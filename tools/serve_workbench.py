@@ -110,11 +110,11 @@ class Handler(SimpleHTTPRequestHandler):
 
         CONTROL_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Step 1: 渲染无音轨视频
-        video_raw = CONTROL_VIDEO_DIR / CONTROL_VIDEO_NAME
+        # Step 1: 渲染无音轨视频（临时文件）
+        video_no_audio = CONTROL_VIDEO_DIR / "control_video_noaud.mp4"
         generate_control_video(
             {"channels": channels, "frame_count": 150, "fps": fps},
-            str(video_raw),
+            str(video_no_audio),
             width=512, height=512, fps=fps,
         )
 
@@ -128,8 +128,12 @@ class Handler(SimpleHTTPRequestHandler):
             output_path=str(audio_baked),
         )
 
-        # Step 3: 合流（用相同文件名覆盖，浏览器看到的就是带音频的版本）
-        merge_audio_video(str(video_raw), str(audio_baked), output_path=str(video_raw))
+        # Step 3: 合流到最终文件（不同路径避免 ffmpeg 读写冲突）
+        final_out = CONTROL_VIDEO_DIR / CONTROL_VIDEO_NAME
+        merge_audio_video(str(video_no_audio), str(audio_baked), output_path=str(final_out))
+
+        # 清理临时无音轨文件
+        video_no_audio.unlink(missing_ok=True)
 
         self._json_response({
             "ok": True,
