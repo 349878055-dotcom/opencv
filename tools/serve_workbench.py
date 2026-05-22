@@ -92,31 +92,49 @@ class Handler(SimpleHTTPRequestHandler):
     # 2D 霓虹控制视频
     # ═══════════════════════════════════════════════════════
     def _render_control_video(self, body: bytes) -> None:
-        """POST /render_control_video — 从当前滑杆编译全量管线并渲染控制视频。"""
+        """POST /render_control_video — 编译全量管线 + 渲染控制视频 + 自动配乐合流。"""
         from gaze_engine.line_drawer import generate_control_video
+        from gaze_engine.audio_compiler import (
+            _generate_mock_audio,
+            bake_audio_by_envelope,
+            merge_audio_video,
+        )
 
         pkt_dict = json.loads(body.decode("utf-8"))
         pipeline = self._compile_pipeline_all(pkt_dict)
 
-        # 取最终阶段通道（平庸纠正后）
+        # 取最终阶段通道 + 包络
         channels = pipeline["stages"]["quality"]["channels"]
         fps = pipeline["fps"]
+        env = pipeline.get("envelope")  # 顶层 envelope 数组
 
         CONTROL_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
-        out = CONTROL_VIDEO_DIR / CONTROL_VIDEO_NAME
 
+        # Step 1: 渲染无音轨视频
+        video_raw = CONTROL_VIDEO_DIR / CONTROL_VIDEO_NAME
         generate_control_video(
             {"channels": channels, "frame_count": 150, "fps": fps},
-            str(out),
-            width=512,
-            height=512,
-            fps=fps,
+            str(video_raw),
+            width=512, height=512, fps=fps,
         )
+
+        # Step 2: 生成 Mock 音源 → 包络卡点
+        audio_raw = CONTROL_VIDEO_DIR / "mock_audio.mp3"
+        _generate_mock_audio(duration_sec=150 / fps, output_path=str(audio_raw))
+        audio_baked = CONTROL_VIDEO_DIR / "audio_baked.mp3"
+        bake_audio_by_envelope(
+            str(audio_raw), env,
+            frame_count=150, fps=fps,
+            output_path=str(audio_baked),
+        )
+
+        # Step 3: 合流（用相同文件名覆盖，浏览器看到的就是带音频的版本）
+        merge_audio_video(str(video_raw), str(audio_baked), output_path=str(video_raw))
 
         self._json_response({
             "ok": True,
             "path": f"/{CONTROL_VIDEO_NAME}",
-            "note": "2D 霓虹控制视频已生成",
+            "note": "2D 霓虹控制视频 + 自动配乐合流完成",
         })
 
     def _serve_control_video(self) -> None:
