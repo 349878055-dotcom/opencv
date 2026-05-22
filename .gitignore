@@ -1,0 +1,11 @@
+eye_asset/packs/**/preview/
+eye_asset/packs/**/05_*.mp4
+资产库/**/预览/*.mp4
+资产库/**/预览/_指令关键点/
+资产库/**/成片/*.mp4
+资产库/**/日志/*.log
+*.log
+.env
+.env.local
+__pycache__/
+*.pyc
