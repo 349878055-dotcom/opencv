@@ -1,0 +1,69 @@
+{
+  "_schema_version": "1.0",
+  "_description": "九大人格矩阵 — 所有偏置/系数均可通过滑杆实时回拨调整",
+  "_frame_count": 150,
+  "personas": {
+    "天选者_大祭司": {
+      "label": "天选者/大祭司",
+      "base_offset": {
+        "pupil_x": 0.48,
+        "pupil_y": 0.48,
+        "blink": 0.50,
+        "eyebrow": 0.40,
+        "pupil_scale": 0.50,
+        "iris_scale": 0.50,
+        "cornea_bulge": 0.50,
+        "squint": 0.50,
+        "brow_raise": 0.50,
+        "lid_upper": 0.50,
+        "lid_lower": 0.50,
+        "eye_gloss": 0.46
+      },
+      "scale_factor": {
+        "pupil_x": 0.02,
+        "pupil_y": 0.02,
+        "blink": 0.25,
+        "eyebrow": 0.90,
+        "pupil_scale": 0.10,
+        "iris_scale": 0.10,
+        "cornea_bulge": 0.15,
+        "squint": 0.20,
+        "brow_raise": 0.05,
+        "lid_upper": 0.15,
+        "lid_lower": 0.15,
+        "eye_gloss": 0.03
+      }
+    },
+    "魅惑者_部落巫医": {
+      "label": "魅惑者/部落巫医",
+      "base_offset": {
+        "pupil_x": 0.50,
+        "pupil_y": 0.50,
+        "blink": 0.50,
+        "eyebrow": 0.50,
+        "pupil_scale": 0.50,
+        "iris_scale": 0.50,
+        "cornea_bulge": 0.50,
+        "squint": 0.50,
+        "brow_raise": 0.50,
+        "lid_upper": 0.58,
+        "lid_lower": 0.42,
+        "eye_gloss": 0.90
+      },
+      "scale_factor": {
+        "pupil_x": 0.55,
+        "pupil_y": 0.50,
+        "blink": 0.75,
+        "eyebrow": 0.55,
+        "pupil_scale": 0.50,
+        "iris_scale": 0.50,
+        "cornea_bulge": 0.55,
+        "squint": 0.40,
+        "brow_raise": 0.45,
+        "lid_upper": 0.55,
+        "lid_lower": 0.50,
+        "eye_gloss": 0.55
+      }
+    }
+  }
+}
