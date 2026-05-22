@@ -92,8 +92,9 @@ class Handler(SimpleHTTPRequestHandler):
     # 2D 霓虹控制视频
     # ═══════════════════════════════════════════════════════
     def _render_control_video(self, body: bytes) -> None:
-        """POST /render_control_video — 编译全量管线 + 渲染控制视频 + 自动配乐合流。"""
-        from gaze_engine.line_drawer import generate_control_video
+        """POST /render_control_video — 用新版渲染管线 + 自动配乐合流。"""
+        import cv2
+        from gaze_engine.line_drawer import draw_single_frame, CANONICAL_KEYS
         from gaze_engine.audio_compiler import (
             _generate_mock_audio,
             bake_audio_by_envelope,
@@ -103,36 +104,38 @@ class Handler(SimpleHTTPRequestHandler):
         pkt_dict = json.loads(body.decode("utf-8"))
         pipeline = self._compile_pipeline_all(pkt_dict)
 
-        # 取最终阶段通道 + 包络
         channels = pipeline["stages"]["quality"]["channels"]
         fps = pipeline["fps"]
-        env = pipeline.get("envelope")  # 顶层 envelope 数组
+        env = pipeline.get("envelope")
+        fc = 150
 
         CONTROL_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Step 1: 渲染无音轨视频（临时文件）
+        # Step 1: 逐帧渲染到临时视频
+        import tempfile
         video_no_audio = CONTROL_VIDEO_DIR / "control_video_noaud.mp4"
-        generate_control_video(
-            {"channels": channels, "frame_count": 150, "fps": fps},
-            str(video_no_audio),
-            width=512, height=512, fps=fps,
-        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for t in range(fc):
+                frame_data = {k: channels[k][t] for k in CANONICAL_KEYS if k in channels}
+                img = draw_single_frame(frame_data)
+                cv2.imwrite(str(Path(tmpdir) / f"f_{t:04d}.png"), img)
+            import subprocess
+            subprocess.run([
+                "ffmpeg", "-y", "-f", "image2", "-r", str(fps),
+                "-i", str(Path(tmpdir) / "f_%04d.png"),
+                "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                str(video_no_audio),
+            ], capture_output=True, check=True)
 
-        # Step 2: 生成 Mock 音源 → 包络卡点
+        # Step 2: 音源 → 包络卡点
         audio_raw = CONTROL_VIDEO_DIR / "mock_audio.mp3"
-        _generate_mock_audio(duration_sec=150 / fps, output_path=str(audio_raw))
+        _generate_mock_audio(duration_sec=fc / fps, output_path=str(audio_raw))
         audio_baked = CONTROL_VIDEO_DIR / "audio_baked.mp3"
-        bake_audio_by_envelope(
-            str(audio_raw), env,
-            frame_count=150, fps=fps,
-            output_path=str(audio_baked),
-        )
+        bake_audio_by_envelope(str(audio_raw), env, frame_count=fc, fps=fps, output_path=str(audio_baked))
 
-        # Step 3: 合流到最终文件（不同路径避免 ffmpeg 读写冲突）
+        # Step 3: 合流
         final_out = CONTROL_VIDEO_DIR / CONTROL_VIDEO_NAME
         merge_audio_video(str(video_no_audio), str(audio_baked), output_path=str(final_out))
-
-        # 清理临时无音轨文件
         video_no_audio.unlink(missing_ok=True)
 
         self._json_response({

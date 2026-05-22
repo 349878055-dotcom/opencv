@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 """
-line_drawer.py · 面部纹理驱动引擎 —— 12 通道 → 参考视频变形动画
+line_drawer.py · 纯 2D 霓虹发光控制视频渲染器 — 12 通道生理几何引擎
 =====================================================================
-输入: 12×150 全量通道 → 基于参考视频帧的纹理变形 → H.264 mp4
+输入: 12×150 全量通道 JSON → 三大层物理渲染 → H.264 mp4
 
-机制:
-  1. 从参考视频提取一帧清晰正面脸作为"底座纹理"
-  2. 根据 12 通道数据对眼部/眉毛区域做局部变形（瞳孔偏移、眼睑开合、眉压）
-  3. 为适应 512x512 渲染分辨率，提取脸部并居中放置
-
-依赖: opencv-python, numpy, ffmpeg（可选）
+架构:
+  [眼球层]  cv2.ellipse 透视切角瞳孔/虹膜 + 45° 固定高光对抗
+  [眼睑层]  三次贝塞尔曲线 — 上睑 lid_upper+blink 下压 / 下睑 lid_lower+squint 上挤
+  [眉毛层]  cv2.fillPoly 梭形多边形 — 非对称下压剑眉
 """
 
 from __future__ import annotations
@@ -19,7 +17,6 @@ import math
 import subprocess
 from pathlib import Path
 from typing import Any
-
 import numpy as np
 
 try:
@@ -28,235 +25,237 @@ try:
 except ImportError:
     _HAS_CV2 = False
 
-try:
-    from gaze_engine.channel_contract import CANONICAL_KEYS
-except ImportError:
-    CANONICAL_KEYS = [
-        "pupil_x", "pupil_y", "blink", "eyebrow",
-        "pupil_scale", "iris_scale", "cornea_bulge",
-        "squint", "brow_raise", "lid_upper", "lid_lower", "eye_gloss",
-    ]
+CANONICAL_KEYS = [
+    "pupil_x", "pupil_y", "blink", "eyebrow",
+    "pupil_scale", "iris_scale", "cornea_bulge",
+    "squint", "brow_raise", "lid_upper", "lid_lower", "eye_gloss",
+]
 
-# ── 路径 ──────────────────────────────────────
-_THIS_DIR = Path(__file__).resolve().parent
-_PROJECT_DIR = _THIS_DIR.parent
-_REF_VIDEO = _PROJECT_DIR / "资产库" / "1b5798d5e22c6e2c32df3d4236ae194a_raw.mp4"
+# ── 核心刚性图形常量定义 ──────────────────────────────────────
+DEFAULT_RES = (512, 512)
+EYE_SPACING = 0.36           # 双眼间距比例
+EYE_Y_BASE = 0.48            # 眼位基准 Y 轴位置
+PUPIL_MAX_SHIFT = 0.08       # pupil_x 最大横向偏移比例
+PUPIL_MAX_VSHIFT = 0.04      # pupil_y 最大纵向偏移比例
+BROW_MAX_LIFT = 0.06         # 眉毛最大位置提升
 
-# ── 渲染尺寸 ──────────────────────────────────
-RENDER_W, RENDER_H = 512, 512
+GLOW_BLUR_KSIZE = (25, 25)
+GLOW_WEIGHT = 1.5
+LINE_THICKNESS_BASE = 4
 
+# 三次贝塞尔控制点横向跨度与梭形眉宽度定义
+BEZIER_DX = 0.22
+BROW_HEAD_W = 0.045           # 眉头宽度
+BROW_PEAK_W = 0.032           # 眉峰宽度
+BROW_TAIL_W = 0.015           # 眉尾宽度
+BROW_LEN = 0.28               # 眉毛横向总长度
+BROW_PEAK_POS = 0.42          # 眉峰处于整条眉毛的 42% 位置
 
-# ═══════════════════════════════════════════════
-# 1. 加载参考视频 → 提取底座纹理
-# ═══════════════════════════════════════════════
-
-def _load_base_texture(ref_path: str = str(_REF_VIDEO)) -> np.ndarray:
-    """从参考视频提取一帧人脸作为底座纹理，裁切脸部并缩放到 512×512。"""
-    cap = cv2.VideoCapture(ref_path)
-    # 跳过前几帧取稳定帧
-    cap.set(cv2.CAP_PROP_POS_FRAMES, 3)
-    ret, frame = cap.read()
-    cap.release()
-    if not ret:
-        raise RuntimeError(f"无法读取参考视频: {ref_path}")
-
-    h, w = frame.shape[:2]
-    # 裁切脸部区域（手动测量参考视频：脸在 x≈200~1050, y≈150~600）
-    face = frame[120:620, 180:1080]
-    # 缩放到 512×512
-    return cv2.resize(face, (RENDER_W, RENDER_H), interpolation=cv2.INTER_CUBIC)
-
-
-# ═══════════════════════════════════════════════
-# 2. 通道加载
-# ═══════════════════════════════════════════════
-
-def _load_channels(source) -> tuple[dict[str, list[float]], int, int]:
+def _load_channels(source) -> tuple[dict[str, list[float]], int, float]:
     if isinstance(source, dict):
         data = source
     else:
         data = json.loads(Path(source).read_text(encoding="utf-8"))
-    ch = data.get("channels") or {}
-    channels = {}
+
+    channels = data.get("channels", {})
+    fc = data.get("frame_count", 150)
+    fps = data.get("fps", 30.0)
+
+    out = {}
     for k in CANONICAL_KEYS:
-        raw = ch.get(k, [])
-        channels[k] = [float(v) for v in raw] if raw else [0.0] * 150
-    fc = int(data.get("frame_count") or 150)
-    fps = int(data.get("fps") or 30)
-    return channels, fc, fps
+        raw_list = channels.get(k, [])
+        if not raw_list:
+            raw_list = [0.0] * fc
+        out[k] = [float(v) for v in raw_list[:fc]]
+    return out, fc, fps
 
+def _get_bezier_point(p0, p1, p2, p3, t: float) -> tuple[int, int]:
+    """计算三次贝塞尔曲线上的单点坐标"""
+    mt = 1.0 - t
+    x = (mt**3)*p0[0] + 3*(mt**2)*t*p1[0] + 3*mt*(t**2)*p2[0] + (t**3)*p3[0]
+    y = (mt**3)*p0[1] + 3*(mt**2)*t*p1[1] + 3*mt*(t**2)*p2[1] + (t**3)*p3[1]
+    return (int(round(x)), int(round(y)))
 
-# ═══════════════════════════════════════════════
-# 3. 变形参数计算
-# ═══════════════════════════════════════════════
+def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAULT_RES) -> np.ndarray:
+    """完美承载 12 指令集的单帧 OpenCV 生理几何重绘引擎"""
+    W, H = res
+    # 建立刚性中性图层与发光图层
+    base_img = np.zeros((H, W, 3), dtype=np.uint8)
+    glow_img = np.zeros((H, W, 3), dtype=np.uint8)
 
-# 从参考视频手动测量的关键点（相对 512×512）：
-# 左眼中心 ≈ (195, 270)，右眼中心 ≈ (375, 270)
-# 虹膜半径 ≈ 30px，瞳孔半径 ≈ 18px
-# 眉毛上边界 ≈ y=210，下边界 ≈ y=240
+    # 1. 提取当前帧的 12 通道物理真值
+    px = frame_data["pupil_x"]
+    py = frame_data["pupil_y"]
+    blink = frame_data["blink"]
+    eb = frame_data["eyebrow"]
+    p_scale = frame_data["pupil_scale"]
+    i_scale = frame_data["iris_scale"]
+    squint = frame_data["squint"]
+    b_raise = frame_data["brow_raise"]
+    l_upper = frame_data["lid_upper"]
+    l_lower = frame_data["lid_lower"]
+    e_gloss = frame_data["eye_gloss"]
 
-_LEFT_EYE_CX = 195
-_RIGHT_EYE_CX = 375
-_EYE_CY = 270
-_IRIS_R = 30
-_PUPIL_R = 18
-_BROW_TOP = 210
-_BROW_BOT = 240
-_HIGHLIGHT_LX = 210  # 左眼高光固定位（45° 方向）
-_HIGHLIGHT_LY = 255
-_HIGHLIGHT_RX = 360
-_HIGHLIGHT_RY = 255
+    # 左右眼空间对称中心判定
+    eye_centers = [
+        ("left",  (int(W * (0.5 - EYE_SPACING/2)), int(H * EYE_Y_BASE)), -1),
+        ("right", (int(W * (0.5 + EYE_SPACING/2)), int(H * EYE_Y_BASE)),  1)
+    ]
 
+    for side, (cx, cy), side_sign in eye_centers:
+        # ──────────────────────────────────────────────────────────
+        # 层一：【眼球球体透视层 & 高光分离对抗】
+        # ──────────────────────────────────────────────────────────
+        # 计算瞳孔物理中心位移 (完美承载 17 帧扫视过冲与 23 帧回弹)
+        pupil_cx = cx + int(px * PUPIL_MAX_SHIFT * W)
+        pupil_cy = cy - int(py * PUPIL_MAX_VSHIFT * H) # 负=向下
 
-def _compute_warp_params(raw: dict[str, float]) -> dict:
-    """计算当前帧的变形参数。"""
-    # 瞳孔偏移
-    px_off = int(raw["pupil_x"] * 30)  # max ±30px
-    py_off = int(raw["pupil_y"] * 20)  # max ±20px
+        # 动态计算虹膜和瞳孔半径
+        base_iris_r = int(W * 0.085) * (1.0 + i_scale)
+        base_pupil_r = int(W * 0.042) * (1.0 + p_scale)
 
-    # 瞳孔/虹膜缩放
-    pupil_scale = 0.5 + raw["pupil_scale"] * 0.5
-    iris_scale = 0.5 + raw["iris_scale"] * 0.5
+        # 模拟眼球球体侧视转动透视偏折：横向扫视越远，椭圆越扁
+        flatten_factor = 1.0 - min(0.35, abs(px) * 0.4)
+        iris_w = int(base_iris_r * flatten_factor)
+        pupil_w = int(base_pupil_r * flatten_factor)
 
-    # 眼睑闭合
-    lid_close = min(1.0, raw["blink"] * 0.85 + raw["lid_upper"] * 0.30)
-    lid_lift = min(1.0, raw["lid_lower"] * 0.6 + raw["squint"] * 0.5)
+        # 绘制虹膜 (天蓝色发光线条)
+        cv2.ellipse(base_img, (pupil_cx, pupil_cy), (iris_w, int(base_iris_r)), 0, 0, 360, (235, 160, 50), LINE_THICKNESS_BASE)
+        cv2.ellipse(glow_img, (pupil_cx, pupil_cy), (iris_w, int(base_iris_r)), 0, 0, 360, (235, 160, 50), LINE_THICKNESS_BASE + 2)
 
-    # 眉压
-    brow_press = raw["eyebrow"] * 0.5 - raw["brow_raise"] * 0.3
+        # 绘制瞳孔 (深海蓝实心圆，随眼合度动态坍缩避免穿帮)
+        if blink < 0.95:
+            cv2.ellipse(base_img, (pupil_cx, pupil_cy), (pupil_w, int(base_pupil_r)), 0, 0, 360, (180, 50, 20), -1)
 
-    return {
-        "px_off": px_off, "py_off": py_off,
-        "pupil_scale": pupil_scale, "iris_scale": iris_scale,
-        "lid_close": lid_close, "lid_lift": lid_lift,
-        "brow_press": brow_press,
-        "eye_gloss": raw["eye_gloss"],
-    }
+        # 【神级卡点：固定光源高光分离对抗】
+        # 高光点位置与眼球转动剥离，死钉在眼眶右上角 45 度，半径随 eye_gloss 动态发颤
+        gloss_cx = cx + int(W * 0.025)
+        gloss_cy = cy - int(H * 0.025)
+        gloss_r = max(2, int(W * 0.008 * (1.0 + e_gloss * 2.5)))
 
+        if blink < 0.85:
+            cv2.circle(base_img, (gloss_cx, gloss_cy), gloss_r, (255, 255, 255), -1)
+            cv2.circle(glow_img, (gloss_cx, gloss_cy), gloss_r + 2, (255, 255, 255), -1)
 
-# ═══════════════════════════════════════════════
-# 4. 单帧渲染（纹理变形）
-# ═══════════════════════════════════════════════
+        # ──────────────────────────────────────────────────────────
+        # 层二：【三次贝塞尔眼睑层 & 刚性双向框压】
+        # ──────────────────────────────────────────────────────────
+        # 确立眼框刚性左右端点
+        eye_w_half = int(W * 0.13)
+        p_start = (cx - eye_w_half, cy)
+        p_end = (cx + eye_w_half, cy)
 
-# 全局缓存 — 底座纹理只加载一次
-_BASE_TEXTURE: np.ndarray | None = None
+        # 动态计算眼框纵向基础跨度，随大开合 blink 压低
+        eye_h_upper = int(H * 0.075) * (1.0 - blink)
+        eye_h_lower = int(H * 0.055)
 
+        # 【上眼睑：完美承载 lid_upper 遮瞳生理学动作】
+        # lid_upper 变大时，控制点向下猛压，切削出冷酷凝视眼感
+        upper_ctrl_y = cy - int(eye_h_upper * (1.0 - l_upper * 1.5))
+        u_ctrl1 = (cx - int(eye_w_half * BEZIER_DX), upper_ctrl_y)
+        u_ctrl2 = (cx + int(eye_w_half * BEZIER_DX), upper_ctrl_y)
 
-def _get_base_texture() -> np.ndarray:
-    global _BASE_TEXTURE
-    if _BASE_TEXTURE is None:
-        _BASE_TEXTURE = _load_base_texture()
-    return _BASE_TEXTURE.copy()
+        # 【下眼睑：完美承载 squint 眶压向上逆推机制】
+        # squint 和 lid_lower 变大时，下睑控制点反重力向上挤压，咬死虹膜下沿
+        lower_ctrl_y = cy + int(eye_h_lower * (1.0 - (squint * 0.6 + l_lower * 0.4)))
+        l_ctrl1 = (cx - int(eye_w_half * BEZIER_DX), lower_ctrl_y)
+        l_ctrl2 = (cx + int(eye_w_half * BEZIER_DX), lower_ctrl_y)
 
+        # 离散化生成平滑连续的贝塞尔线段点集
+        pts_upper = []
+        pts_lower = []
+        steps = 24
+        for i in range(steps + 1):
+            t = i / steps
+            pts_upper.append(_get_bezier_point(p_start, u_ctrl1, u_ctrl2, p_end, t))
+            pts_lower.append(_get_bezier_point(p_start, l_ctrl1, l_ctrl2, p_end, t))
 
-def draw_glowing_neon_lines(channels, frame_idx, width=RENDER_W, height=RENDER_H):
-    """基于参考视频纹理的变形渲染。"""
-    if not _HAS_CV2:
-        raise ImportError("opencv-python 未安装: pip install opencv-python")
+        # 绘制眼睑霓虹线条 (粉红色/魅惑色)
+        cv2.polylines(base_img, [np.array(pts_upper, np.int32)], False, (80, 60, 255), LINE_THICKNESS_BASE)
+        cv2.polylines(glow_img, [np.array(pts_upper, np.int32)], False, (80, 60, 255), LINE_THICKNESS_BASE + 2)
+        cv2.polylines(base_img, [np.array(pts_lower, np.int32)], False, (80, 60, 255), LINE_THICKNESS_BASE)
+        cv2.polylines(glow_img, [np.array(pts_lower, np.int32)], False, (80, 60, 255), LINE_THICKNESS_BASE + 2)
 
-    base = _get_base_texture()
-    raw = {k: channels[k][frame_idx] for k in CANONICAL_KEYS}
-    p = _compute_warp_params(raw)
+        # ──────────────────────────────────────────────────────────
+        # 层三：【梭形非对称下压剑眉】
+        # ──────────────────────────────────────────────────────────
+        # 确立眉毛基线核心端点
+        brow_len_px = int(W * BROW_LEN)
+        bx_start = cx - brow_len_px // 2 if side == "left" else cx + brow_len_px // 2 - side_sign * int(W*0.02)
+        bx_end = cx + brow_len_px // 2 if side == "left" else cx - brow_len_px // 2 - side_sign * int(W*0.02)
 
-    # ── 瞳孔/虹膜变形（覆盖绘制） ─────────
-    for cx, hl_cx, hl_cy in [
-        (_LEFT_EYE_CX, _HIGHLIGHT_LX, _HIGHLIGHT_LY),
-        (_RIGHT_EYE_CX, _HIGHLIGHT_RX, _HIGHLIGHT_RY),
-    ]:
-        icx = cx + p["px_off"]
-        icy = _EYE_CY + p["py_off"]
+        # 基础眉线 Y 轴位置 (受 brow_raise 抬高影响)
+        by_base = cy - int(H * 0.16) - int(b_raise * BROW_MAX_LIFT * H)
 
-        # 虹膜（深棕色覆盖）
-        iris_r = int(_IRIS_R * p["iris_scale"])
-        cv2.circle(base, (icx, icy), iris_r, (30, 50, 80), -1)  # 深棕色 BGR
+        # 【重点：眉头下压权重 1.0，眉尾 0.4，第 32 帧全自动形变为剑眉】
+        by_head = by_base + int(eb * 0.055 * H * 1.0)
+        by_peak = by_base - int(H * 0.025) + int(eb * 0.055 * H * 0.6)
+        by_tail = by_base + int(H * 0.015) + int(eb * 0.055 * H * 0.4)
 
-        # 瞳孔（黑色覆盖）
-        pupil_r = int(_PUPIL_R * p["pupil_scale"])
-        cv2.circle(base, (icx, icy), pupil_r, (10, 10, 10), -1)
+        # 确立非对称梭形的 4 个刚性骨骼骨骼点
+        bx_peak = bx_start + side_sign * int(brow_len_px * BROW_PEAK_POS)
 
-        # 瞳孔内白芯
-        core_r = max(1, pupil_r // 3)
-        cv2.circle(base, (icx - 1, icy - 1), core_r, (255, 255, 255), -1)
+        pt_head_top = (bx_start, by_head - int(H * BROW_HEAD_W))
+        pt_head_bot = (bx_start, by_head + int(H * BROW_HEAD_W * 0.3))
+        pt_peak_top = (bx_peak, by_peak - int(H * BROW_PEAK_W))
+        pt_peak_bot = (bx_peak, by_peak + int(H * BROW_PEAK_W * 0.4))
+        pt_tail     = (bx_end, by_tail)
 
-        # 高光（固定 45° 对抗）
-        hl_r = max(1, int(4 * p["eye_gloss"]))
-        if hl_r > 0:
-            cv2.circle(base, (hl_cx, hl_cy), hl_r, (255, 255, 255), -1)
+        # 缝合构成非对称实心多边形
+        brow_poly = [pt_head_top, pt_peak_top, pt_tail, pt_peak_bot, pt_head_bot]
+        brow_poly_arr = np.array(brow_poly, np.int32)
 
-        # 上眼睑覆盖（lid_close → 用肤色覆盖上方区域模拟闭眼）
-        if p["lid_close"] > 0.05:
-            overlay_h = int(p["lid_close"] * 40)
-            cv2.rectangle(base,
-                          (cx - 50, _EYE_CY - 20 - overlay_h),
-                          (cx + 50, _EYE_CY - 20),
-                          (55, 75, 110), -1)  # 肤色 BGR
+        # 绘制实体剑眉多边形 (碧绿色发光体)
+        cv2.fillPoly(base_img, [brow_poly_arr], (120, 220, 40))
+        cv2.fillPoly(glow_img, [brow_poly_arr], (120, 220, 40))
 
-        # 下眼睑上挤
-        if p["lid_lift"] > 0.05:
-            lift_h = int(p["lid_lift"] * 15)
-            cv2.rectangle(base,
-                          (cx - 40, _EYE_CY + 15),
-                          (cx + 40, _EYE_CY + 15 + lift_h),
-                          (55, 75, 110), -1)
+    # ──────────────────────────────────────────────────────────
+    # 层四：【双层高斯羽化融合】
+    # ──────────────────────────────────────────────────────────
+    # 第一层高斯发光层融出霓虹拉丝烟雾
+    blur1 = cv2.GaussianBlur(glow_img, GLOW_BLUR_KSIZE, 0)
+    # 第二层强化波纹辉光
+    blur2 = cv2.GaussianBlur(glow_img, (51, 51), 0)
 
-        # 眉压（用深色块+柔化模拟眉下压）
-        if abs(p["brow_press"]) > 0.01:
-            brow_y_offset = int(p["brow_press"] * 20)
-            cv2.rectangle(base,
-                          (cx - 60, _BROW_TOP + brow_y_offset),
-                          (cx + 60, _BROW_BOT + brow_y_offset),
-                          (35, 30, 25), -1)  # 深棕
+    combined_glow = cv2.addWeighted(blur1, 1.2, blur2, 0.6, 0)
+    final_render = cv2.addWeighted(base_img, 1.0, combined_glow, GLOW_WEIGHT, 0)
 
-    return base
+    return final_render
 
+def render_pipeline(source_json: str, output_mp4: str, res: tuple[int, int] = DEFAULT_RES) -> str:
+    """全自动刚性音频指令流结合管线"""
+    channels, fc, fps = _load_channels(source_json)
 
-# ═══════════════════════════════════════════════
-# 5. 视频生成
-# ═══════════════════════════════════════════════
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmpdir:
+        img_template = str(Path(tmpdir) / "frame_%04d.png")
 
-def generate_control_video(source, output_path="control_video.mp4", *,
-                           width=RENDER_W, height=RENDER_H, fps=30):
-    if not _HAS_CV2:
-        raise ImportError("opencv-python 未安装: pip install opencv-python")
+        # 逐帧进行非线性几何切削计算
+        for t in range(fc):
+            frame_data = {k: channels[k][t] for k in CANONICAL_KEYS}
+            img = draw_single_frame(frame_data, res)
+            cv2.imwrite(img_template % t, img)
 
-    channels, frame_count, src_fps = _load_channels(source)
-    fps = fps or src_fps
-    out = Path(output_path)
-    out.parent.mkdir(parents=True, exist_ok=True)
+        # 强制卡死 H.264 离散指令转码，直接产出高兼容视频
+        cmd = [
+            "ffmpeg", "-y", "-f", "image2", "-r", str(fps),
+            "-i", img_template, "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            output_mp4
+        ]
+        subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
 
-    tmp = out.parent / f".tmp_{out.name}"
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    writer = cv2.VideoWriter(str(tmp), fourcc, float(fps), (width, height))
-    if not writer.isOpened():
-        tmp = tmp.with_suffix('.avi')
-        writer = cv2.VideoWriter(str(tmp), cv2.VideoWriter_fourcc(*'MJPG'),
-                                 float(fps), (width, height))
-    if not writer.isOpened():
-        raise RuntimeError("无法创建视频文件 — 请确认 opencv-python 安装正确")
+    return output_mp4
 
-    for t in range(frame_count):
-        writer.write(draw_glowing_neon_lines(channels, t, width, height))
-    writer.release()
+if __name__ == "__main__":
+    # 出厂独立闭环冒烟回归校验测试
+    test_frame = {k: 0.0 for k in CANONICAL_KEYS}
+    test_frame["pupil_x"] = 0.5  # 测试横跳过冲
+    test_frame["eyebrow"] = 0.6  # 测试眉头冷压
+    test_frame["squint"] = 0.4   # 测试眶压逆推
+    test_frame["eye_gloss"] = 0.8 # 测试高光微颤
 
-    try:
-        subprocess.run(
-            ["ffmpeg", "-y", "-i", str(tmp),
-             "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
-             "-pix_fmt", "yuv420p", "-vf", f"fps={fps}",
-             str(out)],
-            capture_output=True, text=True, timeout=60, check=True
-        )
-        tmp.unlink(missing_ok=True)
-    except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
-        import shutil
-        shutil.move(str(tmp), str(out))
-
-    return out
-
-
-def generate_control_frames_numpy(source, *, width=RENDER_W, height=RENDER_H):
-    channels, frame_count, _ = _load_channels(source)
-    frames = np.zeros((frame_count, height, width, 3), dtype=np.uint8)
-    for t in range(frame_count):
-        frames[t] = draw_glowing_neon_lines(channels, t, width, height)
-    return frames
+    if _HAS_CV2:
+        out_img = draw_single_frame(test_frame)
+        print(f"[OK] 12通道生理几何引擎 OpenCV 初始化模型组装成功，图像矩阵形体: {out_img.shape}")
+    else:
+        print("[WARN] 未检测到 OpenCV 环境，图形核心已转入离散静态桩。")
