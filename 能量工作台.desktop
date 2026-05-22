@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=能量工作台（一键）
+Exec=/home/jintao/ai_video/ComfyUI/custom_nodes/jintao_node_eye/一键打开能量工作台.sh
+Path=/home/jintao/ai_video/ComfyUI/custom_nodes/jintao_node_eye
+Icon=applications-graphics
+Terminal=false
+Categories=Graphics;
