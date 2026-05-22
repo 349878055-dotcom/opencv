@@ -27,6 +27,32 @@ from gaze_engine.slider_schema import SliderPacket  # noqa: E402
 
 _PIPELINE_DOC = "contracts/全量帧指令集规范.md · envelope-v1"
 
+# 情绪 → PAD 三维向量映射（LLM / 预设自动分配）
+# 值域 [-1.0, 1.0]，分别对应 P(愉悦度), A(激活度), D(控制度)
+EMOTION_PAD: dict[str, tuple[float, float, float]] = {
+    "魅惑·勾人": (0.6,  0.3, -0.4),
+    "施压·凝视": (-0.2, 0.7,  0.6),
+    "冷压·决心": (-0.3, 0.6,  0.8),
+    "威慑·一瞬": (0.0,  0.8,  0.5),
+    "怒视·压人": (-0.5, 0.8,  0.7),
+    "鄙夷·冷瞥": (-0.4, 0.3,  0.5),
+    "可怜·委屈": (-0.2, 0.2, -0.5),
+    "要哭未哭":  (-0.3, 0.3, -0.6),
+    "崩溃·泄劲": (-0.6, 0.5, -0.7),
+    "哀求·仰望": (0.1,  0.2, -0.6),
+    "惊惧·一怔": (-0.4, 0.7, -0.3),
+    "空竭·死心": (-0.7, 0.1, -0.2),
+    "纯甜·含情": (0.8,  0.2,  0.1),
+    "媚杀·一眼": (0.5,  0.4,  0.0),
+    "若即若离":   (0.3,  0.1, -0.1),
+    "打量·玩味": (0.2,  0.3,  0.2),
+}
+
+
+def _emotion_pad(emotion: str) -> tuple[float, float, float]:
+    """按情绪名查找 PAD 值；未找到时返回中性 (0,0,0)。"""
+    return EMOTION_PAD.get(emotion, (0.0, 0.0, 0.0))
+
 def _packet_from_context(context: dict) -> SliderPacket | None:
     block = context.get("slider_packet")
     if isinstance(block, dict) and block.get("schema") == "slider-packet-v1":
@@ -58,7 +84,8 @@ def run_delivery(
     else:
         from gaze_engine.envelope_compile import channels_from_packet
 
-        channels = channels_from_packet(pkt, frame_count)
+        P, A, D = _emotion_pad(pkt.emotion)
+        channels = channels_from_packet(pkt, frame_count, P=P, A=A, D=D)
 
     if skip_human_prior:
         rep = PriorReport(enabled=False)
@@ -96,10 +123,18 @@ def run_delivery_from_packet(
     packet: SliderPacket,
     *,
     frame_count: int = FRAME_COUNT_DEFAULT,
+    P: float | None = None,
+    A: float | None = None,
+    D: float | None = None,
 ) -> tuple[dict[str, Any], dict[str, list[float]], PriorReport, PulseQualityReport]:
     from gaze_engine.envelope_compile import channels_from_packet, make_delivery_stub
 
-    channels = channels_from_packet(packet, frame_count)
+    if P is None or A is None or D is None:
+        _P, _A, _D = _emotion_pad(packet.emotion)
+        if P is None: P = _P
+        if A is None: A = _A
+        if D is None: D = _D
+    channels = channels_from_packet(packet, frame_count, P=P, A=A, D=D)
     stub = make_delivery_stub(
         packet, channels, frame_count=frame_count, label=packet.emotion
     )
