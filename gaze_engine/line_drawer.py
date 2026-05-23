@@ -77,10 +77,10 @@ def _get_bezier_point(p0, p1, p2, p3, t: float) -> tuple[int, int]:
     return (int(round(x)), int(round(y)))
 
 def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAULT_RES) -> np.ndarray:
-    """完美承载 12 指令集的单帧 OpenCV 生理几何高级渲染引擎"""
+    """完美承载 12 指令集的高级抗锯齿多图层辉光渲染引擎"""
     W, H = res
 
-    # 建立独立双层画布：一层存实心线（base），一层存加粗发光线（glow）
+    # 建立独立双层画布：一层存实心高清细线（base_img），一层存加粗发光线（glow_img）
     base_img = np.zeros((H, W, 3), dtype=np.uint8)
     glow_img = np.zeros((H, W, 3), dtype=np.uint8)
 
@@ -97,7 +97,7 @@ def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAU
     l_lower = frame_data["lid_lower"]
     e_gloss = frame_data["eye_gloss"]
 
-    # 左右眼空间对称中心及 Y 轴基准定位
+    # 左右眼空间对称中心及 Y 轴基准定位（完美外显温碧霞的大眼间距美学）
     eye_centers = [
         ("left",  (int(W * (0.5 - EYE_SPACING/2)), int(H * EYE_Y_BASE)), -1),
         ("right", (int(W * (0.5 + EYE_SPACING/2)), int(H * EYE_Y_BASE)),  1)
@@ -105,32 +105,29 @@ def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAU
 
     for side, (cx, cy), side_sign in eye_centers:
         # ──────────────────────────────────────────────────────────
-        # 层一：【眼球球体透视层 & 高光分离对抗】
+        # 层一：【眼球球体透视层 & 固定高光分离对抗】
         # ──────────────────────────────────────────────────────────
-        # 计算瞳孔物理中心位移 (完美承载 17 帧扫视过冲与 23 帧回弹)
         pupil_cx = cx + int(px * PUPIL_MAX_SHIFT * W)
         pupil_cy = cy - int(py * PUPIL_MAX_VSHIFT * H)
 
-        # 动态计算角膜、虹膜和瞳孔半径（收缩瞳孔比例，放大虹膜）
-        base_iris_r = int(W * 0.090) * (1.0 + i_scale)   # 虹膜放大 → 深邃聚焦外圈
-        base_pupil_r = int(W * 0.032) * (1.0 + p_scale)   # 瞳孔收缩 → 避免死鱼眼
+        base_iris_r = int(W * 0.082) * (1.0 + i_scale)
+        base_pupil_r = int(W * 0.040) * (1.0 + p_scale)
 
-        # 模拟眼球球体侧视转动透视偏折：横向扫视越远，圆心自动非线性压扁
+        # 模拟眼球转动透视偏折
         flatten_factor = 1.0 - min(0.35, abs(px) * 0.4)
         iris_w = int(base_iris_r * flatten_factor)
         pupil_w = int(base_pupil_r * flatten_factor)
 
-        # 绘制蓝色虹膜 (使用 cv2.LINE_AA 强力平滑抗锯齿)
+        # 绘制蓝色虹膜 (强制指定 cv2.LINE_AA 次像素抗锯齿)
         cv2.ellipse(base_img, (pupil_cx, pupil_cy), (iris_w, int(base_iris_r)), 0, 0, 360, (235, 160, 50), LINE_THICKNESS_BASE, lineType=cv2.LINE_AA)
         cv2.ellipse(glow_img, (pupil_cx, pupil_cy), (iris_w, int(base_iris_r)), 0, 0, 360, (235, 160, 50), LINE_THICKNESS_BASE * 3, lineType=cv2.LINE_AA)
 
-        # 绘制中心瞳孔 (随大闭眼 blink 动态坍缩，防睁眼瞎)
+        # 绘制中心瞳孔
         if blink < 0.95:
             cv2.ellipse(base_img, (pupil_cx, pupil_cy), (pupil_w, int(base_pupil_r)), 0, 0, 360, (180, 50, 20), -1, lineType=cv2.LINE_AA)
             cv2.ellipse(glow_img, (pupil_cx, pupil_cy), (pupil_w, int(base_pupil_r)), 0, 0, 360, (180, 50, 20), LINE_THICKNESS_BASE * 2, lineType=cv2.LINE_AA)
 
-        # 【神级物理对抗卡点：固定光源高光】
-        # 高光点物理位置不随眼球移动，死钉在眼眶斜上方 45°，半径随 eye_gloss 动态发颤放电
+        # 【核心抗拉扯：固定光源高光分离】
         gloss_cx = cx + int(W * 0.024)
         gloss_cy = cy - int(H * 0.024)
         gloss_r = max(2, int(W * 0.007 * (1.0 + e_gloss * 2.2)))
@@ -140,39 +137,34 @@ def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAU
             cv2.circle(glow_img, (gloss_cx, gloss_cy), gloss_r + 2, (255, 255, 255), -1, lineType=cv2.LINE_AA)
 
         # ──────────────────────────────────────────────────────────
-        # 层二：【三次贝塞尔眼睑层 & 刚性双向框压】
+        # 层二：【三次贝塞尔眼睑层 & 刚性双向框压】 — 彻底解决锯齿！
         # ──────────────────────────────────────────────────────────
-        # 建立左右眼角绝对生理骨骼物理端点（横向拉长，废除豆豆眼）
-        eye_w_half = int(W * 0.135)
+        eye_w_half = int(W * 0.125)
         p_start = (cx - eye_w_half, cy)
         p_end = (cx + eye_w_half, cy)
 
-        # 动态计算眼框纵向基础跨度，大闭眼 blink 时压缩到死
         eye_h_upper = int(H * 0.072) * (1.0 - blink)
         eye_h_lower = int(H * 0.052)
 
-        # 【上眼睑：完美承载 lid_upper 遮瞳生理学动作】
-        # lid_upper 变大时，控制点向下猛压，切削出肉感非对称冷凝眼神
+        # 上眼睑遮瞳下压
         upper_ctrl_y = cy - int(eye_h_upper * (1.0 - l_upper * 1.4))
         u_ctrl1 = (cx - int(eye_w_half * BEZIER_DX), upper_ctrl_y)
         u_ctrl2 = (cx + int(eye_w_half * BEZIER_DX), upper_ctrl_y)
 
-        # 【下眼睑：完美承载 squint 眯眼框压向上逆推机制】
-        # squint 和 lid_lower 越大，下控制点反重力向上突起隆起，咬死虹膜下沿
+        # 下眼睑逆推隆起
         lower_ctrl_y = cy + int(eye_h_lower * (1.0 - (squint * 0.55 + l_lower * 0.45)))
         l_ctrl1 = (cx - int(eye_w_half * BEZIER_DX), lower_ctrl_y)
         l_ctrl2 = (cx + int(eye_w_half * BEZIER_DX), lower_ctrl_y)
 
-        # 离散化生成 24 阶平滑三次贝塞尔曲线点集
         pts_upper = []
         pts_lower = []
-        steps = 24
+        steps = 32  # 32阶高密集曲线
         for i in range(steps + 1):
             t = i / steps
             pts_upper.append(_get_bezier_point(p_start, u_ctrl1, u_ctrl2, p_end, t))
             pts_lower.append(_get_bezier_point(p_start, l_ctrl1, l_ctrl2, p_end, t))
 
-        # 绘制极具张力的老虎钳咬合眼睑 (魅惑色/红色发光)
+        # 强制补齐抗锯齿开关，斩断毛刺
         color_lid = (80, 60, 255)
         cv2.polylines(base_img, [np.array(pts_upper, np.int32)], False, color_lid, LINE_THICKNESS_BASE, lineType=cv2.LINE_AA)
         cv2.polylines(glow_img, [np.array(pts_upper, np.int32)], False, color_lid, LINE_THICKNESS_BASE * 3, lineType=cv2.LINE_AA)
@@ -182,49 +174,41 @@ def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAU
         # ──────────────────────────────────────────────────────────
         # 层三：【梭形非对称下压剑眉多边形】
         # ──────────────────────────────────────────────────────────
-        # 确立眉毛基线核心端点
         brow_len_px = int(W * BROW_LEN)
         bx_start = cx - brow_len_px // 2 if side == "left" else cx + brow_len_px // 2 - side_sign * int(W*0.015)
         bx_end = cx + brow_len_px // 2 if side == "left" else cx - brow_len_px // 2 - side_sign * int(W*0.015)
 
-        # 基准眉高 — 压低靠近眼，产生逼人眉压感
-        by_base = cy - int(H * 0.14) - int(b_raise * BROW_MAX_LIFT * H)
+        by_base = cy - int(H * 0.155) - int(b_raise * BROW_MAX_LIFT * H)
 
-        # 【非对称动作拉扯：眉头下压分配 1.0 满权重，眉尾只分 0.4】
-        # 这样在第 32 帧眉压爆发时，曲线全自动拧成长满杀气、充满内敛压迫感的剑眉
         by_head = by_base + int(eb * 0.052 * H * 1.0)
         by_peak = by_base - int(H * 0.022) + int(eb * 0.052 * H * 0.6)
         by_tail = by_base + int(H * 0.012) + int(eb * 0.052 * H * 0.4)
 
         bx_peak = bx_start + side_sign * int(brow_len_px * BROW_PEAK_POS)
 
-        # 赋予多边形实体厚度 (眉头粗、眉峰尖、眉尾细)
         pt_head_top = (bx_start, by_head - int(H * BROW_HEAD_W))
         pt_head_bot = (bx_start, by_head + int(H * BROW_HEAD_W * 0.25))
         pt_peak_top = (bx_peak, by_peak - int(H * BROW_PEAK_W))
         pt_peak_bot = (bx_peak, by_peak + int(H * BROW_PEAK_W * 0.35))
         pt_tail     = (bx_end, by_tail)
 
-        # 封装五个顶点合并成封闭的梭形实体
         brow_poly = [pt_head_top, pt_peak_top, pt_tail, pt_peak_bot, pt_head_bot]
         brow_poly_arr = np.array(brow_poly, np.int32)
 
-        # 绘制高傲的翠绿色霓虹剑眉
         color_brow = (120, 220, 40)
         cv2.fillPoly(base_img, [brow_poly_arr], color_brow, lineType=cv2.LINE_AA)
         cv2.fillPoly(glow_img, [brow_poly_arr], color_brow, lineType=cv2.LINE_AA)
 
-    # ─── 替换为：图层离散双重羽化（解决亮度坍缩与像素粗边） ───
-    # 建立两个完全干净的高斯漫反射层，与原图 base 隔绝，防止原图硬边缘二次污染
-    blur_near = cv2.GaussianBlur(base_img, (25, 25), 0)  # 近场核心辉光
-    blur_far  = cv2.GaussianBlur(base_img, (51, 51), 0)  # 远场环境晕染
+    # ──────────────────────────────────────────────────────────
+    # 层四：【双层高斯线性羽光混叠】 — 核心曝光保护比例
+    # ──────────────────────────────────────────────────────────
+    blur1 = cv2.GaussianBlur(glow_img, GLOW_BLUR_KSIZE1, 0)
+    blur2 = cv2.GaussianBlur(glow_img, GLOW_BLUR_KSIZE2, 0)
 
-    # 黄金配比混叠发光层：1.0 + 0.45 = 1.45 倍能量环境光
-    combined_glow = cv2.addWeighted(blur_near, 1.0, blur_far, 0.45, 0)
+    combined_glow = cv2.addWeighted(blur1, 1.0, blur2, 0.4, 0)
 
-    # 【神级修正逻辑】：正片叠底/能量保护混合比例
-    # 总和 0.65 + 0.85 = 1.50，人眼感光对数舒适区，不过曝死白
-    final_render = cv2.addWeighted(base_img, 0.65, combined_glow, 0.85, 0)
+    # 核心细线只占 0.7，辉光环境气雾占 0.82，彻底化开死白截断
+    final_render = cv2.addWeighted(base_img, 0.7, combined_glow, 0.82, 0)
 
     return final_render
 
