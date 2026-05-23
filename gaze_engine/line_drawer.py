@@ -77,12 +77,12 @@ def _get_bezier_point(p0, p1, p2, p3, t: float) -> tuple[int, int]:
     return (int(round(x)), int(round(y)))
 
 def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAULT_RES) -> np.ndarray:
-    """完美承载 12 指令集的高级抗锯齿多图层辉光渲染引擎"""
+    """完美承载 12 指令集 — 亮底暗纹工业美学渲染引擎"""
     W, H = res
 
-    # 建立独立双层画布：一层存实心高清细线（base_img），一层存加粗发光线（glow_img）
-    base_img = np.zeros((H, W, 3), dtype=np.uint8)
-    glow_img = np.zeros((H, W, 3), dtype=np.uint8)
+    # 亮灰底画布（参考图 1.png 主色调 ≈ BGR 240）
+    base_img = np.full((H, W, 3), 240, dtype=np.uint8)
+    glow_img = np.full((H, W, 3), 240, dtype=np.uint8)
 
     # 1. 提取当前帧的 12 通道物理真值
     px = frame_data["pupil_x"]
@@ -118,23 +118,25 @@ def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAU
         iris_w = int(base_iris_r * flatten_factor)
         pupil_w = int(base_pupil_r * flatten_factor)
 
-        # 绘制蓝色虹膜 (强制指定 cv2.LINE_AA 次像素抗锯齿)
-        cv2.ellipse(base_img, (pupil_cx, pupil_cy), (iris_w, int(base_iris_r)), 0, 0, 360, (235, 160, 50), LINE_THICKNESS_BASE, lineType=cv2.LINE_AA)
-        cv2.ellipse(glow_img, (pupil_cx, pupil_cy), (iris_w, int(base_iris_r)), 0, 0, 360, (235, 160, 50), LINE_THICKNESS_BASE * 3, lineType=cv2.LINE_AA)
+        # 绘制虹膜 (深蓝灰线 — 亮底用深色)
+        iris_color = (80, 100, 140)
+        cv2.ellipse(base_img, (pupil_cx, pupil_cy), (iris_w, int(base_iris_r)), 0, 0, 360, iris_color, LINE_THICKNESS_BASE, lineType=cv2.LINE_AA)
+        cv2.ellipse(glow_img, (pupil_cx, pupil_cy), (iris_w, int(base_iris_r)), 0, 0, 360, iris_color, LINE_THICKNESS_BASE * 3, lineType=cv2.LINE_AA)
 
-        # 绘制中心瞳孔
+        # 绘制中心瞳孔 (纯黑)
+        pupil_color = (20, 20, 20)
         if blink < 0.95:
-            cv2.ellipse(base_img, (pupil_cx, pupil_cy), (pupil_w, int(base_pupil_r)), 0, 0, 360, (180, 50, 20), -1, lineType=cv2.LINE_AA)
-            cv2.ellipse(glow_img, (pupil_cx, pupil_cy), (pupil_w, int(base_pupil_r)), 0, 0, 360, (180, 50, 20), LINE_THICKNESS_BASE * 2, lineType=cv2.LINE_AA)
+            cv2.ellipse(base_img, (pupil_cx, pupil_cy), (pupil_w, int(base_pupil_r)), 0, 0, 360, pupil_color, -1, lineType=cv2.LINE_AA)
+            cv2.ellipse(glow_img, (pupil_cx, pupil_cy), (pupil_w, int(base_pupil_r)), 0, 0, 360, pupil_color, LINE_THICKNESS_BASE * 2, lineType=cv2.LINE_AA)
 
-        # 【核心抗拉扯：固定光源高光分离】
+        # 【核心抗拉扯：固定光源高光分离】— 亮底用纯白高光
         gloss_cx = cx + int(W * 0.024)
         gloss_cy = cy - int(H * 0.024)
         gloss_r = max(2, int(W * 0.007 * (1.0 + e_gloss * 2.2)))
 
         if blink < 0.85:
-            cv2.circle(base_img, (gloss_cx, gloss_cy), gloss_r, (255, 255, 255), -1, lineType=cv2.LINE_AA)
-            cv2.circle(glow_img, (gloss_cx, gloss_cy), gloss_r + 2, (255, 255, 255), -1, lineType=cv2.LINE_AA)
+            cv2.circle(base_img, (gloss_cx, gloss_cy), gloss_r, (250, 250, 250), -1, lineType=cv2.LINE_AA)
+            cv2.circle(glow_img, (gloss_cx, gloss_cy), gloss_r + 2, (250, 250, 250), -1, lineType=cv2.LINE_AA)
 
         # ──────────────────────────────────────────────────────────
         # 层二：【三次贝塞尔眼睑层 & 刚性双向框压】 — 彻底解决锯齿！
@@ -164,8 +166,8 @@ def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAU
             pts_upper.append(_get_bezier_point(p_start, u_ctrl1, u_ctrl2, p_end, t))
             pts_lower.append(_get_bezier_point(p_start, l_ctrl1, l_ctrl2, p_end, t))
 
-        # 强制补齐抗锯齿开关，斩断毛刺
-        color_lid = (80, 60, 255)
+        # 亮底用深色眼睑线 (深灰紫)
+        color_lid = (90, 80, 130)
         cv2.polylines(base_img, [np.array(pts_upper, np.int32)], False, color_lid, LINE_THICKNESS_BASE, lineType=cv2.LINE_AA)
         cv2.polylines(glow_img, [np.array(pts_upper, np.int32)], False, color_lid, LINE_THICKNESS_BASE * 3, lineType=cv2.LINE_AA)
         cv2.polylines(base_img, [np.array(pts_lower, np.int32)], False, color_lid, LINE_THICKNESS_BASE, lineType=cv2.LINE_AA)
@@ -195,21 +197,16 @@ def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAU
         brow_poly = [pt_head_top, pt_peak_top, pt_tail, pt_peak_bot, pt_head_bot]
         brow_poly_arr = np.array(brow_poly, np.int32)
 
-        color_brow = (120, 220, 40)
+        color_brow = (70, 85, 60)  # 亮底深橄榄绿眉
         cv2.fillPoly(base_img, [brow_poly_arr], color_brow, lineType=cv2.LINE_AA)
         cv2.fillPoly(glow_img, [brow_poly_arr], color_brow, lineType=cv2.LINE_AA)
 
     # ──────────────────────────────────────────────────────────
-    # 层四：【双层高斯线性羽光混叠】 — 核心曝光保护比例
+    # 层四：【亮底柔化】 — 轻微高斯降噪柔边
     # ──────────────────────────────────────────────────────────
-    blur1 = cv2.GaussianBlur(glow_img, GLOW_BLUR_KSIZE1, 0)
-    blur2 = cv2.GaussianBlur(glow_img, GLOW_BLUR_KSIZE2, 0)
-
-    combined_glow = cv2.addWeighted(blur1, 1.0, blur2, 0.4, 0)
-
-    # 核心细线只占 0.7，辉光环境气雾占 0.82，彻底化开死白截断
-    final_render = cv2.addWeighted(base_img, 0.7, combined_glow, 0.82, 0)
-
+    blur = cv2.GaussianBlur(glow_img, (15, 15), 0)
+    # 亮底混合 = 原图0.85 + 柔化0.15，保持清晰同时去锯齿
+    final_render = cv2.addWeighted(base_img, 0.85, blur, 0.15, 0)
     return final_render
 
 def render_pipeline(source_json: str, output_mp4: str, res: tuple[int, int] = DEFAULT_RES) -> str:
