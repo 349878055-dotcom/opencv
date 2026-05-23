@@ -1,0 +1,570 @@
+{
+  "_comment": "v2-fresh：12 通道稀疏真源。改数只改本文件，再导出 05 / 示意图 / 。",
+  "schema_version": "0.2-sparse-tracks",
+  "revision": "v2-fresh",
+  "gaze_emotion_id": "施压瞬间凝视",
+  "template_id": "S01_林青霞_施压瞬间凝视",
+  "character_ref": "林青霞",
+  "mood": "施压·瞬间凝视",
+  "mood_tags": [
+    "施压",
+    "瞬间凝视"
+  ],
+  "profile_hint": "cool_restrained",
+  "energy_phases": [
+    "蓄力",
+    "启动",
+    "保持",
+    "缓和"
+  ],
+  "controls_doc": "contracts/全量帧指令集规范.md",
+  "keys": [
+    "pupil_x",
+    "pupil_y",
+    "blink",
+    "eyebrow",
+    "pupil_scale",
+    "iris_scale",
+    "cornea_bulge",
+    "squint",
+    "brow_raise",
+    "lid_upper",
+    "lid_lower",
+    "eye_gloss"
+  ],
+  "keys_active": [
+    "pupil_x",
+    "pupil_y",
+    "blink",
+    "eyebrow",
+    "pupil_scale",
+    "iris_scale",
+    "cornea_bulge",
+    "squint",
+    "brow_raise",
+    "lid_upper",
+    "lid_lower",
+    "eye_gloss"
+  ],
+  "micro_jitter": {
+    "enabled": true,
+    "profile": "cool_restrained",
+    "channels": [
+      "pupil_x",
+      "pupil_y"
+    ],
+    "by_phase": {
+      "蓄力": {
+        "hz": 0,
+        "amplitude": 0
+      },
+      "启动": {
+        "hz": 0,
+        "amplitude": 0
+      },
+      "保持": {
+        "hz": 14,
+        "amplitude": 0.011
+      },
+      "缓和": {
+        "hz": 9,
+        "amplitude": 0.006
+      }
+    },
+    "_note": "不写入稀疏关键点；补针(插值后)按 phase 自动叠噪。启动=0 以免盖过冲"
+  },
+  "channel_tracks": {
+    "pupil_x": {
+      "role": "视线左右·扫视过冲回弹",
+      "keyframes": [
+        {
+          "t": 0,
+          "v": 0.0,
+          "phase": "蓄力"
+        },
+        {
+          "t": 12,
+          "v": 0.0,
+          "phase": "蓄力",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 14,
+          "v": 0.0,
+          "phase": "启动",
+          "easing": "linear"
+        },
+        {
+          "t": 17,
+          "v": 0.34,
+          "phase": "启动",
+          "easing": "ease_out_expo",
+          "_note": "过冲"
+        },
+        {
+          "t": 23,
+          "v": 0.3,
+          "phase": "启动",
+          "easing": "smoothstep",
+          "_note": "回弹盯住"
+        },
+        {
+          "t": 55,
+          "v": 0.32,
+          "phase": "保持",
+          "easing": "linear"
+        },
+        {
+          "t": 120,
+          "v": 0.22,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        },
+        {
+          "t": 149,
+          "v": 0.0,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        }
+      ]
+    },
+    "pupil_y": {
+      "role": "视线上下·略滞于横视",
+      "keyframes": [
+        {
+          "t": 0,
+          "v": 0.0,
+          "phase": "蓄力"
+        },
+        {
+          "t": 12,
+          "v": -0.05,
+          "phase": "蓄力",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 15,
+          "v": -0.07,
+          "phase": "启动",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 20,
+          "v": -0.13,
+          "phase": "启动",
+          "easing": "ease_out_expo",
+          "_note": "下沉过冲"
+        },
+        {
+          "t": 25,
+          "v": -0.11,
+          "phase": "启动",
+          "easing": "smoothstep",
+          "_note": "稳住"
+        },
+        {
+          "t": 55,
+          "v": -0.09,
+          "phase": "保持",
+          "easing": "linear"
+        },
+        {
+          "t": 120,
+          "v": -0.04,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        },
+        {
+          "t": 149,
+          "v": 0.0,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        }
+      ]
+    },
+    "eyebrow": {
+      "role": "眉压·慢于眼",
+      "keyframes": [
+        {
+          "t": 0,
+          "v": 0.04,
+          "phase": "蓄力"
+        },
+        {
+          "t": 10,
+          "v": 0.08,
+          "phase": "蓄力",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 18,
+          "v": 0.14,
+          "phase": "蓄力",
+          "easing": "smoothstep",
+          "_note": "眼已动眉仍低"
+        },
+        {
+          "t": 32,
+          "v": 0.36,
+          "phase": "启动",
+          "easing": "smoothstep",
+          "_note": "眉峰"
+        },
+        {
+          "t": 55,
+          "v": 0.4,
+          "phase": "保持",
+          "easing": "linear"
+        },
+        {
+          "t": 85,
+          "v": 0.38,
+          "phase": "保持",
+          "easing": "linear"
+        },
+        {
+          "t": 120,
+          "v": 0.28,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        },
+        {
+          "t": 149,
+          "v": 0.06,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        }
+      ]
+    },
+    "blink": {
+      "role": "整体眼睑·独立轻眨",
+      "keyframes": [
+        {
+          "t": 0,
+          "v": 0.0,
+          "phase": "保持"
+        },
+        {
+          "t": 83,
+          "v": 0.0,
+          "phase": "保持",
+          "easing": "linear"
+        },
+        {
+          "t": 86,
+          "v": 0.12,
+          "phase": "保持",
+          "easing": "smoothstep",
+          "_note": "轻眨"
+        },
+        {
+          "t": 90,
+          "v": 0.0,
+          "phase": "保持",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 149,
+          "v": 0.0,
+          "phase": "缓和"
+        }
+      ]
+    },
+    "pupil_scale": {
+      "role": "瞳孔略缩·凝视",
+      "keyframes": [
+        {
+          "t": 0,
+          "v": 0.0,
+          "phase": "蓄力"
+        },
+        {
+          "t": 14,
+          "v": 0.0,
+          "phase": "启动",
+          "easing": "linear"
+        },
+        {
+          "t": 17,
+          "v": 0.06,
+          "phase": "启动",
+          "easing": "ease_out_expo"
+        },
+        {
+          "t": 23,
+          "v": 0.1,
+          "phase": "启动",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 55,
+          "v": 0.14,
+          "phase": "保持",
+          "easing": "linear"
+        },
+        {
+          "t": 120,
+          "v": 0.06,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        },
+        {
+          "t": 149,
+          "v": 0.0,
+          "phase": "缓和"
+        }
+      ]
+    },
+    "iris_scale": {
+      "role": "虹膜锐度",
+      "keyframes": [
+        {
+          "t": 0,
+          "v": 0.0,
+          "phase": "蓄力"
+        },
+        {
+          "t": 32,
+          "v": 0.05,
+          "phase": "启动",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 55,
+          "v": 0.07,
+          "phase": "保持",
+          "easing": "linear"
+        },
+        {
+          "t": 120,
+          "v": 0.03,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        },
+        {
+          "t": 149,
+          "v": 0.0,
+          "phase": "缓和"
+        }
+      ]
+    },
+    "cornea_bulge": {
+      "role": "角膜鼓起·眼神亮",
+      "keyframes": [
+        {
+          "t": 0,
+          "v": 0.0,
+          "phase": "蓄力"
+        },
+        {
+          "t": 25,
+          "v": 0.08,
+          "phase": "启动",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 32,
+          "v": 0.14,
+          "phase": "启动",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 55,
+          "v": 0.18,
+          "phase": "保持",
+          "easing": "linear"
+        },
+        {
+          "t": 120,
+          "v": 0.08,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        },
+        {
+          "t": 149,
+          "v": 0.0,
+          "phase": "缓和"
+        }
+      ]
+    },
+    "squint": {
+      "role": "眯眼眶压·跟眉",
+      "keyframes": [
+        {
+          "t": 0,
+          "v": 0.0,
+          "phase": "蓄力"
+        },
+        {
+          "t": 10,
+          "v": 0.04,
+          "phase": "蓄力",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 18,
+          "v": 0.08,
+          "phase": "蓄力",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 32,
+          "v": 0.2,
+          "phase": "启动",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 55,
+          "v": 0.24,
+          "phase": "保持",
+          "easing": "linear"
+        },
+        {
+          "t": 120,
+          "v": 0.12,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        },
+        {
+          "t": 149,
+          "v": 0.02,
+          "phase": "缓和"
+        }
+      ]
+    },
+    "brow_raise": {
+      "role": "挑眉·本戏压低",
+      "keyframes": [
+        {
+          "t": 0,
+          "v": 0.0,
+          "phase": "蓄力"
+        },
+        {
+          "t": 149,
+          "v": 0.0,
+          "phase": "缓和",
+          "easing": "linear"
+        }
+      ]
+    },
+    "lid_upper": {
+      "role": "上眼睑压",
+      "keyframes": [
+        {
+          "t": 0,
+          "v": 0.0,
+          "phase": "蓄力"
+        },
+        {
+          "t": 18,
+          "v": 0.04,
+          "phase": "蓄力",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 32,
+          "v": 0.09,
+          "phase": "启动",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 55,
+          "v": 0.1,
+          "phase": "保持",
+          "easing": "linear"
+        },
+        {
+          "t": 120,
+          "v": 0.04,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        },
+        {
+          "t": 149,
+          "v": 0.0,
+          "phase": "缓和"
+        }
+      ]
+    },
+    "lid_lower": {
+      "role": "下眼睑微绷",
+      "keyframes": [
+        {
+          "t": 0,
+          "v": 0.0,
+          "phase": "蓄力"
+        },
+        {
+          "t": 32,
+          "v": 0.03,
+          "phase": "启动",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 55,
+          "v": 0.05,
+          "phase": "保持",
+          "easing": "linear"
+        },
+        {
+          "t": 120,
+          "v": 0.02,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        },
+        {
+          "t": 149,
+          "v": 0.0,
+          "phase": "缓和"
+        }
+      ]
+    },
+    "eye_gloss": {
+      "role": "湿润高光·扩散节拍",
+      "keyframes": [
+        {
+          "t": 0,
+          "v": 0.18,
+          "phase": "蓄力"
+        },
+        {
+          "t": 17,
+          "v": 0.32,
+          "phase": "启动",
+          "easing": "ease_out_expo"
+        },
+        {
+          "t": 32,
+          "v": 0.38,
+          "phase": "保持",
+          "easing": "smoothstep"
+        },
+        {
+          "t": 55,
+          "v": 0.4,
+          "phase": "保持",
+          "easing": "linear"
+        },
+        {
+          "t": 86,
+          "v": 0.34,
+          "phase": "保持",
+          "easing": "smoothstep",
+          "_note": "随轻眨"
+        },
+        {
+          "t": 120,
+          "v": 0.22,
+          "phase": "缓和",
+          "easing": "ease_in_quad"
+        },
+        {
+          "t": 149,
+          "v": 0.18,
+          "phase": "缓和"
+        }
+      ]
+    }
+  }
+}

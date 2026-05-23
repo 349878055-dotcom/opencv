@@ -1,7 +1,6 @@
-"""ecursor / jintao_node_eye：ComfyUI 自定义节点（Comfy 用 importlib 加载，禁止相对导入）。"""
+"""ecursor / jintao_node_eye：能量工作台（已脱离 ComfyUI，Web-only 模式）。"""
 from __future__ import annotations
 
-import importlib.util
 import os
 from pathlib import Path
 
@@ -23,20 +22,9 @@ def _load_local_env() -> None:
             os.environ[key] = val
 
 _load_local_env()
-_spec = importlib.util.spec_from_file_location(
-    "jintao_node_eye_nodes_v1", _here / "nodes_v1.py"
-)
-if _spec is None or _spec.loader is None:
-    raise RuntimeError("cannot load nodes_v1.py")
-_mod = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_mod)
 
-NODE_CLASS_MAPPINGS = dict(_mod.NODE_CLASS_MAPPINGS)
-NODE_DISPLAY_NAME_MAPPINGS = dict(
-    getattr(_mod, "NODE_DISPLAY_NAME_MAPPINGS", {})
-)
+# 启动工作台
+#   cd tools && python3 serve_workbench.py
+# 然后打开 http://127.0.0.1:8765/能量工作台.html
 
-# ComfyUI 加载 web/js/*.js，为多行 STRING 补中文标签
-WEB_DIRECTORY = "./web"
-
-__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]
+__all__ = []  # 无 ComfyUI 节点导出

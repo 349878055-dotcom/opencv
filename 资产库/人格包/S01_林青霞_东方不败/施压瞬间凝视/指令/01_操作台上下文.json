@@ -1,0 +1,13 @@
+{
+  "schema": "workbench-context-v1",
+  "natural_language": "",
+  "prompt": "",
+  "knowledge_base": "",
+  "l1_attachment": {
+    "title": "L1 滑杆禁区",
+    "contract": "contracts/滑杆规范.md",
+    "ui_script": "tools/packet_finalize_ui.js",
+    "bounds_script": "tools/slider_forbidden_bounds.js",
+    "note": "拖杆时浏览器内弹回；保存/出厂时 Python finalize_packet 写 02_滑杆_L1纠正.json"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "ecursor_emotion_v1",
+  "id": "施压瞬间凝视",
+  "persona_pack": "S01_林青霞_东方不败",
+  "label": "施压·瞬间凝视",
+  "mood": "施压·瞬间凝视",
+  "mood_tags": ["施压", "瞬间凝视"],
+  "template_id": "S01_林青霞_施压瞬间凝视",
+  "fps": 30,
+  "frame_count": 150,
+  "revision": "v2-fresh",
+  "status": "draft",
+  "keys_active": [
+    "pupil_x", "pupil_y", "blink", "eyebrow",
+    "pupil_scale", "iris_scale", "cornea_bulge", "squint",
+    "brow_raise", "lid_upper", "lid_lower", "eye_gloss"
+  ],
+  "beat_frames_check": [0, 17, 23, 32, 86, 149],
+  "micro_jitter_profile": "cool_restrained"
+}

@@ -1,31 +1,43 @@
-# jintao_node_eye（ecursor S01）
+# jintao_node_eye — 数字人表情资产中台
 
-## 资产库
+> **Eye-Figma Engine**：12 参数驱动的表情几何中间件。  
+> 上接客户审美，下接扩散引擎。  
+> 双模驱动管线：逻辑定义层 → 视觉封装层 → 输出分流。
+
+---
+
+## 架构（双模驱动）
 
 ```
-资产库/人格包/S01_林青霞_东方不败/施压瞬间凝视/
-  指令/_archive/                  ← 历史母版（只读参考）
-  指令/05_扩散节拍表.txt
+[客户] ← 审美确认窗口 → [工作台]  ← 工程校验器 → [Wan 扩散引擎]
+                            │
+                    ┌───────┴───────┐
+                    │  12 通道参数   │
+                    │  人格数据库    │
+                    │  物理约束器    │
+                    └───────┬───────┘
+                            │
+                    ┌───────┴───────┐
+                    │  Stream 1     │  Stream 2
+                    │  工程底模     │  艺术预览
+                    │  (给引擎)     │  (给客户)
+                    └───────────────┘
 ```
 
-**主链（Python）**：滑杆 → **能量包络 E(t)** → 全量 12×150 → human_prior → pulse_quality → 烘焙 02  
-实现：`gaze_engine/envelope_compile.py` · 主合同：`contracts/全量帧指令集规范.md`（继承原关键帧规范）。
-
-## 常用命令
+## 启动
 
 ```bash
-# 从 16 预设生成烘焙 02
-./scripts/s01_从能量生成02.sh 施压·凝视
-
-export ECURSOR_SPARSE_JSON="资产库/.../指令/02_烘焙_真人律.json"
-
-./scripts/s01_导出扩散节拍表.sh
-
-./scripts/s01_主验收示意图.sh
-./scripts/s01_五样本烘焙02.sh
-
-cd tools && python3 build_workbench_pipeline_cache.py   # 刷新工作台缓存
+./一键打开能量工作台.sh
+# → http://127.0.0.1:8765/01_工作台服务/能量工作台.html
 ```
 
-**Comfy 工作流**：`workflows/ecursor_S01.json`（节点 **1→7** 顺序编号）  
-**改节点**：对我说「改 3 包络」等 → `workflows/ComfyUI改代码手册.md` + `nodes_v1.py` 搜 `节点 3`
+## 项目入口
+
+| 用途 | 文件 |
+|------|------|
+| **架构设计（核心文档）** | [`contracts/06_架构/流程设计.md`](contracts/06_架构/流程设计.md) |
+| HTTP 服务 | [`tools/01_工作台服务/serve_workbench.py`](tools/01_工作台服务/serve_workbench.py) |
+| 网页工作台 | [`tools/01_工作台服务/能量工作台.html`](tools/01_工作台服务/能量工作台.html) |
+| 核心引擎 | [`gaze_engine/`](gaze_engine/) |
+| 代码依赖图谱 | [`AI_INDEX.md`](AI_INDEX.md) |
+| 合同索引 | [`contracts/README.md`](contracts/README.md) |

@@ -12,6 +12,7 @@ from gaze_engine.nl_to_packet import match_preset_from_text
 from gaze_engine.slider_schema import HOLD_IDS, MACRO_IDS, HoldSegment, SliderPacket, apply_llm_delta
 
 DEFAULT_MODEL = os.environ.get("ECURSOR_OPENAI_MODEL", "gpt-4o-mini")
+CHEAP_MODEL = os.environ.get("ECURSOR_CHEAP_MODEL", "gpt-4o-mini")  # 非关键任务用轻量模型省Token
 
 def openai_configured() -> bool:
     return bool((os.environ.get("OPENAI_API_KEY") or "").strip())
@@ -20,31 +21,20 @@ def _preset_list() -> str:
     return "、".join(ACTING_PULSE_PRESETS.keys())
 
 def _router_system_prompt() -> str:
-    return f"""你是 ecursor 眼眉「自然语言→能量图」助手（不是视频扩散、不是整脸生成）。
+    """紧凑版系统Prompt（比 prompts/node1_system_prompt.txt 更短, 回退用）。"""
+    return f"""你是ecursor眼眉编译器。边界: 只产滑杆JSON, 不碰扩散/摄影机/整脸。
 
-客户只有自然语言。你必须先做 **意图分离**，再行动：
+【意图】consult=只reply; apply=编译JSON。拿不准→consult。
 
-| intent | 何时选 | 做什么 |
-|--------|--------|--------|
-| consult | 问概念、问怎么调、问预设区别、不确定、纯聊天 | 只回答，不编滑杆 |
-| apply | 描述一段戏、要生成/改成/更冷更钉等可执行戏意 | 编译滑杆 JSON |
+【预设】{_preset_list()}
 
-可选情绪预设（apply 时 preset 必须从中选一）：{_preset_list()}
+【apply】选预设+macro。修改轮:有"刚才/更/再"→macro_delta,单轮改1-2键。
 
-输出必须是单个 JSON 对象，不要 markdown：
-{{
-  "intent": "consult 或 apply",
-  "reply": "给客户的中文回复（两种意图都必填）",
-  "preset": "仅 apply：预设全名",
-  "macro": {{ "push":0-100, ... }},
-  可选 "macro_delta": {{ "power": "+5" }},
-  "hold_seg": {{ "shape":"flat|decay|swell|pulse|tremble", ... }},
-  "energy_map_note": "仅 apply：一两句能量图戏感要点"
-}}
+【macro 0-100】push内收↔外放 power轻↔狠 speed慢↔急 steady飘↔钉 grip泄↔憋 outro快收↔慢收
+【hold_seg】shape:flat|decay|swell|pulse|tremble
 
-规则：
-- 拿不准时选 consult，并在 reply 里引导客户用表演语言再说一遍。
-- apply 时 macro 各键 0-100；只写眼眉能量，不写摄影机/服装/Wan。"""
+输出仅JSON:
+{{"intent":"consult|apply","reply":"中文","preset":"仅apply","macro":{{"push":0,"power":0,"speed":0,"steady":0,"grip":0,"outro":0}},"macro_delta":{{"power":"+5"}},"hold_seg":{{"shape":"flat","pulse_rate":0,"pulse_depth":0,"swell":0}},"energy_map_note":"仅apply"}}"""
 
 def _extract_json(text: str) -> dict[str, Any]:
     t = (text or "").strip()
@@ -155,9 +145,16 @@ def chatgpt_customer_nl(
 
     nl = (text or "").strip()
     kb = resolve_knowledge_base(knowledge_base)
+
+    # --- 模型分档：consult 用轻量模型省 Token ---
+    model = model or DEFAULT_MODEL
+    is_consult_only = force_intent in ("consult",)
+    cheap_model = CHEAP_MODEL if is_consult_only and CHEAP_MODEL != model else model
+
     user_parts = [f"客户自然语言：\n{nl}"]
+    kb_limit = 4000 if model == CHEAP_MODEL else 8000  # 轻量模型上下文窄，知识库截短
     if kb:
-        user_parts.append(f"知识库：\n{kb[:8000]}")
+        user_parts.append(f"知识库：\n{kb[:kb_limit]}")
     if previous_packet is not None:
         user_parts.append(
             "当前滑杆包（上一轮，修改请在此基础上用 macro_delta，勿无故换 preset）：\n"
@@ -168,7 +165,7 @@ def chatgpt_customer_nl(
 
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     resp = client.chat.completions.create(
-        model=model or DEFAULT_MODEL,
+        model=cheap_model,
         temperature=0.35,
         response_format={"type": "json_object"},
         messages=[
@@ -176,6 +173,7 @@ def chatgpt_customer_nl(
             {"role": "user", "content": "\n\n".join(user_parts)},
         ],
     )
+    used_model = cheap_model
     raw = (resp.choices[0].message.content or "").strip()
     data = _extract_json(raw)
 
@@ -186,7 +184,7 @@ def chatgpt_customer_nl(
     reply = str(data.get("reply") or "").strip() or "（模型未返回 reply）"
     meta: dict[str, Any] = {
         "llm": "openai",
-        "model": model or DEFAULT_MODEL,
+        "model": used_model,
         "intent": intent,
         "intent_source": "llm",
         "raw_keys": list(data.keys()),
@@ -204,20 +202,23 @@ def chatgpt_customer_nl(
     return CustomerNLResult(intent=INTENT_APPLY, reply=reply, packet=pkt, meta=meta)
 
 def _apply_system_prompt() -> str:
-    return f"""你是 ecursor 眼眉专用编译器：把客户自然语言编译成 5 秒眼眉滑杆 JSON（不是视频扩散）。
+    """apply模式专用系统Prompt（比全量路由版更轻量）。"""
+    return f"""你是ecursor眼眉编译器。只产滑杆JSON,不碰扩散/摄影机/整脸。
 
-可选情绪预设（preset 必须从中选一）：{_preset_list()}
+【预设】{_preset_list()}
 
-输出单个 JSON，不要 markdown：
-{{
-  "preset": "预设全名",
-  "macro": {{ "push":0-100, "power":0-100, "speed":0-100, "steady":0-100, "grip":0-100, "outro":0-100 }},
-  可选 "macro_delta": {{ "power": "+5" }},
-  "hold_seg": {{ "shape":"flat|decay|swell|pulse|tremble", "pulse_rate":0-100, "pulse_depth":0-100, "swell":0-100 }},
-  "energy_map_note": "可选，厂内备注"
-}}
+【说法映射】更冷/更钉/更狠→power↑steady↑grip↑ 更轻→power↓push↓ 更急→speed↑ 别颤→steady↑ 慢勾→魅惑·勾人
 
-macro 各键 0-100；先选最接近 preset 再微调。"""
+输出JSON:
+{{"preset":"预设全名","macro":{{"push":0-100,"power":0-100,"speed":0-100,"steady":0-100,"grip":0-100,"outro":0-100}},"macro_delta":{{"power":"+5"}},"hold_seg":{{"shape":"flat|decay|swell|pulse|tremble","pulse_rate":0-100,"pulse_depth":0-100,"swell":0-100}},"energy_map_note":"可选"}}
+
+先选最近预设再微调。macro 0-100整数。"""
+
+
+def _cheap_apply_system_prompt() -> str:
+    """超轻量版（配合 CHEAP_MODEL 用, ~50 tokens）。"""
+    p = _preset_list()
+    return f"你是眼眉编译器。预设:{p}。说法:更冷=power↑steady↑,更轻=power↓push↓,更急=speed↑,别颤=steady↑。输出JSON:{{preset,macro(0-100各键),hold_seg,energy_map_note}}。不碰扩散/摄影机。"
 
 def chatgpt_nl_to_packet(
     text: str,
@@ -225,27 +226,35 @@ def chatgpt_nl_to_packet(
     preset_hint: str = "",
     knowledge_base: str = "",
     model: str | None = None,
+    use_cheap: bool = False,
 ) -> tuple[SliderPacket, dict[str, Any]]:
-    """自然语言 → 滑杆包（节点 1 主路径）。"""
+    """自然语言 → 滑杆包（节点 1 主路径）。
+    
+    use_cheap=True 时使用 CHEAP_MODEL + 精简 Prompt，适用于关键词回退等简单场景。
+    """
     if not openai_configured():
         raise RuntimeError("未设置 OPENAI_API_KEY（见 scripts/s01_设置OpenAI密钥.sh）")
 
     from openai import OpenAI
 
     nl = (text or "").strip()
+    model = model or (CHEAP_MODEL if use_cheap else DEFAULT_MODEL)
+    prompt_fn = _cheap_apply_system_prompt if use_cheap else _apply_system_prompt
+
     user_parts = [f"客户自然语言：\n{nl}"]
     if preset_hint.strip() and preset_hint in ACTING_PULSE_PRESETS:
         user_parts.append(f"预设提示：{preset_hint}")
+    kb_limit = 2000 if use_cheap else 4000
     if knowledge_base.strip():
-        user_parts.append(f"厂内参考：\n{knowledge_base.strip()[:4000]}")
+        user_parts.append(f"厂内参考：\n{knowledge_base.strip()[:kb_limit]}")
 
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     resp = client.chat.completions.create(
-        model=model or DEFAULT_MODEL,
+        model=model,
         temperature=0.35,
         response_format={"type": "json_object"},
         messages=[
-            {"role": "system", "content": _apply_system_prompt()},
+            {"role": "system", "content": prompt_fn()},
             {"role": "user", "content": "\n\n".join(user_parts)},
         ],
     )
@@ -254,7 +263,7 @@ def chatgpt_nl_to_packet(
     pkt, apply_meta = _packet_from_llm_apply_json(data, nl, preset_hint=preset_hint)
     meta = {
         "llm": "openai",
-        "model": model or DEFAULT_MODEL,
+        "model": model,
         **apply_meta,
     }
     return pkt, meta
