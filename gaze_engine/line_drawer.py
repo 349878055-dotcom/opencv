@@ -31,15 +31,15 @@ CANONICAL_KEYS = [
     "squint", "brow_raise", "lid_upper", "lid_lower", "eye_gloss",
 ]
 
-# ── 核心图形美学常量定义 ──────────────────────────────────────
+# ── 核心图形美学常量定义（电影美学解剖修正版） ──────────────
 DEFAULT_RES = (512, 512)
-EYE_SPACING = 0.36           # 双眼间距比例
+EYE_SPACING = 0.33           # 缩小双眼间距，向面部中心聚拢
 EYE_Y_BASE = 0.48            # 眼位基准 Y 轴位置
-PUPIL_MAX_SHIFT = 0.08       # pupil_x 最大横向偏移
+PUPIL_MAX_SHIFT = 0.09       # pupil_x 最大横向偏移
 PUPIL_MAX_VSHIFT = 0.04      # pupil_y 最大纵向偏移
-BROW_MAX_LIFT = 0.06         # 眉毛最大位置提升
+BROW_MAX_LIFT = 0.05         # 眉毛最大位置提升
 
-GLOW_BLUR_KSIZE1 = (25, 25)  # 第一层辉光：近场霓虹
+GLOW_BLUR_KSIZE1 = (31, 31)  # 第一层辉光：近场霓虹（加大模糊核）
 GLOW_BLUR_KSIZE2 = (51, 51)  # 第二层辉光：远场环境漫反射
 GLOW_WEIGHT = 1.6            # 辉光整体混叠权重
 LINE_THICKNESS_BASE = 3      # 基础高清画线宽度
@@ -48,7 +48,7 @@ BEZIER_DX = 0.22
 BROW_HEAD_W = 0.045           # 眉头宽度
 BROW_PEAK_W = 0.032           # 眉峰宽度
 BROW_TAIL_W = 0.015           # 眉尾宽度
-BROW_LEN = 0.28               # 眉毛横向总长度
+BROW_LEN = 0.30               # 眉毛横向总长度（加宽，形成包覆压迫感）
 BROW_PEAK_POS = 0.42          # 眉峰处于整条眉毛的 42% 位置
 
 def _load_channels(source) -> tuple[dict[str, list[float]], int, float]:
@@ -111,9 +111,9 @@ def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAU
         pupil_cx = cx + int(px * PUPIL_MAX_SHIFT * W)
         pupil_cy = cy - int(py * PUPIL_MAX_VSHIFT * H)
 
-        # 动态计算角膜、虹膜和瞳孔半径
-        base_iris_r = int(W * 0.082) * (1.0 + i_scale)
-        base_pupil_r = int(W * 0.040) * (1.0 + p_scale)
+        # 动态计算角膜、虹膜和瞳孔半径（收缩瞳孔比例，放大虹膜）
+        base_iris_r = int(W * 0.090) * (1.0 + i_scale)   # 虹膜放大 → 深邃聚焦外圈
+        base_pupil_r = int(W * 0.032) * (1.0 + p_scale)   # 瞳孔收缩 → 避免死鱼眼
 
         # 模拟眼球球体侧视转动透视偏折：横向扫视越远，圆心自动非线性压扁
         flatten_factor = 1.0 - min(0.35, abs(px) * 0.4)
@@ -142,8 +142,8 @@ def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAU
         # ──────────────────────────────────────────────────────────
         # 层二：【三次贝塞尔眼睑层 & 刚性双向框压】
         # ──────────────────────────────────────────────────────────
-        # 建立左右眼角绝对生理骨骼物理端点
-        eye_w_half = int(W * 0.125)
+        # 建立左右眼角绝对生理骨骼物理端点（横向拉长，废除豆豆眼）
+        eye_w_half = int(W * 0.135)
         p_start = (cx - eye_w_half, cy)
         p_end = (cx + eye_w_half, cy)
 
@@ -187,8 +187,8 @@ def draw_single_frame(frame_data: dict[str, float], res: tuple[int, int] = DEFAU
         bx_start = cx - brow_len_px // 2 if side == "left" else cx + brow_len_px // 2 - side_sign * int(W*0.015)
         bx_end = cx + brow_len_px // 2 if side == "left" else cx - brow_len_px // 2 - side_sign * int(W*0.015)
 
-        # 基准眉高 (受抬眉 brow_raise 物理平移控制)
-        by_base = cy - int(H * 0.155) - int(b_raise * BROW_MAX_LIFT * H)
+        # 基准眉高 — 压低靠近眼，产生逼人眉压感
+        by_base = cy - int(H * 0.14) - int(b_raise * BROW_MAX_LIFT * H)
 
         # 【非对称动作拉扯：眉头下压分配 1.0 满权重，眉尾只分 0.4】
         # 这样在第 32 帧眉压爆发时，曲线全自动拧成长满杀气、充满内敛压迫感的剑眉
