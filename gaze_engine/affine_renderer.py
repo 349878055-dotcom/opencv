@@ -233,92 +233,94 @@ else:
             self.meshes = [EyeMesh(LEFT_CX, LEFT_CY, -1), EyeMesh(RIGHT_CX, RIGHT_CY, 1)]
             self.sx, self.sy = _calc_scale()
     
-        def _sp(self, pt: tuple[int, int]) -> tuple[int, int]:
-            """缩放底图坐标到输出坐标"""
-            return (int(pt[0] * self.sx), int(pt[1] * self.sy))
+        def _smooth_ring(self, dst: dict, steps: int = 40) -> np.ndarray:
+            """
+            从变形控制点拟合抛物线，生成平滑眼睑环（40+点）
+            匹配 base_mesh_gen._eye_ring 的平滑度，但使用变形后的控制点。
+            
+            上眼睑：用 upper_0~4 拟合 y = a*x² + b*x + c
+            下眼睑：用 lower_0~4 拟合 y = a*x² + b*x + c（逆序）
+            合并为闭合环 → cv2.polylines 绘制。
+            """
+            # ── 上眼睑抛物线拟合 ──
+            up_names = ["upper_0", "upper_1", "upper_2", "upper_3", "upper_4"]
+            xs = np.array([dst[n][0] for n in up_names], dtype=np.float32)
+            ys = np.array([dst[n][1] for n in up_names], dtype=np.float32)
+            A = np.vstack([xs**2, xs, np.ones_like(xs)]).T
+            a_up, b_up, c_up = np.linalg.lstsq(A, ys, rcond=None)[0]
+            
+            x0, x1 = dst["corner_inner"][0], dst["corner_outer"][0]
+            xs_up = np.linspace(x0, x1, steps + 1)
+            ys_up = a_up * xs_up**2 + b_up * xs_up + c_up
+            
+            # ── 下眼睑抛物线拟合 ──
+            low_names = ["lower_0", "lower_1", "lower_2", "lower_3", "lower_4"]
+            xs = np.array([dst[n][0] for n in low_names], dtype=np.float32)
+            ys = np.array([dst[n][1] for n in low_names], dtype=np.float32)
+            A = np.vstack([xs**2, xs, np.ones_like(xs)]).T
+            a_lo, b_lo, c_lo = np.linalg.lstsq(A, ys, rcond=None)[0]
+            
+            xs_lo = np.linspace(x1, x0, steps + 1)  # 从右到左
+            ys_lo = a_lo * xs_lo**2 + b_lo * xs_lo + c_lo
+            
+            # ── 合并为闭合环 ──
+            ring = np.column_stack([
+                np.concatenate([xs_up, xs_lo]),
+                np.concatenate([ys_up, ys_lo])
+            ])
+            return np.int32(ring)
     
         def render_frame(self, channels: dict[str, float]) -> np.ndarray:
             """
-            网格仿射形变引擎 (Mesh Warp)
-            直接读取并变形工程底图，拒绝重新渲染，对齐扩散引擎输入格式。
+            平滑参数渲染引擎 (Smooth Parametric Render)
+            
+            原理：
+              不用三角网格 warp（会产生三角形边界毛刺），
+              改用从 deform() 算出的变形控制点拟合抛物线，
+              生成 40+ 点平滑眼睑环 → 直接画线。
+            
+            输出: (361, 690, 3) uint8 — R=眼眶, G=眉, B=虹膜+瞳孔
             """
-            # 1. 动态加载真实的工程底图
-            if not hasattr(self, 'base_img'):
-                img = cv2.imread(str(TEXTURE_PATH))
-                if img is None:
-                    raise RuntimeError(f"找不到底图: {TEXTURE_PATH}。请确认文件存在。")
-                self.base_img = img
-
-            # 2. 在 1024x1024 原始空间准备画布
-            canvas = np.zeros_like(self.base_img)
-
-            # 3. 遍历双眼，读取变形后的网格，应用真实的纹理映射
+            canvas = np.zeros((1024, 1024, 3), dtype=np.uint8)
+            
             for mesh in self.meshes:
-                src_pts = mesh.get_src_pts()
                 dst_pts = mesh.deform(channels)
-
-                # 遍历 18 个三角形执行分块仿射变形
-                for tri in mesh.triangles:
-                    pt1, pt2, pt3 = tri
-                    src_tri = np.array([src_pts[pt1], src_pts[pt2], src_pts[pt3]], dtype=np.float32)
-                    dst_tri = np.array([dst_pts[pt1], dst_pts[pt2], dst_pts[pt3]], dtype=np.float32)
-
-                    # 计算源区域与目标区域的 Bounding Box
-                    r1 = cv2.boundingRect(np.array(src_tri, dtype=np.int32))
-                    r2 = cv2.boundingRect(np.array(dst_tri, dtype=np.int32))
-                    x1, y1, w1, h1 = r1
-                    x2, y2, w2, h2 = r2
-
-                    if w1 == 0 or h1 == 0 or w2 == 0 or h2 == 0:
-                        continue
-
-                    # 计算局部偏移坐标（注意：NumPy 2.x 中减法会提升 float32→float64，
-                    # 必须显式转回 float32，否则 OpenCV getAffineTransform 报错）
-                    src_tri_crop = (src_tri - [x1, y1]).astype(np.float32)
-                    dst_tri_crop = (dst_tri - [x2, y2]).astype(np.float32)
-
-                    # 截取底图中的局部三角形原始像素
-                    img_crop = self.base_img[y1:y1+h1, x1:x1+w1]
-
-                    # 计算局部仿射变换矩阵并形变
-                    M = cv2.getAffineTransform(src_tri_crop, dst_tri_crop)
-                    warped = cv2.warpAffine(img_crop, M, (w2, h2), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
-
-                    # 生成目标三角形遮罩，确保只贴图三角形区域
-                    mask = np.zeros((h2, w2, 3), dtype=np.float32)
-                    cv2.fillConvexPoly(mask, np.array(dst_tri_crop, dtype=np.int32), (1.0, 1.0, 1.0), cv2.LINE_AA, 0)
-
-                    # 贴回主画布
-                    roi = canvas[y2:y2+h2, x2:x2+w2]
-                    if roi.shape == mask.shape:
-                        # 用原图底色替换掉黑色背景区域
-                        roi[:] = np.where(mask > 0.5, warped, roi)
-
-            # 4. 覆盖完美虹膜圆（替换菱形网格 warp 后产生的棱角）
-            #    底图虹膜是半径为 22 的实心蓝圆，warp 仅用 4 个 iris 控制点
-            #    做三角仿射会产生四边形逼近 → 这里直接画数学完美圆覆盖
+                
+                # ── R 通道：抛物线拟合平滑眼睑环 ──
+                ring = self._smooth_ring(dst_pts)
+                cv2.polylines(canvas, [ring], True,
+                              (0, 0, 255), 8, cv2.LINE_AA)
+                
+                # ── G 通道：眉毛直接 3 点折线 ──
+                brow = np.int32([
+                    dst_pts["brow_inner"],
+                    dst_pts["brow_peak"],
+                    dst_pts["brow_outer"],
+                ])
+                cv2.polylines(canvas, [brow], False,
+                              (0, 255, 0), 8, cv2.LINE_AA)
+            
+            # ── B 通道：虹膜完美实心圆 + 瞳孔环 ──
             for mesh in self.meshes:
                 dst_pts = mesh.deform(channels)
                 i_scale = channels.get("iris_scale", 0.0)
                 cornea_bulge = channels.get("cornea_bulge", 0.0)
                 p_scale = channels.get("pupil_scale", 0.0)
                 blink = channels.get("blink", 0.0)
-
-                # 虹膜：固定在眼位中心 (cx,cy) 的完美实心蓝圆
+                
                 iris_r = max(2, int(22
                     * (1.0 + i_scale * (IRIS_SCALE_RANGE - 1.0))
                     * (1.0 + cornea_bulge * 0.15)))
                 cv2.circle(canvas, (mesh.cx, mesh.cy), iris_r,
                            (255, 0, 0), -1, cv2.LINE_AA)
-
-                # 瞳孔：跟随 pupil_x/y 的细蓝环（B 通道指示瞳孔位置）
+                
                 if blink < 0.95:
                     pupil_r = max(2, int(PUPIL_R_BASE * (1.0 + p_scale * 0.5)))
                     cv2.circle(canvas, dst_pts["pupil"], pupil_r,
                                (255, 0, 0), 2, cv2.LINE_AA)
-
-            # 5. 整体缩放到参照图 5.png 的输出尺寸 (690, 361)
-            final_output = cv2.resize(canvas, (OUTPUT_W, OUTPUT_H), interpolation=cv2.INTER_AREA)
+            
+            final_output = cv2.resize(canvas, (OUTPUT_W, OUTPUT_H),
+                                      interpolation=cv2.INTER_AREA)
             return final_output
     
         def render_batch(self, json_path: str | Path, out_dir: str | Path, fps: int = 30) -> Path:
