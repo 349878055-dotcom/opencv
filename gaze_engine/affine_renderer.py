@@ -294,7 +294,30 @@ else:
                         # 用原图底色替换掉黑色背景区域
                         roi[:] = np.where(mask > 0.5, warped, roi)
 
-            # 4. 整体缩放到参照图 5.png 的输出尺寸 (690, 361)
+            # 4. 覆盖完美虹膜圆（替换菱形网格 warp 后产生的棱角）
+            #    底图虹膜是半径为 22 的实心蓝圆，warp 仅用 4 个 iris 控制点
+            #    做三角仿射会产生四边形逼近 → 这里直接画数学完美圆覆盖
+            for mesh in self.meshes:
+                dst_pts = mesh.deform(channels)
+                i_scale = channels.get("iris_scale", 0.0)
+                cornea_bulge = channels.get("cornea_bulge", 0.0)
+                p_scale = channels.get("pupil_scale", 0.0)
+                blink = channels.get("blink", 0.0)
+
+                # 虹膜：固定在眼位中心 (cx,cy) 的完美实心蓝圆
+                iris_r = max(2, int(22
+                    * (1.0 + i_scale * (IRIS_SCALE_RANGE - 1.0))
+                    * (1.0 + cornea_bulge * 0.15)))
+                cv2.circle(canvas, (mesh.cx, mesh.cy), iris_r,
+                           (255, 0, 0), -1, cv2.LINE_AA)
+
+                # 瞳孔：跟随 pupil_x/y 的细蓝环（B 通道指示瞳孔位置）
+                if blink < 0.95:
+                    pupil_r = max(2, int(PUPIL_R_BASE * (1.0 + p_scale * 0.5)))
+                    cv2.circle(canvas, dst_pts["pupil"], pupil_r,
+                               (255, 0, 0), 2, cv2.LINE_AA)
+
+            # 5. 整体缩放到参照图 5.png 的输出尺寸 (690, 361)
             final_output = cv2.resize(canvas, (OUTPUT_W, OUTPUT_H), interpolation=cv2.INTER_AREA)
             return final_output
     
