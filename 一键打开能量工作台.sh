@@ -2,7 +2,7 @@
 # 双击运行：关旧服务 → 启动新版 → 打开浏览器
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-URL="http://127.0.0.1:8765/能量工作台.html"
+URL="http://127.0.0.1:8765/01_工作台服务/能量工作台.html"
 HEALTH="http://127.0.0.1:8765/health"
 PORT=8765
 LOG="${XDG_CACHE_HOME:-$HOME/.cache}/ecursor_workbench.log"

@@ -24,8 +24,8 @@ GREEN = (0, 255, 0)
 BLUE  = (255, 0, 0)
 BLACK = (0, 0, 0)
 
-LEFT_CX, LEFT_CY   = 350, 325
-RIGHT_CX, RIGHT_CY = 700, 325
+LEFT_CX, LEFT_CY   = 337, 325
+RIGHT_CX, RIGHT_CY = 687, 325
 
 EYE_HALF_W = 150
 UPPER_PEAK = 45
@@ -68,17 +68,7 @@ def generate() -> np.ndarray:
         ring = _eye_ring(cx, cy)
         cv2.polylines(img, [ring], True, RED, THICK, cv2.LINE_AA)
 
-        # ── 2. 双眼皮线（外眼角挑出） ──
-        pts_crease = []
-        for i in range(41):
-            t = i / 40
-            x = int(cx - EYE_HALF_W + 20 + 2 * (EYE_HALF_W - 10) * t)
-            y_offset = (UPPER_PEAK + 18) * (1 - (2*t - 1)**2)
-            y = int(cy - y_offset - 5)
-            pts_crease.append((x, y))
-        cv2.polylines(img, [np.array(pts_crease, np.int32)], False, RED, THICK, cv2.LINE_AA)
-
-        # ── 3. 虹膜（纯蓝实心，无瞳孔） ──
+        # ── 2. 虹膜（纯蓝实心，无瞳孔） ──
         cv2.circle(img, (cx, cy), IRIS_R, BLUE, -1, cv2.LINE_AA)
 
         # ── 4. 眉毛 ──

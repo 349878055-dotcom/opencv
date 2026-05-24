@@ -14,21 +14,13 @@
 }
 * { box-sizing: border-box; margin: 0; }
 body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color: var(--text); background: var(--bg); }
-
-/* header */
 .hd { background: var(--card); border-bottom: 1px solid var(--line); padding: 10px 20px; }
 .hd h1 { font-size: 1.05rem; font-weight: 700; }
 .hd p { margin-top: 4px; font-size: 0.78rem; color: var(--muted); }
-
-/* grid */
 .grid { display: grid; grid-template-columns: 180px 1fr minmax(380px, 500px); gap: 10px; max-width: 1480px; margin: 0 auto; padding: 12px 14px 28px; }
 @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
-
-/* cards */
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
 .card-hd { padding: 8px 12px; font-weight: 700; font-size: 0.82rem; border-bottom: 1px solid var(--line); background: #f8f9fb; }
-
-/* inputs */
 .input-block { padding: 6px 10px; }
 .input-block label { display: block; font-size: 0.68rem; color: var(--muted); margin-bottom: 3px; }
 .input-block textarea { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; font-size: 0.74rem; resize: vertical; font-family: inherit; }
@@ -39,8 +31,6 @@ body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color
 .btn.primary:hover { opacity: 0.88; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn.sm { padding: 3px 8px; font-size: 0.66rem; }
-
-/* presets */
 .emotion-card { margin-top: 10px; }
 .preset-hint { padding: 4px 10px; font-size: 0.64rem; color: var(--muted); }
 .preset-check { padding: 4px 10px; font-size: 0.66rem; }
@@ -52,8 +42,6 @@ body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color
 .preset-btn:hover { border-color: var(--accent); background: #f0f5ff; }
 .preset-btn.on { border-color: var(--accent); background: #eff6ff; font-weight: 700; }
 .preset-btn small { display: block; font-size: 0.6rem; color: var(--muted); font-weight: 400; }
-
-/* pulse viz */
 .pulse-viz { padding: 10px 14px 0; }
 .pulse-viz h2 { font-size: 0.85rem; margin-bottom: 4px; }
 .pulse-labels { display: flex; gap: 10px; font-size: 0.64rem; margin-bottom: 6px; }
@@ -63,8 +51,6 @@ body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color
 .pulse-viz svg { width: 100%; height: 100px; border: 1px solid var(--line); border-radius: 6px; background: #fafbfd; }
 .pulse-info { font-size: 0.64rem; color: var(--muted); margin-top: 4px; }
 #l1-fix-msg { font-size: 0.62rem; color: #c2410c; margin-top: 2px; }
-
-/* slider zones */
 .zone { padding: 8px 14px; border-top: 1px solid var(--line); }
 .zone.rise { background: var(--rise); border-left: 4px solid var(--rise-bd); }
 .zone.move { background: var(--move); border-left: 4px solid var(--move-bd); }
@@ -74,14 +60,10 @@ body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color
 .shapes { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
 .shapes button { padding: 4px 8px; font-size: 0.66rem; border: 1px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; }
 .shapes button.on { border-color: var(--move-bd); background: #fffbeb; font-weight: 700; }
-
-/* knobs */
 .knob { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
 .knob label { width: 64px; font-size: 0.66rem; color: var(--muted); flex-shrink: 0; }
 .knob input[type=range] { flex: 1; height: 6px; }
 .knob .val { width: 32px; text-align: right; font-size: 0.64rem; font-weight: 600; }
-
-/* neon video section */
 .neon-section { border-top: 1px solid var(--line); padding: 12px 14px 14px; }
 .neon-section h2 { font-size: 0.85rem; margin-bottom: 4px; }
 .neon-section .hint { font-size: 0.64rem; color: var(--muted); margin-bottom: 8px; }
@@ -91,8 +73,6 @@ body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color
 #neon-video { width: 100%; max-height: 380px; display: none; object-fit: contain; }
 .neon-ctrl { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
 #neon-status { font-size: 0.66rem; color: var(--muted); }
-
-/* pipeline */
 .pipe-hint { margin: 0; padding: 6px 10px; font-size: 0.66rem; color: var(--muted); border-bottom: 1px solid var(--line); background: #fafbfc; }
 .pipe-hint.ok { color: #166534; background: #f0fdf4; }
 .pipe-hint.warn { color: #92400e; background: #fffbeb; }
@@ -184,8 +164,8 @@ body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color
 
     <!-- 2D 霓虹控制流 -->
     <section class="neon-section">
-      <h2>🎬 2D 霓虹控制流 · 12通道视觉化</h2>
-      <p class="hint">🟢眉 · 🔴眼眶 · 🔵瞳孔 — 高斯发光线条 · 纯2D OpenCV · 供扩散引擎消费</p>
+      <h2>🎬 工程底模 · 12通道视觉化</h2>
+      <p class="hint">🟢眉(G) · 🔴眼眶(R) · 🔵瞳孔(B) — RGB三色分离 · 0-noise闭合路径 · 供扩散引擎消费</p>
       <div id="neon-video-box">
         <div id="neon-placeholder"><span class="icon">🎬</span><p style="font-size:0.7rem;margin-top:6px">点「渲染 2D 控制流」生成预览</p></div>
         <video id="neon-video" controls loop muted playsinline></video>
@@ -218,18 +198,14 @@ body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color
 
 </div>
 
-<script src="../02_前端插件/workbench_pipeline_ui.js"></script>
-<script src="../02_前端插件/slider_forbidden_bounds.js"></script>
-<script src="../02_前端插件/packet_finalize_ui.js"></script>
-
-<script>
-// ═══════════════ 内嵌控制面数据 ═══════════════
-window.__CONTROL_SURFACE__ = {"schema": "slider-packet-v1", "source": "gaze_engine/control_surface.py", "preset_groups": [{"label": "压 · 慑", "keys": ["施压·凝视", "冷压·决心", "威慑·一瞬", "怒视·压人", "鄙夷·冷瞥"]}, {"label": "悲 · 怯", "keys": ["可怜·委屈", "要哭未哭", "崩溃·泄劲", "哀求·仰望", "惊惧·一怔", "空竭·死心"]}, {"label": "媚 · 勾", "keys": ["魅惑·勾人", "纯甜·含情", "媚杀·一眼", "若即若离", "打量·玩味"]}], "presets": {"施压·凝视": {"note": "外放、急、猛、平顶钉死、慢收", "macro": {"push": 85, "power": 90, "speed": 88, "steady": 94, "grip": 90, "outro": 32}, "hold_seg": {"shape": "flat", "pulse_rate": 0, "pulse_depth": 0, "swell": 0}}, "冷压·决心": {"note": "更狠更钉，起略缓", "macro": {"push": 88, "power": 95, "speed": 76, "steady": 96, "grip": 94, "outro": 38}, "hold_seg": {"shape": "flat", "pulse_rate": 0, "pulse_depth": 0, "swell": 0}}, "威慑·一瞬": {"note": "极急、快收", "macro": {"push": 90, "power": 92, "speed": 98, "steady": 90, "grip": 86, "outro": 10}, "hold_seg": {"shape": "flat", "pulse_rate": 0, "pulse_depth": 0, "swell": 0}}, "怒视·压人": {"note": "外放、高力度、平顶", "macro": {"push": 92, "power": 88, "speed": 82, "steady": 88, "grip": 88, "outro": 22}, "hold_seg": {"shape": "flat", "pulse_rate": 0, "pulse_depth": 0, "swell": 0}}, "鄙夷·冷瞥": {"note": "外放、快、钉、快收", "macro": {"push": 78, "power": 42, "speed": 72, "steady": 86, "grip": 82, "outro": 12}, "hold_seg": {"shape": "flat", "pulse_rate": 0, "pulse_depth": 0, "swell": 0}}, "可怜·委屈": {"note": "内收、轻、颤", "macro": {"push": 15, "power": 26, "speed": 22, "steady": 62, "grip": 68, "outro": 22}, "hold_seg": {"shape": "tremble", "pulse_rate": 18, "pulse_depth": 22, "swell": 8}}, "要哭未哭": {"note": "更轻更慢、颤", "macro": {"push": 12, "power": 18, "speed": 16, "steady": 55, "grip": 52, "outro": 20}, "hold_seg": {"shape": "tremble", "pulse_rate": 14, "pulse_depth": 16, "swell": 5}}, "崩溃·泄劲": {"note": "内收、平顶下泄、快断", "macro": {"push": 10, "power": 22, "speed": 28, "steady": 52, "grip": 22, "outro": 8}, "hold_seg": {"shape": "decay", "pulse_rate": 0, "pulse_depth": 0, "swell": 0}}, "哀求·仰望": {"note": "内收、轻、慢收留韵", "macro": {"push": 8, "power": 32, "speed": 18, "steady": 70, "grip": 62, "outro": 78}, "hold_seg": {"shape": "tremble", "pulse_rate": 12, "pulse_depth": 14, "swell": 12}}, "惊惧·一怔": {"note": "急、中力、颤、快收", "macro": {"push": 38, "power": 58, "speed": 96, "steady": 58, "grip": 42, "outro": 14}, "hold_seg": {"shape": "tremble", "pulse_rate": 28, "pulse_depth": 32, "swell": 0}}, "魅惑·勾人": {"note": "外放、中力、脉冲更明显、粘、慢收", "macro": {"push": 72, "power": 62, "speed": 40, "steady": 70, "grip": 82, "outro": 72}, "hold_seg": {"shape": "pulse", "pulse_rate": 46, "pulse_depth": 58, "swell": 32}}, "纯甜·含情": {"note": "轻、慢脉冲、很粘、慢收", "macro": {"push": 65, "power": 32, "speed": 28, "steady": 74, "grip": 90, "outro": 82}, "hold_seg": {"shape": "pulse", "pulse_rate": 32, "pulse_depth": 28, "swell": 18}}, "媚杀·一眼": {"note": "较猛、中急、深脉冲", "macro": {"push": 76, "power": 80, "speed": 58, "steady": 88, "grip": 86, "outro": 42}, "hold_seg": {"shape": "pulse", "pulse_rate": 44, "pulse_depth": 62, "swell": 22}}, "若即若离": {"note": "飘、慢拱、留韵", "macro": {"push": 68, "power": 48, "speed": 35, "steady": 36, "grip": 48, "outro": 85}, "hold_seg": {"shape": "swell", "pulse_rate": 22, "pulse_depth": 18, "swell": 65}}, "打量·玩味": {"note": "中外放、慢拱、中等粘", "macro": {"push": 70, "power": 45, "speed": 30, "steady": 42, "grip": 72, "outro": 62}, "hold_seg": {"shape": "swell", "pulse_rate": 18, "pulse_depth": 15, "swell": 42}}, "空竭·死心": {"note": "轻、内收、下泄、慢散", "macro": {"push": 18, "power": 14, "speed": 24, "steady": 48, "grip": 18, "outro": 58}, "hold_seg": {"shape": "decay", "pulse_rate": 0, "pulse_depth": 0, "swell": 0}}}, "neutral": {"macro": {"push": 50, "power": 50, "speed": 50, "steady": 50, "grip": 50, "outro": 50}, "hold_seg": {"shape": "flat", "pulse_rate": 0, "pulse_depth": 0, "swell": 0}}, "zones": {"rise": {"title": "起", "sub": "上升沿 · 劲怎么甩出来", "knobs": [{"k": "macro", "id": "speed", "label": "起坡急缓", "lo": "缓", "hi": "急"}, {"k": "macro", "id": "power", "label": "峰值力度", "lo": "轻", "hi": "猛"}, {"k": "macro", "id": "push", "label": "往哪使劲", "lo": "内收", "hi": "外放"}]}, "move": {"title": "动", "sub": "平顶段 · 劲停住时长什么样", "shapes": true, "knobs": [{"k": "hold_seg", "id": "shape", "label": "花纹类型", "type": "shape"}, {"k": "macro", "id": "steady", "label": "盯得稳", "lo": "飘", "hi": "钉死"}, {"k": "macro", "id": "grip", "label": "定得住", "lo": "泄", "hi": "憋住"}, {"k": "hold_seg", "id": "pulse_rate", "label": "勾得多密", "lo": "稀", "hi": "密", "ifShape": ["pulse"]}, {"k": "hold_seg", "id": "pulse_depth", "label": "一波多深", "lo": "浅", "hi": "深", "ifShape": ["pulse"]}, {"k": "hold_seg", "id": "swell", "label": "段内起伏", "lo": "平", "hi": "明显", "ifShape": ["swell", "pulse"]}]}, "fall": {"title": "收", "sub": "下降沿 · 劲怎么没", "knobs": [{"k": "macro", "id": "outro", "label": "收场快慢", "lo": "快落", "hi": "慢收"}]}}, "shape_opts": [{"id": "flat", "label": "平顶"}, {"id": "decay", "label": "下泄"}, {"id": "swell", "label": "慢拱"}, {"id": "pulse", "label": "脉冲"}, {"id": "tremble", "label": "发颤"}], "macro_ids": ["push", "power", "speed", "steady", "grip", "outro"], "hold_ids": ["shape", "pulse_rate", "pulse_depth", "swell"], "valid_shapes": ["decay", "flat", "pulse", "swell", "tremble"], "pipe_tabs": [{"id": "1_slider_packet", "title": "① 滑杆", "sub": "SliderPacket 真值"}, {"id": "2_energy_envelope", "title": "② 包络", "sub": "能量曲线 E(t)"}, {"id": "3_dense_from_envelope", "title": "③ 全量", "sub": "12×150 展开"}, {"id": "4_dense_after_human_prior", "title": "④ 真人", "sub": "Human Prior 后"}, {"id": "4b_pulse_quality_report", "title": "④b平庸", "sub": "修正日记"}, {"id": "5_baked_02_delivery", "title": "⑤ 烘焙", "sub": "定稿直出"}, {"id": "6_human_prior_report", "title": "报告", "sub": "prior+quality"}], "workbench_stages": [{"id": "queue", "label": "排队"}, {"id": "bake", "label": "烘焙 02"}, {"id": "apply", "label": "编译控制视频"}, {"id": "live", "label": "输出控制视频"}]};
-</script>
+<script src="/02_前端插件/workbench_pipeline_ui.js"></script>
+<script src="/02_前端插件/slider_forbidden_bounds.js"></script>
+<script src="/02_前端插件/packet_finalize_ui.js"></script>
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   能量控制台 v12 · 全量重写
+   能量控制台 v12 · 全量重写 (clean generation)
+   控制面数据从 /control_surface.json API 获取，不内嵌硬编码数据
    ═══════════════════════════════════════════════════════ */
 
 const $ = id => document.getElementById(id);
@@ -272,12 +248,12 @@ function applyControlSurface(data) {
 }
 
 async function loadControlSurface() {
-  let data = window.__CONTROL_SURFACE__;
+  let data = null;
   if (location.protocol !== 'file:') {
     try {
       const r = await fetch('/control_surface.json', { cache: 'no-store' });
       if (r.ok) data = await r.json();
-    } catch (e) {}
+    } catch (e) { /* ignore */ }
   }
   if (!data) {
     PCHECK.className = 'preset-check err';
@@ -286,38 +262,43 @@ async function loadControlSurface() {
   }
   applyControlSurface(data);
   PCHECK.className = 'preset-check ok';
-  PCHECK.className = 'preset-check ok'; PCHECK.textContent = '✅ v12 就绪 · ' + Object.keys(PRESETS).length + ' 种情绪';
+  PCHECK.textContent = '✅ v12 就绪 · ' + Object.keys(PRESETS).length + ' 种情绪';
   return true;
 }
 
 // ─── §2 · 预设按钮 ─────────────────────────────────────
 function buildPresets() {
   PLIST.innerHTML = '';
-  PRESET_GROUPS.forEach(g => {
-    const hd = document.createElement('div');
+  PRESET_GROUPS.forEach(function(g) {
+    var hd = document.createElement('div');
     hd.className = 'preset-group';
     hd.textContent = g.label;
     PLIST.appendChild(hd);
-    g.keys.forEach(key => {
-      const data = PRESETS[key];
+    g.keys.forEach(function(key) {
+      var data = PRESETS[key];
       if (!data) return;
-      const b = document.createElement('button');
+      var b = document.createElement('button');
       b.className = 'preset-btn'; b.dataset.preset = key;
       b.innerHTML = key + '<small>' + (data.note || '') + '</small>';
-      b.onclick = () => selectEmotion(key);
+      b.onclick = function() { selectEmotion(key); };
       PLIST.appendChild(b);
     });
   });
 }
 
 function highlightPreset(name) {
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('on', b.dataset.preset === name));
+  document.querySelectorAll('.preset-btn').forEach(function(b) {
+    b.classList.toggle('on', b.dataset.preset === name);
+  });
 }
 
 async function selectEmotion(name) {
-  const data = PRESETS[name];
-  if (!data || (!_loading && activePreset === name)) { highlightPreset(name); return true; }
-  const token = ++_loadToken;
+  var data = PRESETS[name];
+  if (!data || (!_loading && activePreset === name)) {
+    highlightPreset(name);
+    return true;
+  }
+  var token = ++_loadToken;
   _loading = true;
   activePreset = name;
   macro = { ...data.macro };
@@ -327,9 +308,9 @@ async function selectEmotion(name) {
   try {
     if (typeof WorkbenchPipeline !== 'undefined') {
       try {
-        const r = await fetch('pipeline_cache/' + WorkbenchPipeline.slug(name) + '.json');
+        var r = await fetch('/03_工具脚本/pipeline_cache/' + WorkbenchPipeline.slug(name) + '.json');
         if (r.ok) pipelineData = await r.json();
-      } catch (e) {}
+      } catch (e) { /* no cache yet */ }
     }
     if (token === _loadToken) paint();
   } finally {
@@ -350,23 +331,23 @@ function resetToNeutral() {
 
 // ─── §3 · 滑杆构建 ─────────────────────────────────────
 function buildZones() {
-  ['rise','move','fall'].forEach(zid => {
-    const z = ZONES[zid];
-    const root = document.getElementById('zone-' + zid);
+  ['rise','move','fall'].forEach(function(zid) {
+    var z = ZONES[zid];
+    var root = document.getElementById('zone-' + zid);
     if (!z) { root.innerHTML = ''; return; }
     root.innerHTML = '<h3 class="zone-hd">' + z.title + '<span>' + (z.sub || '') + '</span></h3>';
     if (z.shapes) {
-      const row = document.createElement('div');
+      var row = document.createElement('div');
       row.className = 'shapes';
-      SHAPE_OPTS.forEach(s => {
-        const b = document.createElement('button');
+      SHAPE_OPTS.forEach(function(s) {
+        var b = document.createElement('button');
         b.textContent = s.label; b.dataset.shape = s.id;
-        b.onclick = () => { hold_seg.shape = s.id; paint(); };
+        b.onclick = function() { hold_seg.shape = s.id; paint(); };
         row.appendChild(b);
       });
       root.appendChild(row);
     }
-    (z.knobs || []).forEach(spec => {
+    (z.knobs || []).forEach(function(spec) {
       if (spec.type === 'shape') return;
       root.appendChild(buildKnob(spec.k, spec));
     });
@@ -374,20 +355,20 @@ function buildZones() {
 }
 
 function buildKnob(k, spec) {
-  const div = document.createElement('div');
+  var div = document.createElement('div');
   div.className = 'knob';
-  const label = document.createElement('label');
+  var label = document.createElement('label');
   label.textContent = spec.label;
-  const input = document.createElement('input');
+  var input = document.createElement('input');
   input.type = 'range'; input.min = 0; input.max = 100;
   input.dataset.key = k;
   input.dataset.spec = spec.id;
   input.value = (k === 'macro' ? macro[spec.id] : hold_seg[spec.id]) || 0;
-  const val = document.createElement('span');
+  var val = document.createElement('span');
   val.className = 'val';
   val.textContent = input.value;
-  const update = () => {
-    const v = Number(input.value);
+  var update = function() {
+    var v = Number(input.value);
     if (k === 'macro') macro[spec.id] = v;
     else hold_seg[spec.id] = v;
     val.textContent = v;
@@ -403,61 +384,59 @@ function buildKnob(k, spec) {
 // ─── §4 · SVG 脉冲曲线 ─────────────────────────────────
 function paint() {
   // update knobs via data attributes
-  document.querySelectorAll('.knob input').forEach(inp => {
-    const k = inp.dataset.key;
-    const id = inp.dataset.spec;
+  document.querySelectorAll('.knob input').forEach(function(inp) {
+    var k = inp.dataset.key;
+    var id = inp.dataset.spec;
     if (!k || !id) return;
     if (k === 'macro' && macro[id] !== undefined) inp.value = macro[id];
     if (k === 'hold_seg' && hold_seg[id] !== undefined) inp.value = hold_seg[id];
-    const valSpan = inp.nextElementSibling;
+    var valSpan = inp.nextElementSibling;
     if (valSpan && valSpan.className === 'val') valSpan.textContent = inp.value;
   });
-  document.querySelectorAll('.shapes button').forEach(b => b.classList.toggle('on', b.dataset.shape === hold_seg.shape));
+  document.querySelectorAll('.shapes button').forEach(function(b) {
+    b.classList.toggle('on', b.dataset.shape === hold_seg.shape);
+  });
 
   // draw SVG curve
-  const svg = CURVE;
-  const W = 300, H = 100;
-  let html = '<rect width="300" height="100" fill="#fafbfd"/>';
-  // background zones
+  var svg = CURVE;
+  var W = 300, H = 100;
+  var html = '<rect width="300" height="100" fill="#fafbfd"/>';
   html += '<rect x="0" y="0" width="60" height="100" fill="#dbeafe" opacity="0.4"/>';
   html += '<rect x="60" y="0" width="180" height="100" fill="#fef3c7" opacity="0.4"/>';
   html += '<rect x="240" y="0" width="60" height="100" fill="#e0e7ff" opacity="0.4"/>';
 
-  const push = macro.push / 100;
-  const power = macro.power / 100;
-  const speed = macro.speed / 100;
-  const steady = macro.steady / 100;
-  const grip = macro.grip / 100;
-  const outro = macro.outro / 100;
+  var push = macro.push / 100;
+  var power = macro.power / 100;
+  var speed = macro.speed / 100;
+  var steady = macro.steady / 100;
+  var grip = macro.grip / 100;
+  var outro = macro.outro / 100;
 
-  const tPeak = 14 + (1 - speed) * 10;
-  const peakY = H - (15 + power * 65);
-  const tHold = 30 + steady * 60;
-  const tOutro = tHold + (1 - outro) * 40;
-  const holdY = peakY + (1 - grip) * 10;
+  var tPeak = 14 + (1 - speed) * 10;
+  var peakY = H - (15 + power * 65);
+  var tHold = 30 + steady * 60;
+  var tOutro = tHold + (1 - outro) * 40;
+  var holdY = peakY + (1 - grip) * 10;
 
-  let d = 'M0,' + H;
-  // rise
-  for (let t = 0; t <= tPeak; t++) {
-    const u = t / tPeak;
-    const y = H - u * (H - peakY) * (push > 0.5 ? 1 + (push - 0.5) * 0.4 : 1);
+  var d = 'M0,' + H;
+  for (var t = 0; t <= tPeak; t++) {
+    var u = t / tPeak;
+    var y = H - u * (H - peakY) * (push > 0.5 ? 1 + (push - 0.5) * 0.4 : 1);
     d += ' L' + (t / 150 * W) + ',' + Math.round(y);
   }
-  // hold
-  for (let t = tPeak + 1; t <= tHold; t++) {
-    const u = (t - tPeak) / (tHold - tPeak);
-    let y = peakY + (holdY - peakY) * u;
+  for (var t = tPeak + 1; t <= tHold; t++) {
+    var u = (t - tPeak) / (tHold - tPeak);
+    var y = peakY + (holdY - peakY) * u;
     if (hold_seg.shape === 'tremble') y += Math.sin(u * 20) * 4;
     if (hold_seg.shape === 'pulse') y += Math.sin(u * hold_seg.pulse_rate * 0.3) * hold_seg.pulse_depth * 0.3;
     if (hold_seg.shape === 'decay') y += u * 20;
     if (hold_seg.shape === 'swell') y -= Math.sin(Math.PI * u) * hold_seg.swell * 0.3;
     d += ' L' + (t / 150 * W) + ',' + Math.round(Math.max(peakY - 10, Math.min(H, y)));
   }
-  // fall
-  for (let t = tHold + 1; t <= 150; t++) {
-    const u = (t - tHold) / (150 - tHold);
-    const ease = u < 0.5 ? 2 * u * u : -1 + (4 - 2 * u) * u;
-    const y = holdY + (H - holdY) * ease;
+  for (var t = tHold + 1; t <= 150; t++) {
+    var u = (t - tHold) / (150 - tHold);
+    var ease = u < 0.5 ? 2 * u * u : -1 + (4 - 2 * u) * u;
+    var y = holdY + (H - holdY) * ease;
     d += ' L' + (t / 150 * W) + ',' + Math.round(y);
   }
 
@@ -472,41 +451,52 @@ function paint() {
 // ─── §5 · 管线 ─────────────────────────────────────────
 function buildPipeTabs() {
   PTABS.innerHTML = '';
-  PIPE_TABS.forEach(tab => {
-    const b = document.createElement('button');
+  PIPE_TABS.forEach(function(tab) {
+    var b = document.createElement('button');
     b.className = 'pipe-tab';
     b.innerHTML = tab.title + (tab.sub ? '<small>' + tab.sub + '</small>' : '');
     b.dataset.tab = tab.id;
-    b.onclick = () => { activePipeTab = tab.id; renderPipeJson(); };
+    b.onclick = function() { activePipeTab = tab.id; renderPipeJson(); };
     PTABS.appendChild(b);
   });
 }
 
 function renderPipeJson() {
-  PTABS.querySelectorAll('.pipe-tab').forEach(b => b.classList.toggle('on', b.dataset.tab === activePipeTab));
+  PTABS.querySelectorAll('.pipe-tab').forEach(function(b) {
+    b.classList.toggle('on', b.dataset.tab === activePipeTab);
+  });
   if (!pipelineData) {
     PJ.textContent = JSON.stringify(buildPacket(), null, 2);
     PSRC.textContent = '⚠ 前端草稿（非出厂定稿）· 选情绪或点编译';
     PSRC.className = 'pipe-hint warn';
     return;
   }
-  const tab = activePipeTab;
-  let obj;
-  if (tab === '1_slider_packet') obj = pipelineData.slider_packet || buildPacket();
-  else if (tab === '2_envelope') obj = pipelineData.energy_envelope || pipelineData.envelope || {};
-  else if (tab === '3_dense_env' || tab === '4_dense_prior' || tab === '4b_pulse_quality_report') {
+  var tab = activePipeTab;
+  var obj;
+  if (tab === '1_slider_packet') {
+    obj = pipelineData.slider_packet || buildPacket();
+  } else if (tab === '2_envelope') {
+    obj = pipelineData.energy_envelope || pipelineData.envelope || {};
+  } else if (tab === '3_dense_env' || tab === '4_dense_prior' || tab === '4b_pulse_quality_report') {
     obj = pipelineData.channel_tracks || pipelineData.channels || {};
     if (!PFULL.checked) {
-      const summary = {};
-      Object.keys(obj).forEach(k => {
-        if (Array.isArray(obj[k]) && obj[k].length > 10) summary[k] = '[150 frames, first 5]: ' + JSON.stringify(obj[k].slice(0, 5));
-        else summary[k] = obj[k];
+      var summary = {};
+      Object.keys(obj).forEach(function(k) {
+        if (Array.isArray(obj[k]) && obj[k].length > 10) {
+          summary[k] = '[150 frames, first 5]: ' + JSON.stringify(obj[k].slice(0, 5));
+        } else {
+          summary[k] = obj[k];
+        }
       });
       obj = summary;
     }
-  } else if (tab === '5_baked_02_delivery') obj = pipelineData.channel_tracks || pipelineData.channels || {};
-  else if (tab === '6_human_prior_report') obj = pipelineData.human_prior_report || pipelineData.prior_report || {};
-  else obj = pipelineData;
+  } else if (tab === '5_baked_02_delivery') {
+    obj = pipelineData.channel_tracks || pipelineData.channels || {};
+  } else if (tab === '6_human_prior_report') {
+    obj = pipelineData.human_prior_report || pipelineData.prior_report || {};
+  } else {
+    obj = pipelineData;
+  }
   PJ.textContent = JSON.stringify(obj, null, 2);
   PSRC.textContent = '✓ 出厂定稿 · ' + (pipelineData.emotion || pipelineData.mood || '');
   PSRC.className = 'pipe-hint ok';
@@ -523,9 +513,10 @@ function buildPacket() {
 }
 
 // ─── §7 · API 通信 ─────────────────────────────────────
-async function fetchJSON(url, opts = {}) {
-  const r = await fetch(url, opts);
-  const text = await r.text();
+async function fetchJSON(url, opts) {
+  if (!opts) opts = {};
+  var r = await fetch(url, opts);
+  var text = await r.text();
   if (!r.ok) throw new Error(text.slice(0, 200));
   try { return JSON.parse(text); } catch (e) {
     throw new Error('非 JSON 响应 — 请重启工作台');
@@ -534,80 +525,97 @@ async function fetchJSON(url, opts = {}) {
 
 async function loadContext() {
   try {
-    const r = await fetch('/workbench_context.json', { cache: 'no-cache' });
+    var r = await fetch('/workbench_context.json', { cache: 'no-cache' });
     if (!r.ok) return;
-    const c = await r.json();
+    var c = await r.json();
     if (c.natural_language) NL.value = c.natural_language;
     if (c.energy_map_note || c.prompt) PROMPT.value = c.energy_map_note || c.prompt;
     if (c.knowledge_base) KB.value = c.knowledge_base;
-  } catch (e) {}
+  } catch (e) { /* ignore */ }
 }
 
 async function loadSliderPacket() {
   try {
-    const r = await fetch('slider_packet.json', { cache: 'no-cache' });
+    var r = await fetch('/slider_packet.json', { cache: 'no-cache' });
     if (r.ok) {
-      const pkt = await r.json();
-      if (pkt?.macro) {
-        macro = { ...pkt.macro }; hold_seg = { ...pkt.hold_seg };
+      var pkt = await r.json();
+      if (pkt && pkt.macro) {
+        macro = { ...pkt.macro };
+        hold_seg = { ...pkt.hold_seg };
         if (pkt.emotion && PRESETS[pkt.emotion]) activePreset = pkt.emotion;
-        pipelineData = null; paint();
+        pipelineData = null;
+        paint();
       }
     }
-  } catch (e) {}
+  } catch (e) { /* no saved packet yet */ }
 }
 
 async function saveContext() {
-  const body = { natural_language: NL.value.trim(), energy_map_note: PROMPT.value.trim(), knowledge_base: KB.value.trim() };
+  var body = {
+    natural_language: NL.value.trim(),
+    energy_map_note: PROMPT.value.trim(),
+    knowledge_base: KB.value.trim()
+  };
   try {
-    const j = await fetchJSON('/save_context', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    var j = await fetchJSON('/save_context', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
     alert(j.ok ? '✅ 已保存' : '保存失败');
   } catch (e) { alert('请先运行启动脚本'); }
 }
 
 async function savePacket() {
   try {
-    const j = await fetchJSON('/save_packet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildPacket()) });
+    var j = await fetchJSON('/save_packet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buildPacket())
+    });
     alert(j.ok ? '✅ 已保存' : '保存失败');
   } catch (e) { alert('保存失败'); }
 }
 
 // ─── §8 · 2D 霓虹控制视频 ─────────────────────────────
 async function renderNeonControlVideo() {
-  if (location.protocol === 'file:') { NSTATUS.textContent = '⚠ 请通过 http://127.0.0.1:8765 访问'; return; }
+  if (location.protocol === 'file:') {
+    NSTATUS.textContent = '⚠ 请通过 http://127.0.0.1:8765 访问';
+    return;
+  }
   NB_RENDER.disabled = true;
   NB_RENDER.textContent = '⏳ 渲染中…';
   NSTATUS.textContent = '⏳ 编译管线: 滑杆→12×150→人律→平庸→视频…';
   NPLACE.style.display = 'none';
   NVID.style.display = 'none';
   try {
-    const pkt = buildPacket();
-    console.log('Sending packet:', JSON.stringify(pkt));
-    const r = await fetch('/render_control_video', {
+    var pkt = buildPacket();
+    var r = await fetch('/render_control_video', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(pkt)
     });
-    console.log('Response status:', r.status);
-    const j = await r.json();
-    console.log('Response body:', j);
-    if (!j.ok) { NSTATUS.textContent = '渲染失败: ' + (j.error || j.message || JSON.stringify(j)); return; }
-    const url = (j.path || '/control_video.mp4') + '?t=' + Date.now();
-    console.log('Setting video src:', url);
+    var j = await r.json();
+    if (!j.ok) {
+      NSTATUS.textContent = '渲染失败: ' + (j.error || j.message || JSON.stringify(j));
+      return;
+    }
+    var url = (j.path || '/control_video.mp4') + '?t=' + Date.now();
     NVID.src = url;
     NVID.style.display = 'block';
     NVID.load();
-    NVID.onloadeddata = () => {
+    NVID.onloadeddata = function() {
       NSTATUS.textContent = '✓ 2D 霓虹控制流就绪 · 播放中';
-      NVID.play().catch(e => { NSTATUS.textContent += ' (点击播放)'; });
+      NVID.play().catch(function() {
+        NSTATUS.textContent += ' (点击播放)';
+      });
     };
-    NVID.onerror = () => {
+    NVID.onerror = function() {
       NSTATUS.textContent = '视频加载失败，请右键检查浏览器控制台';
       NVID.style.display = 'none';
       NPLACE.style.display = 'flex';
     };
   } catch (e) {
-    console.error('renderNeonControlVideo error:', e);
     NSTATUS.textContent = '网络错误: ' + (e.message || e) + ' · 确认服务已启动';
   } finally {
     NB_RENDER.disabled = false;
@@ -616,42 +624,51 @@ async function renderNeonControlVideo() {
 }
 
 async function healthCheck() {
-  if (location.protocol === 'file:') { PSRC.textContent = '⚠ 请启动工作台'; PSRC.className = 'pipe-hint warn'; return false; }
+  if (location.protocol === 'file:') {
+    PSRC.textContent = '⚠ 请启动工作台';
+    PSRC.className = 'pipe-hint warn';
+    return false;
+  }
   try {
-    const r = await fetch('/health', { cache: 'no-store' });
-    const h = await r.json();
-    if (h.ok) { PSRC.textContent = '✓ 服务 v' + h.version; PSRC.className = 'pipe-hint ok'; return true; }
-  } catch (e) {}
-  PSRC.textContent = '⚠ 服务异常'; PSRC.className = 'pipe-hint warn';
+    var r = await fetch('/health', { cache: 'no-store' });
+    var h = await r.json();
+    if (h.ok) {
+      PSRC.textContent = '✓ 服务 v' + h.version;
+      PSRC.className = 'pipe-hint ok';
+      return true;
+    }
+  } catch (e) { /* ignore */ }
+  PSRC.textContent = '⚠ 服务异常';
+  PSRC.className = 'pipe-hint warn';
   return false;
 }
 
-// ─── §7 · 人格矩阵 ─────────────────────────────────────
-const CANONICAL_KEYS = [
+// ─── §9 · 人格矩阵 ─────────────────────────────────────
+var CANONICAL_KEYS = [
   "pupil_x","pupil_y","blink","eyebrow","pupil_scale","iris_scale",
   "cornea_bulge","squint","brow_raise","lid_upper","lid_lower","eye_gloss"
 ];
-const CHANNEL_LABELS = {
+var CHANNEL_LABELS = {
   pupil_x:"视线左右",pupil_y:"视线上下",blink:"眼睑开合",eyebrow:"眉压",
   pupil_scale:"瞳孔缩放",iris_scale:"虹膜圈",cornea_bulge:"角膜鼓起",
   squint:"眯眼眶压",brow_raise:"挑眉",lid_upper:"上眼睑",lid_lower:"下眼睑",
   eye_gloss:"眼湿润高光"
 };
 
-let personaMatrix = null;
-let selectedPersonaId = '';
+var personaMatrix = null;
+var selectedPersonaId = '';
 
 async function loadPersonaMatrix() {
   if (location.protocol === 'file:') return;
   try {
-    const r = await fetch('/persona_matrix.json', { cache: 'no-store' });
+    var r = await fetch('/persona_matrix.json', { cache: 'no-store' });
     if (!r.ok) return;
     personaMatrix = await r.json();
-    const sel = document.getElementById('persona-select');
+    var sel = document.getElementById('persona-select');
     sel.innerHTML = '';
-    const ids = Object.keys(personaMatrix.personas || {});
-    ids.forEach(pid => {
-      const opt = document.createElement('option');
+    var ids = Object.keys(personaMatrix.personas || {});
+    ids.forEach(function(pid) {
+      var opt = document.createElement('option');
       opt.value = pid;
       opt.textContent = personaMatrix.personas[pid].label + ' (' + pid + ')';
       sel.appendChild(opt);
@@ -661,34 +678,38 @@ async function loadPersonaMatrix() {
       selectedPersonaId = ids[0];
       renderPersonaSliders(ids[0]);
     }
-    sel.onchange = () => { selectedPersonaId = sel.value; renderPersonaSliders(sel.value); };
+    sel.onchange = function() {
+      selectedPersonaId = sel.value;
+      renderPersonaSliders(sel.value);
+    };
   } catch (e) {
     console.warn('人格矩阵加载失败', e);
   }
 }
 
 function renderPersonaSliders(pid) {
-  const container = document.getElementById('persona-sliders');
-  const p = personaMatrix?.personas?.[pid];
-  if (!p) { container.innerHTML = '<p style="font-size:0.66rem;color:var(--muted);padding:8px">无此人格数据</p>'; return; }
+  var container = document.getElementById('persona-sliders');
+  var p = personaMatrix && personaMatrix.personas && personaMatrix.personas[pid];
+  if (!p) {
+    container.innerHTML = '<p style="font-size:0.66rem;color:var(--muted);padding:8px">无此人格数据</p>';
+    return;
+  }
 
-  let html = '';
-  CANONICAL_KEYS.forEach(key => {
-    const label = CHANNEL_LABELS[key] || key;
-    const base = p.base_offset[key] ?? 0.5;
-    const scale = p.scale_factor[key] ?? 0.3;
+  var html = '';
+  CANONICAL_KEYS.forEach(function(key) {
+    var label = CHANNEL_LABELS[key] || key;
+    var base = (p.base_offset && p.base_offset[key] !== undefined) ? p.base_offset[key] : 0.5;
+    var scale = (p.scale_factor && p.scale_factor[key] !== undefined) ? p.scale_factor[key] : 0.3;
 
     html += '<div style="margin:4px 0;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fafbfd">';
     html += '<div style="font-size:0.66rem;font-weight:600;margin-bottom:2px">' + label + ' <span style="color:var(--muted);font-weight:400">(' + key + ')</span></div>';
 
-    // base_offset slider
     html += '<div class="knob" style="margin-bottom:1px;gap:4px">';
     html += '<label style="width:auto;font-size:0.6rem">偏置</label>';
     html += '<input type="range" min="0" max="1" step="0.01" value="' + base + '" data-pid="' + pid + '" data-key="' + key + '" data-field="base_offset" style="flex:1;height:4px">';
     html += '<span class="val" style="width:28px;font-size:0.6rem">' + base.toFixed(2) + '</span>';
     html += '</div>';
 
-    // scale_factor slider
     html += '<div class="knob" style="margin-bottom:1px;gap:4px">';
     html += '<label style="width:auto;font-size:0.6rem">系数</label>';
     html += '<input type="range" min="0" max="1" step="0.01" value="' + scale + '" data-pid="' + pid + '" data-key="' + key + '" data-field="scale_factor" style="flex:1;height:4px">';
@@ -698,7 +719,6 @@ function renderPersonaSliders(pid) {
     html += '</div>';
   });
 
-  // 重置按钮 + 保存按钮
   html += '<div style="display:flex;gap:6px;padding:6px 2px 0">';
   html += '<button class="btn sm" id="btn-persona-reset" style="flex:1">↺ 重置当前人格</button>';
   html += '<button class="btn sm primary" id="btn-persona-save" style="flex:1">💾 保存到 JSON</button>';
@@ -706,51 +726,56 @@ function renderPersonaSliders(pid) {
 
   container.innerHTML = html;
 
-  // 绑定滑杆事件
-  container.querySelectorAll('.knob input[type=range]').forEach(inp => {
-    inp.oninput = () => {
-      const valSpan = inp.nextElementSibling;
+  container.querySelectorAll('.knob input[type=range]').forEach(function(inp) {
+    inp.oninput = function() {
+      var valSpan = inp.nextElementSibling;
       if (valSpan) valSpan.textContent = parseFloat(inp.value).toFixed(2);
     };
   });
 
-  // 重置按钮
-  document.getElementById('btn-persona-reset')?.addEventListener('click', () => renderPersonaSliders(pid));
+  document.getElementById('btn-persona-reset').addEventListener('click', function() {
+    renderPersonaSliders(pid);
+  });
 
-  // 保存按钮
-  document.getElementById('btn-persona-save')?.addEventListener('click', async () => {
+  document.getElementById('btn-persona-save').addEventListener('click', async function() {
     if (!personaMatrix || !personaMatrix.personas[pid]) return;
-    const p = personaMatrix.personas[pid];
-    container.querySelectorAll('.knob input[type=range]').forEach(inp => {
-      const key = inp.dataset.key;
-      const field = inp.dataset.field;
-      if (key && field && p[field]) p[field][key] = parseFloat(inp.value);
+    var pData = personaMatrix.personas[pid];
+    container.querySelectorAll('.knob input[type=range]').forEach(function(inp) {
+      var dataKey = inp.dataset.key;
+      var field = inp.dataset.field;
+      if (dataKey && field && pData[field]) {
+        pData[field][dataKey] = parseFloat(inp.value);
+      }
     });
     try {
-      const r = await fetch('/persona_matrix.json', {
+      var res = await fetch('/persona_matrix.json', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'save', persona_id: pid, data: p })
+        body: JSON.stringify({ action: 'save', persona_id: pid, data: pData })
       });
-      const j = await r.json();
-      if (j.ok) alert('✅ 已保存到 persona_matrix.json');
-      else alert('❌ 保存失败: ' + (j.error || ''));
-    } catch (e) {
-      alert('❌ 网络错误: ' + e.message);
+      var result = await res.json();
+      if (result.ok) {
+        alert('✅ 已保存到 persona_matrix.json');
+      } else {
+        alert('❌ 保存失败: ' + (result.error || ''));
+      }
+    } catch (err) {
+      alert('❌ 网络错误: ' + err.message);
     }
+  });
 }
 
-// ─── §8 · 资产库浏览器 ─────────────────────────────────
+// ─── §10 · 资产库浏览器 ─────────────────────────────────
 async function loadAssetBrowser() {
-  const tree = document.getElementById('asset-tree');
+  var tree = document.getElementById('asset-tree');
   if (location.protocol === 'file:') {
     tree.innerHTML = '<p style="font-size:0.66rem;color:var(--muted);padding:8px;text-align:center">⚠ 请通过 HTTP 访问</p>';
     return;
   }
   try {
-    const r = await fetch('/api/asset-browser', { cache: 'no-cache' });
+    var r = await fetch('/api/asset-browser', { cache: 'no-cache' });
     if (!r.ok) throw new Error(r.statusText);
-    const data = await r.json();
+    var data = await r.json();
     if (!data.ok || !data.root) throw new Error('无效响应');
     renderAssetTree(tree, data.root);
   } catch (e) {
@@ -758,14 +783,15 @@ async function loadAssetBrowser() {
   }
 }
 
-function renderAssetTree(container, items, depth = 0) {
+function renderAssetTree(container, items, depth) {
+  if (depth === undefined) depth = 0;
   if (!items || items.length === 0) {
     container.innerHTML = '<p style="font-size:0.66rem;color:var(--muted);padding:8px;text-align:center">（空）</p>';
     return;
   }
-  let html = '';
-  items.forEach(item => {
-    const pad = depth * 14;
+  var html = '';
+  items.forEach(function(item) {
+    var pad = depth * 14;
     if (item.type === 'dir') {
       html += '<div style="padding:2px 0;font-size:0.68rem">';
       html += '<span style="display:inline-block;width:' + pad + 'px"></span>';
@@ -773,9 +799,8 @@ function renderAssetTree(container, items, depth = 0) {
       html += '<strong>' + item.name + '</strong>';
       html += '</div>';
       if (item.children) {
-        // 递归子目录/文件
-        item.children.forEach(child => {
-          const cpad = (depth + 1) * 14;
+        item.children.forEach(function(child) {
+          var cpad = (depth + 1) * 14;
           if (child.type === 'dir') {
             html += '<div style="padding:2px 0;font-size:0.68rem">';
             html += '<span style="display:inline-block;width:' + cpad + 'px"></span>';
@@ -783,7 +808,7 @@ function renderAssetTree(container, items, depth = 0) {
             html += child.name;
             html += '</div>';
             if (child.children) {
-              child.children.forEach(grand => {
+              child.children.forEach(function(grand) {
                 html += renderFileItem(grand, (depth + 2) * 14);
               });
             }
@@ -798,13 +823,23 @@ function renderAssetTree(container, items, depth = 0) {
 }
 
 function renderFileItem(item, pad) {
-  const icon = item.tag === '烘焙' ? '🎯' : item.tag === '节拍表' ? '📋' : item.tag === '人格' ? '🧬' : item.tag === '情绪' ? '🎭' : '📄';
-  const tagHtml = item.tag ? ' <span style="font-size:0.55rem;color:#1a56db;background:#dbeafe;padding:1px 5px;border-radius:4px">' + item.tag + '</span>' : '';
-  const sizeHtml = item.size ? ' <span style="font-size:0.55rem;color:var(--muted)">' + (item.size > 1024 ? (item.size/1024).toFixed(1)+'KB' : item.size+'B') + '</span>' : '';
-  let clickAttr = '';
-  let cursor = 'default';
+  var icon = '📄';
+  if (item.tag === '烘焙') icon = '🎯';
+  else if (item.tag === '节拍表') icon = '📋';
+  else if (item.tag === '人格') icon = '🧬';
+  else if (item.tag === '情绪') icon = '🎭';
+  var tagHtml = '';
+  if (item.tag) {
+    tagHtml = ' <span style="font-size:0.55rem;color:#1a56db;background:#dbeafe;padding:1px 5px;border-radius:4px">' + item.tag + '</span>';
+  }
+  var sizeHtml = '';
+  if (item.size) {
+    sizeHtml = ' <span style="font-size:0.55rem;color:var(--muted)">' + (item.size > 1024 ? (item.size/1024).toFixed(1)+'KB' : item.size+'B') + '</span>';
+  }
+  var clickAttr = '';
+  var cursor = 'default';
   if (item.tag === '烘焙' && item.ext === '.json') {
-    clickAttr = ` onclick="loadBakedAsset(this, '${item.name.replace(/'/g, "\\'")}')"`;
+    clickAttr = ' onclick="loadBakedAsset(this, \'' + item.name.replace(/'/g, "\\'") + '\')"';
     cursor = 'pointer';
   }
   return '<div style="padding:2px 0;font-size:0.66rem;cursor:' + cursor + '"' + clickAttr + '>'
@@ -815,42 +850,38 @@ function renderFileItem(item, pad) {
 }
 
 async function loadBakedAsset(el, filename) {
-  // 从 DOM 向上找父级目录名（情绪目录）
-  const parentDiv = el.parentElement?.previousElementSibling;
-  const grandParent = el.closest('#asset-tree');
+  var grandParent = el.closest('#asset-tree');
   if (!grandParent) return;
-
-  // 通过 API 查找文件路径
   try {
-    const r = await fetch('/api/asset-browser', { cache: 'no-cache' });
-    const data = await r.json();
-    // 广度遍历找到匹配文件
-    let foundPath = '';
+    var r = await fetch('/api/asset-browser', { cache: 'no-cache' });
+    var data = await r.json();
+    var foundPath = '';
     function search(items, prefix) {
-      for (const item of items) {
-        if (item.type === 'dir' && item.children) search(item.children, prefix + item.name + '/');
-        else if (item.name === filename) foundPath = prefix + item.name;
+      for (var idx = 0; idx < items.length; idx++) {
+        var item = items[idx];
+        if (item.type === 'dir' && item.children) {
+          search(item.children, prefix + item.name + '/');
+        } else if (item.name === filename) {
+          foundPath = prefix + item.name;
+        }
       }
     }
     search(data.root, '资产库/');
     if (!foundPath) { alert('未找到文件路径'); return; }
 
-    const pkt = buildPacket();
-    // 调用 load-baked API
-    const r2 = await fetch('/api/asset-load-baked', {
+    var pkt = buildPacket();
+    var r2 = await fetch('/api/asset-load-baked', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path: foundPath, packet: pkt })
     });
-    const result = await r2.json();
+    var result = await r2.json();
     if (!result.ok) { alert('加载失败: ' + (result.error || '')); return; }
 
-    // 加载到交付链查看器
     if (result.baked) {
       pipelineData = result.baked;
       activePipeTab = '5_baked_02_delivery';
       renderPipeJson();
-      // 如果有滑杆包，同步到 UI
       if (result.packet && result.packet.macro) {
         macro = { ...result.packet.macro };
         if (result.packet.hold_seg) hold_seg = { ...result.packet.hold_seg };
@@ -860,7 +891,6 @@ async function loadBakedAsset(el, filename) {
       }
       PSRC.textContent = '✓ 已加载: ' + foundPath;
       PSRC.className = 'pipe-hint ok';
-      // 如果有节拍表，显示
       if (result.metronome) {
         console.log('📋 扩散节拍表已加载 (' + result.metronome.length + ' chars)');
       }
@@ -873,22 +903,23 @@ async function loadBakedAsset(el, filename) {
 // ─── 事件绑定 ──────────────────────────────────────────
 $('btn-save-ctx').onclick = saveContext;
 $('btn-save-packet').onclick = savePacket;
-$('btn-copy').onclick = () => navigator.clipboard.writeText(PJ.textContent);
-PFULL.onchange = () => renderPipeJson();
+$('btn-copy').onclick = function() { navigator.clipboard.writeText(PJ.textContent); };
+PFULL.onchange = function() { renderPipeJson(); };
 $('btn-neutral').onclick = resetToNeutral;
 NB_RENDER.onclick = renderNeonControlVideo;
 
 // ─── 启动 ──────────────────────────────────────────────
 (async function boot() {
   await healthCheck();
-  const ok = await loadControlSurface();
+  var ok = await loadControlSurface();
   if (!ok) return;
   buildPipeTabs();
   buildPresets();
   buildZones();
   loadContext();
-  try { await loadSliderPacket(); } catch (e) {}
+  try { await loadSliderPacket(); } catch (e) { /* ignore */ }
   loadPersonaMatrix();
+  loadAssetBrowser();
   resetToNeutral();
 })();
 </script>

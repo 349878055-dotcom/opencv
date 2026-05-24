@@ -30,6 +30,19 @@
         "squint": 0.40, "brow_raise": 0.45, "lid_upper": 0.55, "lid_lower": 0.50, "eye_gloss": 0.55
       }
     },
+    "魅惑者_温碧霞": {
+      "label": "魅惑者/温碧霞",
+      "base_offset": {
+        "pupil_x": 0.50, "pupil_y": 0.50, "blink": 0.50, "eyebrow": 0.50,
+        "pupil_scale": 0.50, "iris_scale": 0.50, "cornea_bulge": 0.50,
+        "squint": 0.50, "brow_raise": 0.50, "lid_upper": 0.58, "lid_lower": 0.42, "eye_gloss": 0.90
+      },
+      "scale_factor": {
+        "pupil_x": 0.55, "pupil_y": 0.50, "blink": 0.75, "eyebrow": 0.55,
+        "pupil_scale": 0.50, "iris_scale": 0.50, "cornea_bulge": 0.55,
+        "squint": 0.40, "brow_raise": 0.45, "lid_upper": 0.55, "lid_lower": 0.50, "eye_gloss": 0.55
+      }
+    },
     "狠厉者_铁血将军": {
       "label": "狠厉者/铁血将军（占位）",
       "base_offset": {

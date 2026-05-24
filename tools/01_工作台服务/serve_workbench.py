@@ -111,17 +111,68 @@ class Handler(SimpleHTTPRequestHandler):
                 print(f"[workbench] 未知 POST 路径: {path!r}", flush=True)
                 self.send_error(404)
         except Exception as e:
-            self.send_error(400, str(e))
+            # 屏蔽非 ASCII 字符，避免 latin-1 send_error 崩溃
+            safe_msg = str(e).encode("ascii", errors="replace").decode("ascii")
+            self.send_error(400, safe_msg)
 
     # ═══════════════════════════════════════════════════════
-    # 控制视频（待仿射重建）
+    # 控制视频（仿射渲染引擎）
     # ═══════════════════════════════════════════════════════
-    # 旧版 line_drawer 已删除。
-    # 新版 affine_renderer 重建后此端点复活。
     def _render_control_video(self, body: bytes) -> None:
+        """POST /render_control_video — 全管线 → 工程底模 → mp4。"""
+        import cv2
+        from gaze_engine.affine_renderer import AffineRenderer
+        from gaze_engine.slider_schema import SliderPacket
+        from gaze_engine.delivery_pipeline import run_delivery_from_packet
+
+        pkt_dict = json.loads(body.decode("utf-8"))
+        pkt = SliderPacket.from_dict(pkt_dict)
+        baked, dense_out, prior_rep, pq_rep = run_delivery_from_packet(pkt)
+
+        # 从烘焙结果提取 12 通道 × 150 帧
+        channels_data = dense_out  # dict of 12 keys × 150 values
+        frame_count = len(next(iter(channels_data.values())))
+
+        # 确保缓存目录存在
+        CONTROL_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+
+        # 初始化渲染引擎（无需底图纹理）
+        renderer = AffineRenderer()
+
+        # 临时帧目录
+        frames_dir = CONTROL_VIDEO_DIR / "_frames"
+        frames_dir.mkdir(exist_ok=True)
+
+        print(f"[workbench] 渲染 {frame_count} 帧工程底模...", flush=True)
+        from gaze_engine.affine_renderer import CANONICAL_KEYS
+        for t in range(frame_count):
+            frame_data = {k: channels_data[k][t] for k in CANONICAL_KEYS if k in channels_data}
+            img = renderer.render_frame(frame_data)  # (H,W,3) RGB工程底模
+            cv2.imwrite(str(frames_dir / f"f_{t:04d}.png"), img)
+            if (t + 1) % 30 == 0:
+                print(f"  ... {t+1}/{frame_count}", flush=True)
+
+        # 合成 mp4
+        import subprocess
+        video_path = CONTROL_VIDEO_DIR / CONTROL_VIDEO_NAME
+        subprocess.run([
+            "ffmpeg", "-y", "-f", "image2", "-r", "30",
+            "-i", str(frames_dir / "f_%04d.png"),
+            "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
+            "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-crf", "18",
+            str(video_path),
+        ], capture_output=True, check=True)
+
+        # 清理临时帧
+        import shutil
+        shutil.rmtree(frames_dir)
+
+        print(f"[workbench] 工程底模视频已保存: {video_path}", flush=True)
         self._json_response({
-            "ok": False,
-            "note": "渲染引擎重建中（affine_renderer 替代 line_drawer），暂不可用",
+            "ok": True,
+            "path": "/control_video.mp4",
+            "frames": frame_count,
         })
 
     def _serve_control_video(self) -> None:

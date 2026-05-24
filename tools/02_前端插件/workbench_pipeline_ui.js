@@ -311,7 +311,7 @@
   async function fetchPipeline(presetName, pkt) {
     const s = slug(presetName || "custom");
     try {
-      const r = await fetch("pipeline_cache/" + s + ".json", { cache: "no-cache" });
+      const r = await fetch("/03_工具脚本/pipeline_cache/" + s + ".json", { cache: "no-cache" });
       if (r.ok) {
         const data = await r.json();
         data._source = "python-cache";

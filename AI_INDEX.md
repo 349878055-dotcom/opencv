@@ -119,10 +119,35 @@ API: POST /api/run-pipeline
 └──────────────────────────────────────────────────────┘
     │
     ▼
-┌─ 6. dense_to_baked_sparse() ────────────────────────┐
-│  → 02_烘焙_真人律.json (交付物)                       │
-│  → export_diffusion_metronome → 扩散节拍表            │
-└──────────────────────────────────────────────────────┘
+╔═ 6. 视觉封装层 (The Articulator) ══════════════════╗
+║  [dense_to_baked_sparse()] ───────────────────────║
+║  human_prior.dense_to_baked_sparse()              ║
+║  → 02_烘焙_真人律.json (12通道逐帧关键帧)         ║
+║                                                    ║
+║  [工程底模 (Asset for Diffusion)] ──────────────║
+║  affine_renderer (RGB三色分离)                     ║
+║  R=眼, G=眉, B=瞳孔 · 闭合路径 · 0-noise         ║
+║  ⚠️ 当前 _AFFINE_DISABLED，重建中                ║
+║                                                    ║
+║  [艺术皮肤 (Visual Skin for Client)] ───────────║
+║  Canvas 叠加 · Bloom/变径/手绘质感                ║
+║  ❌ 待建 (加法策略：不碰底层坐标)                  ║
+╚══════════════════════════════════════════════════════╝
+    │
+    ▼
+╔═ 7. 输出分流引擎 (The Stream Splitter) ════════════╗
+║                                                     ║
+║  Stream 1 → Raw_Asset (02.json + 工程底模)          ║
+║              → Wan 扩散引擎                         ║
+║                                                     ║
+║  Stream 2 → Preview_View (艺术皮肤渲染)             ║
+║              → 客户预览                             ║
+║                                                     ║
+║  export_diffusion_metronome.build_metronome_text()  ║
+║  → 扩散节拍表 (文本辅助 · 给 Wan 的脉冲语义)        ║
+║                                                     ║
+║  底层控制点（12 通道数据）永远不变                    ║
+╚══════════════════════════════════════════════════════╝
 ```
 
 ---
@@ -191,6 +216,8 @@ API: POST /api/run-pipeline
 | "改人格矩阵" | [`persona_matrix.json`](gaze_engine/persona_matrix.json) | 人格 ID | 具体人格 ~15 行 |
 | "启用渲染引擎" | [`affine_renderer.py`](gaze_engine/affine_renderer.py:37) | `_AFFINE_DISABLED` | 改 `True`→`False` |
 | "启用音频编译" | [`audio_compiler.py`](gaze_engine/audio_compiler.py:12) | `_AUDIO_DISABLED` | 改 `True`→`False` |
+| "改 6 视觉封装" | [`affine_renderer.py`](gaze_engine/affine_renderer.py) + [`human_prior.py`](gaze_engine/human_prior.py) | `dense_to_baked_sparse` / `render_control_mesh` | 各 ~50 行 |
+| "改 7 输出分流" | [`export_diffusion_metronome.py`](gaze_engine/export_diffusion_metronome.py) + [`delivery_pipeline.py`](gaze_engine/delivery_pipeline.py) | `build_metronome_text` / `run_delivery` | 各 ~50 行 |
 | "改架构设计" | [`contracts/06_架构/流程设计.md`](contracts/06_架构/流程设计.md) | 全文 | 全文 |
 | "改合同索引" | [`contracts/README.md`](contracts/README.md) | 全文 | 全文 |
 
