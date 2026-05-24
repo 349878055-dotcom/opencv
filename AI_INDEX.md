@@ -25,9 +25,6 @@
 ├── eye_asset/               ← 眼眉视觉资产
 │   └── derived/             ← 派生资产（眼睑素材等）
 │
-├── plans/                   ← 计划文档
-│   └── affine_renderer_fix_plan.md ← 仿射渲染修复计划
-│
 ├── tools/                   ← 网页工作台 + HTTP 服务
 │   ├── 01_工作台服务/        ← 主应用
 │   │   ├── serve_workbench.py   ← HTTP 后端（API 主入口）
@@ -60,15 +57,19 @@
 │   ├── batch_presets.py         ← 五样本烘焙
 │   ├── persona_compiler.py      ← 人格编译
 │   ├── persona_matrix.json      ← 9人格矩阵
-│   ├── base_mesh_gen.py         ← 基础网格
-│   ├── affine_renderer.py       ← ⚠️ 禁用中 (_AFFINE_DISABLED)
+│   ├── base_mesh_gen.py         ← 基础网格（底图生成）
+│   ├── affine_renderer.py       ← 工程底膜驱动引擎 (_AFFINE_DISABLED=False ✅)
 │   ├── audio_compiler.py        ← ⚠️ 禁用中 (_AUDIO_DISABLED)
 │   ├── __init__.py              ← Python 包初始化
 │   └── test_persona_integrity.py ← 人格完整性自检
 │
 ├── contracts/                ← 合同规范
+│   ├── 合同规范.md            ← 📐 统一合同模板（五段格式）
 │   ├── 01_总纲/               ← 全局理论+工程
 │   ├── 02_情绪/               ← 每个情绪一个文件
+│   ├── 03_工程底膜/           ← 工程底膜（扩散引擎消费的视觉骨架）
+│   │   ├── 工程底膜合同.md     ← RGB 三色分离格式协议
+│   │   └── 工程底膜驱动规范.md ← affine_renderer 驱动引擎
 │   ├── 04_接口/               ← 上下游对接
 │   ├── 05_人格化/             ← 人格风格化偏向
 │   └── 06_架构/               ← 顶层设计（核心）
@@ -142,7 +143,7 @@ API: POST /api/run-pipeline
 ║  [工程底模 (Asset for Diffusion)] ──────────────║
 ║  affine_renderer (RGB三色分离)                     ║
 ║  R=眼, G=眉, B=瞳孔 · 闭合路径 · 0-noise         ║
-║  ⚠️ 当前 _AFFINE_DISABLED，重建中                ║
+║  ✅ 已启用 (_AFFINE_DISABLED=False)              ║
 ║                                                    ║
 ║  [艺术皮肤 (Visual Skin for Client)] ───────────║
 ║  Canvas 叠加 · Bloom/变径/手绘质感                ║
@@ -229,9 +230,11 @@ API: POST /api/run-pipeline
 | "加新预设" | [`control_surface.py`](gaze_engine/control_surface.py:18) + [`slider_bounds.py`](gaze_engine/slider_bounds.py) | `PRESETS` + `load_rules` | 各 ~10 行 |
 | "改前端 UI" | [`能量工作台.html`](tools/01_工作台服务/能量工作台.html) | 按钮 ID / 函数名 | 具体函数 ~30 行 |
 | "改人格矩阵" | [`persona_matrix.json`](gaze_engine/persona_matrix.json) | 人格 ID | 具体人格 ~15 行 |
-| "启用渲染引擎" | [`affine_renderer.py`](gaze_engine/affine_renderer.py:37) | `_AFFINE_DISABLED` | 改 `True`→`False` |
+| "启用/停用驱动引擎" | [`affine_renderer.py`](gaze_engine/affine_renderer.py:37) | `_AFFINE_DISABLED` | 当前 `False`（已启用） |
 | "启用音频编译" | [`audio_compiler.py`](gaze_engine/audio_compiler.py:12) | `_AUDIO_DISABLED` | 改 `True`→`False` |
-| "改 6 视觉封装" | [`affine_renderer.py`](gaze_engine/affine_renderer.py) + [`human_prior.py`](gaze_engine/human_prior.py) | `dense_to_baked_sparse` / `render_control_mesh` | 各 ~50 行 |
+| "改工程底膜驱动" | [`affine_renderer.py`](gaze_engine/affine_renderer.py) | `deform` / `_smooth_ring` / `render_frame` | ~150 行 |
+| "看工程底膜合同" | [`contracts/03_工程底膜/工程底膜合同.md`](contracts/03_工程底膜/工程底膜合同.md) | 全文 | 格式协议+验收标准 |
+| "看驱动引擎规范" | [`contracts/03_工程底膜/工程底膜驱动规范.md`](contracts/03_工程底膜/工程底膜驱动规范.md) | 全文 | 核心机制+注意事项 |
 | "改 7 输出分流" | [`export_diffusion_metronome.py`](gaze_engine/export_diffusion_metronome.py) + [`delivery_pipeline.py`](gaze_engine/delivery_pipeline.py) | `build_metronome_text` / `run_delivery` | 各 ~50 行 |
 | "改架构设计" | [`contracts/06_架构/流程设计.md`](contracts/06_架构/流程设计.md) | 全文 | 全文 |
 | "改合同索引" | [`contracts/README.md`](contracts/README.md) | 全文 | 全文 |
@@ -241,6 +244,7 @@ API: POST /api/run-pipeline
 ## 七、审计线索
 
 - 12 通道定义唯一真源: [`channel_contract.py`](gaze_engine/channel_contract.py)
+- 合同规范模板: [`contracts/合同规范.md`](contracts/合同规范.md)
 - 全量帧指令集规范: [`contracts/01_总纲/全量帧指令集规范.md`](contracts/01_总纲/全量帧指令集规范.md)
 - 眼眉真人默认律: [`contracts/01_总纲/眼眉真人默认律.md`](contracts/01_总纲/眼眉真人默认律.md)
 - 双模驱动架构: [`contracts/06_架构/流程设计.md`](contracts/06_架构/流程设计.md)
