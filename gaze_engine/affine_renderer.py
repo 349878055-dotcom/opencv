@@ -211,19 +211,20 @@ class EyeMesh:
             y_offset = lower_bot * (1 - (2*t - 1)**2)
             dst[name] = (x, int(cy + y_offset))
         
-        # ── 虹膜（iris_scale + cornea_bulge）──
+        # ── 瞳孔中心（含 pupil_x/y 偏移，作为虹膜刚体基准）──
+        pupil_s = 1.0 + channels.get("pupil_scale", 0.0) * (PUPIL_SCALE_RANGE - 1.0)
+        pupil_cx = int(cx + px * PUPIL_X_RANGE * pupil_s)
+        pupil_cy = int(cy + py * PUPIL_Y_RANGE * pupil_s)
+        dst["pupil"] = (pupil_cx, pupil_cy)
+        
+        # ── 虹膜（刚体跟随瞳孔平移 + 独立缩放）──
         iris_s = 1.0 + i_scale * (IRIS_SCALE_RANGE - 1.0)
         bulge_s = 1.0 + cornea_bulge * 0.15
         iris_scale_val = iris_s * bulge_s
         for name, dx, dy in [("iris_top", 0, -22), ("iris_bottom", 0, 22),
                               ("iris_left", -22, 0), ("iris_right", 22, 0)]:
-            dst[name] = (int(cx + dx * iris_scale_val),
-                         int(cy + dy * iris_scale_val))
-        
-        # ── 瞳孔（随 pupil_x/y 偏移）──
-        pupil_s = 1.0 + channels.get("pupil_scale", 0.0) * (PUPIL_SCALE_RANGE - 1.0)
-        dst["pupil"] = (int(cx + px * PUPIL_X_RANGE * pupil_s),
-                        int(cy + py * PUPIL_Y_RANGE * pupil_s))
+            dst[name] = (int(pupil_cx + dx * iris_scale_val),
+                         int(pupil_cy + dy * iris_scale_val))
         
         # ── 眉毛 ──
         brow_offset = eyebrow * BROW_DOWN - b_raise * BROW_RAISE
@@ -255,59 +256,51 @@ else:
             self.meshes = [EyeMesh(LEFT_CX, LEFT_CY, -1), EyeMesh(RIGHT_CX, RIGHT_CY, 1)]
             self.sx, self.sy = _calc_scale()
     
-        def _smooth_ring(self, dst: dict, steps: int = 40) -> np.ndarray:
+        def _parametric_eyelid(self, mesh: EyeMesh, channels: dict[str, float],
+                               steps: int = 40) -> np.ndarray:
             """
-            从变形控制点拟合抛物线，生成平滑眼睑环（82点，精确闭合）
+            标准参数法：直接使用抛物线公式生成眼睑环（82点），不走 deform() 控制点。
             
-            关键：把 corner_inner/corner_outer 也加入抛物线拟合，
-            避免外推导致眼角跑偏 → 消除"眼睛边上多出一块"。
-            
-            上下眼睑共用眼角点，首尾天然闭合 → 消除毛刺。
+            原理（匹配工程底膜驱动规范 §4.4）：
+              眼睑曲线 = peak × (1 − (2t−1)²)
+              deform() 只负责瞳孔/虹膜/眉毛，眼睑几何直接由通道值驱动。
+              眼角天然闭合（t=0 → y=0, t=1 → y=0），无需最小二乘拟合。
             """
-            # ── 上眼睑：7点拟合（含眼角）──
-            up_names = ["corner_inner", "upper_0", "upper_1",
-                        "upper_2", "upper_3", "upper_4", "corner_outer"]
-            xs = np.array([dst[n][0] for n in up_names], dtype=np.float32)
-            ys = np.array([dst[n][1] for n in up_names], dtype=np.float32)
-            A = np.vstack([xs**2, xs, np.ones_like(xs)]).T
-            a_up, b_up, c_up = np.linalg.lstsq(A, ys, rcond=None)[0]
+            cx, cy, ew = mesh.cx, mesh.cy, EYE_W
+            blink = channels.get("blink", 0.0)
+            squint = channels.get("squint", 0.0)
+            lid_upper = channels.get("lid_upper", 0.0)
+            lid_lower = channels.get("lid_lower", 0.0)
             
-            x0, x1 = dst["corner_inner"][0], dst["corner_outer"][0]
-            xs_up = np.linspace(x0, x1, steps + 1)
-            ys_up = a_up * xs_up**2 + b_up * xs_up + c_up
-            # 强制眼角精确闭合
-            ys_up[0] = dst["corner_inner"][1]
-            ys_up[-1] = dst["corner_outer"][1]
+            upper_peak = max(-2, UPPER_PEAK - blink * BLINK_DROP - lid_upper * LID_UPPER_DROP)
+            lower_bot = max(-2, LOWER_BOT - squint * SQUINT_LIFT - lid_lower * LID_LOWER_LIFT)
             
-            # ── 下眼睑：7点拟合（含眼角，逆序）──
-            low_names = ["corner_outer", "lower_4", "lower_3",
-                         "lower_2", "lower_1", "lower_0", "corner_inner"]
-            xs = np.array([dst[n][0] for n in low_names], dtype=np.float32)
-            ys = np.array([dst[n][1] for n in low_names], dtype=np.float32)
-            A = np.vstack([xs**2, xs, np.ones_like(xs)]).T
-            a_lo, b_lo, c_lo = np.linalg.lstsq(A, ys, rcond=None)[0]
+            pts = []
+            # ── 上眼睑：从左到右 ──
+            for i in range(steps + 1):
+                t = i / steps
+                x = int(cx - ew + 2 * ew * t)
+                y_offset = upper_peak * (1 - (2*t - 1)**2)
+                y = int(cy - y_offset)
+                pts.append((x, y))
+            # ── 下眼睑：从右到左（保证连续闭合）──
+            for i in range(steps + 1):
+                t = i / steps
+                x = int(cx + ew - 2 * ew * t)
+                y_offset = lower_bot * (1 - (2*t - 1)**2)
+                y = int(cy + y_offset)
+                pts.append((x, y))
             
-            xs_lo = np.linspace(x1, x0, steps + 1)
-            ys_lo = a_lo * xs_lo**2 + b_lo * xs_lo + c_lo
-            # 强制眼角精确闭合
-            ys_lo[0] = dst["corner_outer"][1]
-            ys_lo[-1] = dst["corner_inner"][1]
-            
-            # ── 合并为闭合环（首尾均为 corner_inner，天然闭合）──
-            ring = np.column_stack([
-                np.concatenate([xs_up, xs_lo]),
-                np.concatenate([ys_up, ys_lo])
-            ])
-            return np.array(ring, dtype=np.int32)
+            return np.array(pts, np.int32)
     
         def render_frame(self, channels: dict[str, float]) -> np.ndarray:
             """
-            平滑参数渲染引擎 (Smooth Parametric Render)
+            标准参数渲染引擎 (Parametric Standard Render)
             
-            原理：
-              不用三角网格 warp（会产生三角形边界毛刺），
-              改用从 deform() 算出的变形控制点拟合抛物线，
-              生成 40+ 点平滑眼睑环 → 直接画线。
+            原理（匹配工程底膜驱动规范 §4.4）：
+              眼睑环使用标准抛物线公式直接计算，不走 deform() 控制点。
+              deform() 仅负责瞳孔/虹膜/眉毛。
+              输出为纯黑白二值轮廓（LINE_8），无抗锯齿。
             
             输出: (361, 690, 3) uint8 — R=眼眶, G=眉, B=虹膜+瞳孔
             """
@@ -316,8 +309,8 @@ else:
             for mesh in self.meshes:
                 dst_pts = mesh.deform(channels)
                 
-                # ── R 通道：抛物线拟合平滑眼睑环 ──
-                ring = self._smooth_ring(dst_pts)
+                # ── R 通道：直接参数法眼睑环（不走 deform）──
+                ring = self._parametric_eyelid(mesh, channels)
                 cv2.polylines(canvas, [ring], True,
                               (0, 0, 255), 8, cv2.LINE_8)
                 
@@ -341,7 +334,7 @@ else:
                 iris_r = max(2, int(22
                     * (1.0 + i_scale * (IRIS_SCALE_RANGE - 1.0))
                     * (1.0 + cornea_bulge * 0.15)))
-                cv2.circle(canvas, (mesh.cx, mesh.cy), iris_r,
+                cv2.circle(canvas, dst_pts["pupil"], iris_r,
                            (255, 0, 0), -1, cv2.LINE_8)
                 
                 if blink < 0.95:
