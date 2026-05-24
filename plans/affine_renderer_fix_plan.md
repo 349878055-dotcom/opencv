@@ -97,7 +97,31 @@ UPPER_PEAK = 45      # 上眼睑抛物线峰值
 LOWER_BOT = 38       # 下眼睑抛物线谷值 (45 * 0.85)
 ```
 
-## 四、验证计划
+## 四、增量发现：LINE_AA → LINE_8（2026-05-24 验证并应用）
+
+### 问题
+[`affine_renderer.py`](gaze_engine/affine_renderer.py) 全部 4 处绘图使用 `cv2.LINE_AA`。
+结合 [`micro_jitter.py`](gaze_engine/micro_jitter.py) 对 pupil_x/y 施加的 14Hz 微颤动，
+相邻帧间 LINE_AA 产生的半透明边缘像素值跳变 → 扩散引擎看到"闪烁边缘"→ 成品纹理毛刺。
+
+### 修改
+| 位置 | 从 | 到 |
+|------|-----|-----|
+| [眼睑 polylines](gaze_engine/affine_renderer.py:322) | `cv2.LINE_AA` | `cv2.LINE_8` |
+| [眉毛 polylines](gaze_engine/affine_renderer.py:331) | `cv2.LINE_AA` | `cv2.LINE_8` |
+| [虹膜 circle](gaze_engine/affine_renderer.py:346) | `cv2.LINE_AA` | `cv2.LINE_8` |
+| [瞳孔 circle](gaze_engine/affine_renderer.py:351) | `cv2.LINE_AA` | `cv2.LINE_8` |
+
+### 原理
+硬边缘（LINE_8）→ 像素值只有 0 或 255 → 相邻帧无中间值跳变 → 稳定骨架。
+微颤动依然存在于 pupil_x/y 指令集中，扩散引擎能感知到"瞳孔在动"，但边缘不再闪烁。
+
+### 后续如果觉得"不够活"
+不要改回 LINE_AA。应该调 micro_jitter.py 的频率/幅度参数：
+- 降低频率（14Hz → 3-5Hz）产生更优雅的扫视摆动
+- 增加幅度补偿，让瞳孔移动更具物理惯性感
+
+## 五、验证计划
 
 | 检查项 | 方法 | 预期 |
 |--------|------|------|

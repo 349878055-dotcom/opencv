@@ -319,7 +319,7 @@ else:
                 # ── R 通道：抛物线拟合平滑眼睑环 ──
                 ring = self._smooth_ring(dst_pts)
                 cv2.polylines(canvas, [ring], True,
-                              (0, 0, 255), 8, cv2.LINE_AA)
+                              (0, 0, 255), 8, cv2.LINE_8)
                 
                 # ── G 通道：眉毛直接 3 点折线 ──
                 brow = np.array([
@@ -328,7 +328,7 @@ else:
                     dst_pts["brow_outer"],
                 ], dtype=np.int32)
                 cv2.polylines(canvas, [brow], False,
-                              (0, 255, 0), 8, cv2.LINE_AA)
+                              (0, 255, 0), 8, cv2.LINE_8)
             
             # ── B 通道：虹膜完美实心圆 + 瞳孔环 ──
             for mesh in self.meshes:
@@ -342,12 +342,12 @@ else:
                     * (1.0 + i_scale * (IRIS_SCALE_RANGE - 1.0))
                     * (1.0 + cornea_bulge * 0.15)))
                 cv2.circle(canvas, (mesh.cx, mesh.cy), iris_r,
-                           (255, 0, 0), -1, cv2.LINE_AA)
+                           (255, 0, 0), -1, cv2.LINE_8)
                 
                 if blink < 0.95:
                     pupil_r = max(2, int(PUPIL_R_BASE * (1.0 + p_scale * 0.5)))
                     cv2.circle(canvas, dst_pts["pupil"], pupil_r,
-                               (255, 0, 0), 2, cv2.LINE_AA)
+                               (255, 0, 0), 2, cv2.LINE_8)
             
             final_output = cv2.resize(canvas, (OUTPUT_W, OUTPUT_H),
                                       interpolation=cv2.INTER_AREA)
