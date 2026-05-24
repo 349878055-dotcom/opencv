@@ -94,28 +94,34 @@ class EyeMesh:
         self.triangles = self._build_triangles()
         
     def _build_source(self) -> dict[str, tuple[float, float]]:
-        ew, eh = EYE_W, EYE_H
+        ew = EYE_W  # 150
+        # 精确匹配 base_mesh_gen._eye_ring 抛物线几何
+        # 上眼睑 peak=45, 下眼睑 bot=38, 虹膜半径=22
         return {
             "corner_inner": (-ew, 0),
             "corner_outer": (ew, 0),
-            "upper_0": (-int(ew*0.85), -int(eh*0.7)),
-            "upper_1": (-int(ew*0.5), -int(eh*0.9)),
-            "upper_2": (0, -int(eh*1.0)),
-            "upper_3": (int(ew*0.5), -int(eh*0.9)),
-            "upper_4": (int(ew*0.85), -int(eh*0.7)),
-            "lower_0": (-int(ew*0.85), int(eh*0.6)),
-            "lower_1": (-int(ew*0.5), int(eh*0.8)),
-            "lower_2": (0, int(eh*0.9)),
-            "lower_3": (int(ew*0.5), int(eh*0.8)),
-            "lower_4": (int(ew*0.85), int(eh*0.6)),
-            "iris_top": (0, -int(eh*0.55)),
-            "iris_bottom": (0, int(eh*0.55)),
-            "iris_left": (-int(ew*0.35), 0),
-            "iris_right": (int(ew*0.35), 0),
+            # 上眼睑沿 _eye_ring 抛物线取点: y = 45*(1-(2t-1)^2)
+            "upper_0": (-int(ew*0.85), -12),
+            "upper_1": (-int(ew*0.5), -34),
+            "upper_2": (0, -45),
+            "upper_3": (int(ew*0.5), -34),
+            "upper_4": (int(ew*0.85), -12),
+            # 下眼睑沿 _eye_ring 抛物线取点: y = 38*(1-(2t-1)^2)
+            "lower_0": (-int(ew*0.85), 10),
+            "lower_1": (-int(ew*0.5), 29),
+            "lower_2": (0, 38),
+            "lower_3": (int(ew*0.5), 29),
+            "lower_4": (int(ew*0.85), 10),
+            # 虹膜边界（匹配 base_mesh_gen.IRIS_R = 22）
+            "iris_top": (0, -22),
+            "iris_bottom": (0, 22),
+            "iris_left": (-22, 0),
+            "iris_right": (22, 0),
             "pupil": (0, 0),
-            "brow_inner": (-int(ew*0.7), -int(eh*1.7)),
-            "brow_peak": (0, -int(eh*1.9)),
-            "brow_outer": (int(ew*0.7), -int(eh*1.6)),
+            # 眉毛近似位置（source 网格对称近似）
+            "brow_inner": (-130, -90),
+            "brow_peak": (0, -115),
+            "brow_outer": (130, -90),
         }
     
     def _build_triangles(self) -> list[list[str]]:
@@ -233,47 +239,64 @@ else:
     
         def render_frame(self, channels: dict[str, float]) -> np.ndarray:
             """
-            渲染一帧工程底模
-            输入: 12 通道 {name: float}
-            输出: (361, 690, 3) uint8 — R=眼眶, G=眉, B=瞳孔
+            网格仿射形变引擎 (Mesh Warp)
+            直接读取并变形工程底图，拒绝重新渲染，对齐扩散引擎输入格式。
             """
-            canvas = np.zeros((OUTPUT_H, OUTPUT_W, 3), dtype=np.uint8)
-            blink = channels.get("blink", 0.0)
-            
+            # 1. 动态加载真实的工程底图
+            if not hasattr(self, 'base_img'):
+                img = cv2.imread(str(TEXTURE_PATH))
+                if img is None:
+                    raise RuntimeError(f"找不到底图: {TEXTURE_PATH}。请确认文件存在。")
+                self.base_img = img
+
+            # 2. 在 1024x1024 原始空间准备画布
+            canvas = np.zeros_like(self.base_img)
+
+            # 3. 遍历双眼，读取变形后的网格，应用真实的纹理映射
             for mesh in self.meshes:
-                dst = mesh.deform(channels)
-                
-                # 缩放全部目标点到输出坐标系
-                d = {name: self._sp(pt) for name, pt in dst.items()}
-                
-                # ── R 通道：眼眶闭合路径 ──
-                eyelid = np.int32([d["corner_inner"], d["upper_0"], d["upper_1"],
-                                   d["upper_2"], d["upper_3"], d["upper_4"],
-                                   d["corner_outer"], d["lower_4"], d["lower_3"],
-                                   d["lower_2"], d["lower_1"], d["lower_0"],
-                                   d["corner_inner"]])
-                cv2.polylines(canvas, [eyelid], isClosed=True,
-                              color=(0, 0, 255), thickness=EYELID_THICK, lineType=cv2.LINE_AA)
-                
-                # 虹膜圈
-                iris = np.int32([d["iris_left"], d["iris_top"], d["iris_right"],
-                                 d["iris_bottom"], d["iris_left"]])
-                cv2.polylines(canvas, [iris], isClosed=True,
-                              color=(0, 0, 255), thickness=IRIS_RING_THICK, lineType=cv2.LINE_AA)
-                
-                # ── G 通道：眉骨架线 ──
-                brow = np.int32([d["brow_inner"], d["brow_peak"], d["brow_outer"]])
-                cv2.polylines(canvas, [brow], isClosed=False,
-                              color=(0, 255, 0), thickness=BROW_THICK, lineType=cv2.LINE_AA)
-                
-                # ── B 通道：瞳孔 ──
-                p_scale = channels.get("pupil_scale", 0.0)
-                pupil_r = max(2, int(PUPIL_R_BASE * (1.0 + p_scale * 0.5)))
-                if blink < 0.95:
-                    cv2.circle(canvas, d["pupil"], pupil_r,
-                               color=(255, 0, 0), thickness=PUPIL_THICK, lineType=cv2.LINE_AA)
-            
-            return canvas
+                src_pts = mesh.get_src_pts()
+                dst_pts = mesh.deform(channels)
+
+                # 遍历 18 个三角形执行分块仿射变形
+                for tri in mesh.triangles:
+                    pt1, pt2, pt3 = tri
+                    src_tri = np.array([src_pts[pt1], src_pts[pt2], src_pts[pt3]], dtype=np.float32)
+                    dst_tri = np.array([dst_pts[pt1], dst_pts[pt2], dst_pts[pt3]], dtype=np.float32)
+
+                    # 计算源区域与目标区域的 Bounding Box
+                    r1 = cv2.boundingRect(np.array(src_tri, dtype=np.int32))
+                    r2 = cv2.boundingRect(np.array(dst_tri, dtype=np.int32))
+                    x1, y1, w1, h1 = r1
+                    x2, y2, w2, h2 = r2
+
+                    if w1 == 0 or h1 == 0 or w2 == 0 or h2 == 0:
+                        continue
+
+                    # 计算局部偏移坐标（注意：NumPy 2.x 中减法会提升 float32→float64，
+                    # 必须显式转回 float32，否则 OpenCV getAffineTransform 报错）
+                    src_tri_crop = (src_tri - [x1, y1]).astype(np.float32)
+                    dst_tri_crop = (dst_tri - [x2, y2]).astype(np.float32)
+
+                    # 截取底图中的局部三角形原始像素
+                    img_crop = self.base_img[y1:y1+h1, x1:x1+w1]
+
+                    # 计算局部仿射变换矩阵并形变
+                    M = cv2.getAffineTransform(src_tri_crop, dst_tri_crop)
+                    warped = cv2.warpAffine(img_crop, M, (w2, h2), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+
+                    # 生成目标三角形遮罩，确保只贴图三角形区域
+                    mask = np.zeros((h2, w2, 3), dtype=np.float32)
+                    cv2.fillConvexPoly(mask, np.array(dst_tri_crop, dtype=np.int32), (1.0, 1.0, 1.0), cv2.LINE_AA, 0)
+
+                    # 贴回主画布
+                    roi = canvas[y2:y2+h2, x2:x2+w2]
+                    if roi.shape == mask.shape:
+                        # 用原图底色替换掉黑色背景区域
+                        roi[:] = np.where(mask > 0.5, warped, roi)
+
+            # 4. 整体缩放到参照图 5.png 的输出尺寸 (690, 361)
+            final_output = cv2.resize(canvas, (OUTPUT_W, OUTPUT_H), interpolation=cv2.INTER_AREA)
+            return final_output
     
         def render_batch(self, json_path: str | Path, out_dir: str | Path, fps: int = 30) -> Path:
             out_dir = Path(out_dir)
