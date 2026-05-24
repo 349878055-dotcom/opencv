@@ -59,6 +59,10 @@ EYE_H = 72
 PUPIL_R_BASE = 16
 IRIS_R_BASE = 44
 
+# ── 底图抛物线常量（匹配 base_mesh_gen._eye_ring）───
+UPPER_PEAK = 45      # 上眼睑抛物线峰值（px）
+LOWER_BOT = 38       # 下眼睑抛物线谷值（45 * 0.85）
+
 # ── 变形幅度常量 ─────────────────────────────────────
 BLINK_DROP = 40
 SQUINT_LIFT = 25
@@ -154,61 +158,79 @@ class EyeMesh:
     
     def deform(self, channels: dict[str, float]) -> dict[str, tuple[int, int]]:
         """
-        12 通道全部参与网格变形：
+        12 通道驱动变形 — 基于底图抛物线公式直接计算。
+        
+        核心原理（修复前 vs 修复后）：
+        
+        修复前（错误）：y_新 = y_原 + 指令值 * 线性衰减因子
+                  → 眼角被拽下来，抛物线被压成折线
+        
+        修复后（正确）：y_新 = cy − 当前峰值 × (1 − (2t−1)²)
+                  → 眼角 (t=0, t=1) 天然锁死在 cy，
+                    中间 (t=0.5) 受峰值控制，
+                    曲线始终保持完美抛物线
+        
         pupil_x/y, blink, eyebrow, pupil_scale, iris_scale,
         cornea_bulge, squint, brow_raise, lid_upper, lid_lower, eye_gloss
         """
-        src = self.get_src_pts()
         dst = {}
+        cx, cy, ew = self.cx, self.cy, EYE_W
         
-        px = channels.get("pupil_x", 0.0)
-        py = channels.get("pupil_y", 0.0)
         blink = channels.get("blink", 0.0)
-        eyebrow = channels.get("eyebrow", 0.0)
         squint = channels.get("squint", 0.0)
-        b_raise = channels.get("brow_raise", 0.0)
         lid_upper = channels.get("lid_upper", 0.0)
         lid_lower = channels.get("lid_lower", 0.0)
+        eyebrow = channels.get("eyebrow", 0.0)
+        b_raise = channels.get("brow_raise", 0.0)
+        px = channels.get("pupil_x", 0.0)
+        py = channels.get("pupil_y", 0.0)
         i_scale = channels.get("iris_scale", 0.0)
         cornea_bulge = channels.get("cornea_bulge", 0.0)
         
-        # 眼角固定
-        dst["corner_inner"] = src["corner_inner"]
-        dst["corner_outer"] = src["corner_outer"]
+        # ── 眼角固定 ──
+        x0, x1 = cx - ew, cx + ew  # corner_inner.x, corner_outer.x
+        dst["corner_inner"] = (x0, cy)
+        dst["corner_outer"] = (x1, cy)
         
-        # 上眼睑
-        upper_drop = blink * BLINK_DROP + lid_upper * LID_UPPER_DROP
-        for name in ["upper_0", "upper_1", "upper_2", "upper_3", "upper_4"]:
-            x, y = src[name]
-            factor = 1.0 - abs(x - self.cx) / EYE_W * 0.4
-            dst[name] = (x, int(y + upper_drop * factor))
+        # ── 上眼睑：抛物线公式 y = cy − peak × (1−(2t−1)²) ──
+        upper_peak = max(-2, UPPER_PEAK - blink * BLINK_DROP - lid_upper * LID_UPPER_DROP)
+        for name, x in [("upper_0", x0 + 22), ("upper_1", x0 + 75),
+                         ("upper_2", cx),    ("upper_3", x1 - 75),
+                         ("upper_4", x1 - 22)]:
+            t = (x - x0) / (2 * ew)
+            y_offset = upper_peak * (1 - (2*t - 1)**2)
+            dst[name] = (x, int(cy - y_offset))
         
-        # 下眼睑
-        lower_lift = squint * SQUINT_LIFT + lid_lower * LID_LOWER_LIFT
-        for name in ["lower_0", "lower_1", "lower_2", "lower_3", "lower_4"]:
-            x, y = src[name]
-            factor = 1.0 - abs(x - self.cx) / EYE_W * 0.3
-            dst[name] = (x, int(y - lower_lift * factor))
+        # ── 下眼睑：抛物线公式 y = cy + bot × (1−(2t−1)²) ──
+        lower_bot = max(-2, LOWER_BOT - squint * SQUINT_LIFT - lid_lower * LID_LOWER_LIFT)
+        # 下眼睑从右到左，t 从 0 到 1
+        for name, x in [("lower_4", x1 - 22), ("lower_3", x1 - 75),
+                         ("lower_2", cx),      ("lower_1", x0 + 75),
+                         ("lower_0", x0 + 22)]:
+            t = (x1 - x) / (2 * ew)  # 反向：右→左
+            y_offset = lower_bot * (1 - (2*t - 1)**2)
+            dst[name] = (x, int(cy + y_offset))
         
-        # 虹膜（iris_scale + cornea_bulge 共同影响）
+        # ── 虹膜（iris_scale + cornea_bulge）──
         iris_s = 1.0 + i_scale * (IRIS_SCALE_RANGE - 1.0)
         bulge_s = 1.0 + cornea_bulge * 0.15
         iris_scale_val = iris_s * bulge_s
-        for name in ["iris_top", "iris_bottom", "iris_left", "iris_right"]:
-            x, y = src[name]
-            dx, dy = x - self.cx, y - self.cy
-            dst[name] = (int(self.cx + dx * iris_scale_val), int(self.cy + dy * iris_scale_val))
+        for name, dx, dy in [("iris_top", 0, -22), ("iris_bottom", 0, 22),
+                              ("iris_left", -22, 0), ("iris_right", 22, 0)]:
+            dst[name] = (int(cx + dx * iris_scale_val),
+                         int(cy + dy * iris_scale_val))
         
-        # 瞳孔
+        # ── 瞳孔（随 pupil_x/y 偏移）──
         pupil_s = 1.0 + channels.get("pupil_scale", 0.0) * (PUPIL_SCALE_RANGE - 1.0)
-        dst["pupil"] = (int(self.cx + px * PUPIL_X_RANGE * pupil_s),
-                        int(self.cy + py * PUPIL_Y_RANGE * pupil_s))
+        dst["pupil"] = (int(cx + px * PUPIL_X_RANGE * pupil_s),
+                        int(cy + py * PUPIL_Y_RANGE * pupil_s))
         
-        # 眉毛
+        # ── 眉毛 ──
         brow_offset = eyebrow * BROW_DOWN - b_raise * BROW_RAISE
-        for name in ["brow_inner", "brow_peak", "brow_outer"]:
-            x, y = src[name]
-            dst[name] = (x, int(y + brow_offset))
+        for name, dx, dy in [("brow_inner", -130, -90),
+                              ("brow_peak", 0, -115),
+                              ("brow_outer", 130, -90)]:
+            dst[name] = (int(cx + dx), int(cy + dy + brow_offset))
         
         return dst
 
@@ -235,15 +257,16 @@ else:
     
         def _smooth_ring(self, dst: dict, steps: int = 40) -> np.ndarray:
             """
-            从变形控制点拟合抛物线，生成平滑眼睑环（40+点）
-            匹配 base_mesh_gen._eye_ring 的平滑度，但使用变形后的控制点。
+            从变形控制点拟合抛物线，生成平滑眼睑环（82点，精确闭合）
             
-            上眼睑：用 upper_0~4 拟合 y = a*x² + b*x + c
-            下眼睑：用 lower_0~4 拟合 y = a*x² + b*x + c（逆序）
-            合并为闭合环 → cv2.polylines 绘制。
+            关键：把 corner_inner/corner_outer 也加入抛物线拟合，
+            避免外推导致眼角跑偏 → 消除"眼睛边上多出一块"。
+            
+            上下眼睑共用眼角点，首尾天然闭合 → 消除毛刺。
             """
-            # ── 上眼睑抛物线拟合 ──
-            up_names = ["upper_0", "upper_1", "upper_2", "upper_3", "upper_4"]
+            # ── 上眼睑：7点拟合（含眼角）──
+            up_names = ["corner_inner", "upper_0", "upper_1",
+                        "upper_2", "upper_3", "upper_4", "corner_outer"]
             xs = np.array([dst[n][0] for n in up_names], dtype=np.float32)
             ys = np.array([dst[n][1] for n in up_names], dtype=np.float32)
             A = np.vstack([xs**2, xs, np.ones_like(xs)]).T
@@ -252,23 +275,30 @@ else:
             x0, x1 = dst["corner_inner"][0], dst["corner_outer"][0]
             xs_up = np.linspace(x0, x1, steps + 1)
             ys_up = a_up * xs_up**2 + b_up * xs_up + c_up
+            # 强制眼角精确闭合
+            ys_up[0] = dst["corner_inner"][1]
+            ys_up[-1] = dst["corner_outer"][1]
             
-            # ── 下眼睑抛物线拟合 ──
-            low_names = ["lower_0", "lower_1", "lower_2", "lower_3", "lower_4"]
+            # ── 下眼睑：7点拟合（含眼角，逆序）──
+            low_names = ["corner_outer", "lower_4", "lower_3",
+                         "lower_2", "lower_1", "lower_0", "corner_inner"]
             xs = np.array([dst[n][0] for n in low_names], dtype=np.float32)
             ys = np.array([dst[n][1] for n in low_names], dtype=np.float32)
             A = np.vstack([xs**2, xs, np.ones_like(xs)]).T
             a_lo, b_lo, c_lo = np.linalg.lstsq(A, ys, rcond=None)[0]
             
-            xs_lo = np.linspace(x1, x0, steps + 1)  # 从右到左
+            xs_lo = np.linspace(x1, x0, steps + 1)
             ys_lo = a_lo * xs_lo**2 + b_lo * xs_lo + c_lo
+            # 强制眼角精确闭合
+            ys_lo[0] = dst["corner_outer"][1]
+            ys_lo[-1] = dst["corner_inner"][1]
             
-            # ── 合并为闭合环 ──
+            # ── 合并为闭合环（首尾均为 corner_inner，天然闭合）──
             ring = np.column_stack([
                 np.concatenate([xs_up, xs_lo]),
                 np.concatenate([ys_up, ys_lo])
             ])
-            return np.int32(ring)
+            return np.array(ring, dtype=np.int32)
     
         def render_frame(self, channels: dict[str, float]) -> np.ndarray:
             """
@@ -292,11 +322,11 @@ else:
                               (0, 0, 255), 8, cv2.LINE_AA)
                 
                 # ── G 通道：眉毛直接 3 点折线 ──
-                brow = np.int32([
+                brow = np.array([
                     dst_pts["brow_inner"],
                     dst_pts["brow_peak"],
                     dst_pts["brow_outer"],
-                ])
+                ], dtype=np.int32)
                 cv2.polylines(canvas, [brow], False,
                               (0, 255, 0), 8, cv2.LINE_AA)
             

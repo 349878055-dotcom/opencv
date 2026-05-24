@@ -14,10 +14,19 @@
 根目录（AI 第一眼看到）
 ├── AI_INDEX.md             ← 本文件（代码图谱）
 ├── README.md               ← 项目简介
+├── .clinerules             ← Roo Code AI 行为规则
 ├── .cursorrules            ← Cursor AI 行为规则
+├── .env.example            ← 环境变量示例
+├── .gitignore              ← Git 忽略规则
 ├── 一键打开能量工作台.sh     ← 启动入口
 ├── __init__.py              ← 项目初始化
 ├── asset_lib.py             ← 资产库路径工具
+│
+├── eye_asset/               ← 眼眉视觉资产
+│   └── derived/             ← 派生资产（眼睑素材等）
+│
+├── plans/                   ← 计划文档
+│   └── affine_renderer_fix_plan.md ← 仿射渲染修复计划
 │
 ├── tools/                   ← 网页工作台 + HTTP 服务
 │   ├── 01_工作台服务/        ← 主应用
@@ -28,7 +37,7 @@
 │   ├── 04_缓存数据/          ← 运行时数据
 │   └── 05_其他工具/          ← 独立辅助工具
 │
-├── gaze_engine/             ← 核心引擎 (19 模块)
+├── gaze_engine/             ← 核心引擎 (25 模块)
 │   ├── control_surface.py       ← 唯一真源: 16预设
 │   ├── slider_schema.py         ← 数据类: SliderPacket
 │   ├── slider_bounds.py         ← L1 禁区
@@ -50,10 +59,12 @@
 │   ├── export_diffusion_metronome.py ← 扩散节拍表
 │   ├── batch_presets.py         ← 五样本烘焙
 │   ├── persona_compiler.py      ← 人格编译
+│   ├── persona_matrix.json      ← 9人格矩阵
 │   ├── base_mesh_gen.py         ← 基础网格
 │   ├── affine_renderer.py       ← ⚠️ 禁用中 (_AFFINE_DISABLED)
 │   ├── audio_compiler.py        ← ⚠️ 禁用中 (_AUDIO_DISABLED)
-│   └── persona_matrix.json      ← 9人格矩阵
+│   ├── __init__.py              ← Python 包初始化
+│   └── test_persona_integrity.py ← 人格完整性自检
 │
 ├── contracts/                ← 合同规范
 │   ├── 01_总纲/               ← 全局理论+工程
@@ -70,14 +81,18 @@
 │   ├── s01_从能量生成02.sh        ← 主出厂（CLI）
 │   ├── s01_五样本烘焙02.sh        ← 批量烘焙
 │   ├── s01_导出扩散节拍表.sh       ← 导出
-│   └── s01_设置OpenAI密钥.sh      ← 配置
+│   ├── s01_打开能量工作台.sh       ← 打开能量工作台
+│   ├── s01_设置OpenAI密钥.sh      ← 配置
+│   ├── s01_env.sh                 ← 环境变量
+│   └── README.md                  ← 目录说明
 │
 ├── docs/                     ← 非 AI 直接需求
 │   ├── PROJECT_FILES.md      ← 文件清单
 │   └── TOKEN_BUDGET.md       ← Token 优化指南
 │
 └── 资产库/                   ← 数据存储
-    └── 人格包/S01_林青霞_东方不败/
+    ├── 人格包/S01_林青霞_东方不败/
+    └── 人格包/S02_温碧霞_魅惑者/
 ```
 
 ---

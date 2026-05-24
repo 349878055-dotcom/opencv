@@ -1,12 +1,14 @@
 # 能量控制台 · 全量文件清单
 
-> 生成日期: 2026-05-21 · 最后更新: 2026-05-23
+> 生成日期: 2026-05-24 · 最后更新: 2026-05-24
 > 架构变更：已脱离 ComfyUI，全 Web 模式。`nodes_v1.py` → `_archive/`，`workflows/` 已删除。
 > 新入口：[`tools/01_工作台服务/serve_workbench.py`](tools/01_工作台服务/serve_workbench.py)（HTTP API）+ [`tools/01_工作台服务/能量工作台.html`](tools/01_工作台服务/能量工作台.html)（前端）
 
 ---
 
 ## 🧠 一、核心Python引擎 (`gaze_engine/`)
+
+共 25 个 Python 模块 + 1 个 JSON 矩阵 + 1 个测试文件。
 
 ### 数据模型 & 预设（唯一真源）
 
@@ -57,16 +59,11 @@
 | [`gaze_engine/workbench_context.py`](gaze_engine/workbench_context.py) | **操作台上下文管理**：自然语言+能量图说明+知识库+L1附件，与Comfy节点同步 |
 | [`gaze_engine/node1_defaults.py`](gaze_engine/node1_defaults.py) | **节点1默认值加载**：读取prompts/下的系统Prompt和知识库文本，占位符检测 |
 
-### 扩散 & 导出
+### 扩散 & 人格 & 视觉模块
 
 | 文件 | 作用 |
 |------|------|
 | [`gaze_engine/export_diffusion_metronome.py`](gaze_engine/export_diffusion_metronome.py) | **扩散节拍表导出**：从烘焙02提取节奏时刻+通道提示语，生成05_扩散节拍表.txt，供Wan扩散引擎使用 |
-
-### 人格 & 视觉模块
-
-| 文件 | 作用 |
-|------|------|
 | [`gaze_engine/persona_compiler.py`](gaze_engine/persona_compiler.py) | **人格编译**：从资产库人格包加载人格定义，生成人格化参数 |
 | [`gaze_engine/persona_matrix.json`](gaze_engine/persona_matrix.json) | **9人格矩阵**：人格ID→性格偏向的映射数据（JSON静态） |
 | [`gaze_engine/base_mesh_gen.py`](gaze_engine/base_mesh_gen.py) | **基础网格生成**：眼眉区域三角网格顶点定义 |
@@ -91,7 +88,17 @@
 
 ---
 
-## 🖥️ 三、UI & 工具 (`tools/`)
+## 👁️ 三、眼眉资产 (`eye_asset/`)
+
+| 路径 | 内容 |
+|------|------|
+| [`eye_asset/derived/eyelid_raw.png`](eye_asset/derived/eyelid_raw.png) | 眼睑原始素材（派生资产） |
+
+> 用于仿射渲染管线的视觉资产。
+
+---
+
+## 🖥️ 四、UI & 工具 (`tools/`)
 
 ### 工作台服务（主入口）
 
@@ -115,6 +122,13 @@
 | [`tools/03_工具脚本/build_standalone_share.py`](tools/03_工具脚本/build_standalone_share.py) | 从能量工作台.html生成单文件分享版（内嵌pipeline_cache） |
 | [`tools/03_工具脚本/build_workbench_pipeline_cache.py`](tools/03_工具脚本/build_workbench_pipeline_cache.py) | **管线缓存生成**：为16个预设预编译全量JSON缓存(pipeline_cache/*.json)，供工作台加载 |
 
+### 缓存数据（运行时）
+
+| 路径 | 内容 |
+|------|------|
+| `tools/04_缓存数据/pipeline_cache/` | 16预设的预编译全量JSON缓存，供工作台高速加载 |
+| `tools/04_缓存数据/preview_cache/` | 预览帧缓存（_bench_cap, _bench_ff, five_frames, skeleton_frames） |
+
 ### 其他工具
 
 | 文件 | 作用 |
@@ -123,7 +137,7 @@
 
 ---
 
-## 📜 四、合同 & 规范 (`contracts/`)
+## 📜 五、合同 & 规范 (`contracts/`)
 
 | 文件 | 内容 |
 |------|------|
@@ -138,7 +152,7 @@
 
 ---
 
-## 📜 五、脚本 (`scripts/`)
+## 📜 六、脚本 (`scripts/`)
 
 ### 主流程脚本
 
@@ -154,7 +168,7 @@
 
 ---
 
-## 🗂️ 六、根目录 & 配置
+## 🗂️ 七、根目录 & 配置
 
 ### 根目录文件
 
@@ -175,10 +189,13 @@
 | 路径 | 内容 |
 |------|------|
 | `资产库/README.txt` | 资产库目录说明 |
-| `资产库/人格包/S01_林青霞_东方不败/人格包.json` | 林青霞东方不败人格定义 |
+| `资产库/人格包/S01_林青霞_东方不败/人格包.json` | 林青霞·东方不败人格定义 |
 | `资产库/人格包/S01_林青霞_东方不败/施压瞬间凝视/情绪.json` | 施压瞬间凝视情绪配置 |
 | `资产库/人格包/S01_林青霞_东方不败/施压瞬间凝视/指令/` | 各阶段产物JSON(01_滑杆包, 02_烘焙, 03_能量包络, 04_全量, 05_扩散节拍表, 06_平庸纠正) |
 | `资产库/人格包/S01_林青霞_东方不败/施压瞬间凝视/脉冲样本_五连/` | 五个情绪样本JSON + manifest.json + blend/ |
+| `资产库/人格包/S02_温碧霞_魅惑者/人格包.json` | 温碧霞·魅惑者人格定义 |
+| `资产库/人格包/S02_温碧霞_魅惑者/魅惑勾人/情绪.json` | 魅惑勾人情绪配置 |
+| `资产库/人格包/S02_温碧霞_魅惑者/魅惑勾人/指令/` | 各阶段产物JSON(01_操作台上下文, 01_滑杆包, 01_自然语言) |
 
 ### Prompt 模板
 
@@ -187,9 +204,15 @@
 | [`prompts/node1_system_prompt.txt`](prompts/node1_system_prompt.txt) | 节点1系统Prompt（LLM角色+规则） |
 | [`prompts/node1_knowledge_base.txt`](prompts/node1_knowledge_base.txt) | 节点1知识库（16情绪+滑杆） |
 
+### 计划文档
+
+| 路径 | 作用 |
+|------|------|
+| [`plans/affine_renderer_fix_plan.md`](plans/affine_renderer_fix_plan.md) | affine_renderer 重建修复计划 |
+
 ---
 
-## 🔗 七、数据流转全图
+## 🔗 八、数据流转全图
 
 ```
 客户自然语言
