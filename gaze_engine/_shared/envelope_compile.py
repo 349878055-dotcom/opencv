@@ -11,36 +11,29 @@ from __future__ import annotations
 import math
 from typing import Any, Dict, List
 
-from gaze_engine.channel_contract import CANONICAL_KEYS
-from gaze_engine.slider_schema import HoldSegment, SliderPacket
-from gaze_engine.persona_compiler import clamp_to_safe_range
+from typing import Any, Dict, List, Optional, Tuple
+
+from gaze_engine._shared.channel_contract import CANONICAL_KEYS as _HUMAN_KEYS
+from gaze_engine._shared.slider_schema import HoldSegment, SliderPacket
+from gaze_engine._shared.persona_compiler import clamp_to_safe_range
+from gaze_engine.human.pad_weights import HUMAN_PAD_WEIGHTS, HUMAN_BASE_SCALE
+
+# ── 默认人类配置（向后兼容）──
+DEFAULT_CANONICAL_KEYS = _HUMAN_KEYS
+DEFAULT_PAD_WEIGHTS = HUMAN_PAD_WEIGHTS
+DEFAULT_BASE_SCALE = HUMAN_BASE_SCALE
 
 FRAME_COUNT_DEFAULT = 150
 FPS_DEFAULT = 30
 
 
 # ──────────────────────────────────────────────
-# 硬编码 PAD 骨骼权重（审美铁律）
+# PAD 骨骼权重 — 默认人类（来自 human/pad_weights.py）
+# 物种专用权重通过 channels_from_envelope() 的 pad_weights 参数注入
 # ──────────────────────────────────────────────
 # final_scale = Wp*P + Wa*A + Wd*D
-# 每个通道三元组 (Wp, Wa, Wd)
-_PAD_WEIGHTS: Dict[str, tuple[float, float, float]] = {
-    "pupil_x":      (0.0,  0.50,  0.40),  # 高 A/D → 眼神向前聚焦（"迎"）
-    "pupil_y":      (0.0,  0.50,  0.40),
-    "blink":        (0.0,  0.30,  0.10),
-    "eyebrow":      (0.0,  0.30, -0.35),  # D 负 → 负负得正 → 眉压下（"拒"）
-    "pupil_scale":  (0.10, 0.30,  0.20),
-    "iris_scale":   (0.10, 0.20,  0.10),
-    "cornea_bulge": (0.0,  0.40,  0.30),
-    "squint":       (0.10, 0.35,  0.20),
-    "brow_raise":   (0.10, 0.20, -0.20),  # 低 D → 挑眉抬起
-    "lid_upper":    (0.0,  0.50,  0.40),  # 高 A/D → 上眼睑紧张
-    "lid_lower":    (0.0,  0.30,  0.20),
-    "eye_gloss":    (0.30, 0.10,  0.0),   # 高 P → 湿润光泽
-}
-
-# 基础 scale（无 PAD 影响时的中性值）
-_BASE_SCALE: Dict[str, float] = {k: 0.30 for k in CANONICAL_KEYS}
+_PAD_WEIGHTS = DEFAULT_PAD_WEIGHTS
+_BASE_SCALE = DEFAULT_BASE_SCALE
 
 
 def _clamp01(u: float) -> float:
@@ -57,12 +50,33 @@ def _smoothstep(u: float) -> float:
     return u * u * (3.0 - 2.0 * u)
 
 
-def _compute_pad_scale(key: str, P: float, A: float, D: float) -> float:
-    """PAD 动态投影：返回通道放大权重（≥0，不钳位上限让包络自然限制）。"""
-    Wp, Wa, Wd = _PAD_WEIGHTS.get(key, (0.0, 0.3, 0.2))
-    base = _BASE_SCALE.get(key, 0.30)
+def compute_pad_scale(
+    key: str,
+    P: float,
+    A: float,
+    D: float,
+    pad_weights: dict[str, tuple[float, float, float]] | None = None,
+    base_scale: dict[str, float] | None = None,
+) -> float:
+    """PAD 动态投影：返回通道放大权重（≥0，不钳位上限让包络自然限制）。
+
+    Args:
+        key: 通道名
+        P, A, D: PAD 情绪维度
+        pad_weights: 物种专用 PAD 权重表（默认人类）
+        base_scale: 物种专用基础 scale（默认人类）
+    """
+    if pad_weights is None:
+        pad_weights = _PAD_WEIGHTS
+    if base_scale is None:
+        base_scale = _BASE_SCALE
+    Wp, Wa, Wd = pad_weights.get(key, (0.0, 0.3, 0.2))
+    base = base_scale.get(key, 0.30)
     s = base + P * Wp + A * Wa + D * Wd
     return max(0.0, s)
+
+# 别名：旧名向后兼容
+_compute_pad_scale = compute_pad_scale
 
 
 def _timing(packet: SliderPacket, frame_count: int) -> dict[str, int]:
@@ -179,8 +193,11 @@ def channels_from_envelope(
     A: float = 0.0,
     D: float = 0.0,
     frame_count: int = FRAME_COUNT_DEFAULT,
+    canonical_keys: list[str] | None = None,
+    pad_weights: dict[str, tuple[float, float, float]] | None = None,
+    base_scale: dict[str, float] | None = None,
 ) -> dict[str, list[float]]:
-    """E(t) × PAD → 12 轨全量（动态投影 + 微颤 + 安全钳位）。
+    """E(t) × PAD → N 轨全量（动态投影 + 微颤 + 安全钳位）。
 
     Args:
         packet:   滑杆包
@@ -189,7 +206,12 @@ def channels_from_envelope(
         A:        激活度 [-1.0, 1.0]
         D:        控制度 [-1.0, 1.0]
         frame_count: 帧数 (默认 150)
+        canonical_keys: 物种通道列表（默认人类 12 通道）
+        pad_weights:    物种 PAD 权重表（默认人类）
+        base_scale:     物种基础 scale（默认人类）
     """
+    if canonical_keys is None:
+        canonical_keys = DEFAULT_CANONICAL_KEYS
     # 钳位 PAD 到合法范围
     P = max(-1.0, min(1.0, P))
     A = max(-1.0, min(1.0, A))
@@ -209,8 +231,8 @@ def channels_from_envelope(
 
     # ── 逐通道动态投影 scale ──
     pad_scale: Dict[str, float] = {}
-    for key in CANONICAL_KEYS:
-        pad_scale[key] = _compute_pad_scale(key, P, A, D)
+    for key in canonical_keys:
+        pad_scale[key] = compute_pad_scale(key, P, A, D, pad_weights, base_scale)
 
     # ── 瞳孔方向（受 PAD 动态投影影响） ──
     # 高 A/D → 眼神聚焦幅度放大；高 P + 低 D → 收敛柔和
@@ -222,7 +244,7 @@ def channels_from_envelope(
     # ── 逐通道生成 ──
     result: Dict[str, list[float]] = {}
 
-    for key in CANONICAL_KEYS:
+    for key in canonical_keys:
         s = pad_scale[key]
         if key == "pupil_x":
             series = [clamp_to_safe_range(px[t]) for t in range(frame_count)]
@@ -249,7 +271,7 @@ def channels_from_envelope(
         result[key] = series
 
     # ── 注入生物微颤（micro_jitter） ──
-    from gaze_engine.micro_jitter import (
+    from gaze_engine._shared.micro_jitter import (
         default_micro_jitter_block,
         resolve_jitter_config,
     )
@@ -279,19 +301,19 @@ def channels_from_envelope(
 
     jitter_cfg = resolve_jitter_config(sparse_stub, frame_count, FPS_DEFAULT)
     if jitter_cfg.get("enabled"):
-        from gaze_engine.micro_jitter import apply_jitter_to_series
+        from gaze_engine._shared.micro_jitter import apply_jitter_to_series
 
         for ch in jitter_cfg.get("channels", []):
             if ch in result:
                 result[ch] = apply_jitter_to_series(result[ch], jitter_cfg, ch)
 
     # ── 最终安全钳位（二次保险） ──
-    for key in CANONICAL_KEYS:
+    for key in canonical_keys:
         result[key] = [clamp_to_safe_range(v) for v in result[key]]
 
     # ── 防御校验 ──
-    assert set(result.keys()) == set(CANONICAL_KEYS), (
-        f"输出缺少通道: {set(CANONICAL_KEYS) - set(result.keys())}"
+    assert set(result.keys()) == set(canonical_keys), (
+        f"输出缺少通道: {set(canonical_keys) - set(result.keys())}"
     )
     return result
 
@@ -337,13 +359,18 @@ def channels_from_packet(
     P: float = 0.0,
     A: float = 0.0,
     D: float = 0.0,
+    canonical_keys: list[str] | None = None,
+    pad_weights: dict[str, tuple[float, float, float]] | None = None,
+    base_scale: dict[str, float] | None = None,
 ) -> dict[str, list[float]]:
     """完整管线：包络 → PAD 投影 → 脉冲耦合。
 
     PAD 默认 (0,0,0) = 中性情感，仅靠滑杆驱动。
+    canonical_keys / pad_weights / base_scale → 物种专用（默认人类）
     """
     env = build_energy_envelope(packet, frame_count)
-    ch = channels_from_envelope(packet, env, P, A, D, frame_count)
+    ch = channels_from_envelope(packet, env, P, A, D, frame_count,
+                                canonical_keys, pad_weights, base_scale)
     _apply_pulse_hold_coupling(packet, ch, env, frame_count)
     return ch
 
@@ -372,7 +399,7 @@ def make_delivery_stub(
     label: str = "",
 ) -> dict[str, Any]:
     """供 human_prior / 烘焙 用的轻量 02 上下文（非稀疏关键帧真值）。"""
-    from gaze_engine.micro_jitter import default_micro_jitter_block
+    from gaze_engine._shared.micro_jitter import default_micro_jitter_block
 
     pkt = packet.clamped()
     tm = _timing(pkt, frame_count)
@@ -395,8 +422,8 @@ def make_delivery_stub(
         "mood": pkt.emotion,
         "energy_phases": ["蓄力", "启动", "保持", "缓和"],
         "controls_doc": "contracts/滑杆规范.md",
-        "keys": list(CANONICAL_KEYS),
-        "keys_active": list(CANONICAL_KEYS),
+        "keys": list(DEFAULT_CANONICAL_KEYS),
+        "keys_active": list(DEFAULT_CANONICAL_KEYS),
         "slider_packet": pkt.to_dict(),
         "energy_envelope": export_envelope_series(pkt, frame_count),
         "channel_tracks": {

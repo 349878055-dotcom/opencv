@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from gaze_engine.control_surface import PRESETS as ACTING_PULSE_PRESETS, MACRO_IDS
+from gaze_engine.human.control_surface import PRESETS as ACTING_PULSE_PRESETS, MACRO_IDS
 
 MACRO_RADIUS_DEFAULT = 22
 

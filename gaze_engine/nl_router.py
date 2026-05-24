@@ -12,12 +12,12 @@ from gaze_engine.nl_intent import (
     normalize_intent,
 )
 from gaze_engine.nl_to_packet import _packet_keyword_fallback, match_preset_from_text
-from gaze_engine.slider_schema import SliderPacket
+from gaze_engine._shared.slider_schema import SliderPacket
 
 def load_internal_knowledge() -> str:
     """厂内知识库（客户画布不填）；来自已保存上下文或空。"""
     try:
-        from gaze_engine.workbench_context import read_workbench_context
+        from gaze_engine._shared.workbench_context import read_workbench_context
 
         ctx = read_workbench_context()
         return str(ctx.get("knowledge_base") or "").strip()
@@ -35,7 +35,7 @@ def _consult_reply_keyword(text: str) -> str:
             "若要出能量图，请直接描述表演，例如「更冷更钉的施压凝视」。"
         )
     if "预设" in t or "情绪" in t:
-        from gaze_engine.control_surface import PRESETS as ACTING_PULSE_PRESETS
+        from gaze_engine.human.control_surface import PRESETS as ACTING_PULSE_PRESETS
 
         names = "、".join(list(ACTING_PULSE_PRESETS.keys())[:6]) + "…"
         return f"【咨询】可选情绪预设共 16 个，例如：{names}。要生成请直接说戏意。"
@@ -57,7 +57,7 @@ def process_customer_nl(
     - consult：只写回复，不改滑杆包（沿用已有 01_滑杆包.json）
     - apply：生成/修改滑杆包
     """
-    from gaze_engine.llm_openai import chatgpt_customer_nl, openai_configured
+    from gaze_engine._shared.llm_openai import chatgpt_customer_nl, openai_configured
 
     nl = (text or "").strip()
     kb = (internal_knowledge or "").strip() or load_internal_knowledge()

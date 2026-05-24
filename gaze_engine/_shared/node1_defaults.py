@@ -6,8 +6,8 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from gaze_engine.pipeline_io import F_PACKET, cmd_dir
-from gaze_engine.slider_schema import SliderPacket
+from gaze_engine._shared.pipeline_io import F_PACKET, cmd_dir
+from gaze_engine._shared.slider_schema import SliderPacket
 
 _PKG_ROOT = Path(__file__).resolve().parent.parent
 _PROMPTS_DIR = _PKG_ROOT / "prompts"
@@ -55,14 +55,14 @@ def load_previous_slider_packet(out_dir: Path | None = None) -> SliderPacket | N
     pkt_path = base / F_PACKET
     if pkt_path.is_file():
         try:
-            from gaze_engine.workbench_io import read_slider_packet
+            from gaze_engine._shared.workbench_io import read_slider_packet
 
             pkt, _ = read_slider_packet(str(pkt_path))
             return pkt.clamped()
         except Exception:
             pass
     try:
-        from gaze_engine.workbench_context import read_workbench_context
+        from gaze_engine._shared.workbench_context import read_workbench_context
 
         snap = read_workbench_context().get("last_slider_packet")
         if isinstance(snap, dict) and snap.get("macro"):

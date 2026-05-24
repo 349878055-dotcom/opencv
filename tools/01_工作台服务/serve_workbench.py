@@ -57,7 +57,7 @@ class Handler(SimpleHTTPRequestHandler):
             })
             return
         if path == "/control_surface.json":
-            from gaze_engine.control_surface import export_workbench_json
+            from gaze_engine.human.control_surface import export_workbench_json
             self._json_response(export_workbench_json())
             return
         if path == "/workbench_context.json":
@@ -121,8 +121,8 @@ class Handler(SimpleHTTPRequestHandler):
     def _render_control_video(self, body: bytes) -> None:
         """POST /render_control_video — 全管线 → 工程底模 → mp4。"""
         import cv2
-        from gaze_engine.affine_renderer import AffineRenderer
-        from gaze_engine.slider_schema import SliderPacket
+        from gaze_engine.human.affine_renderer import AffineRenderer
+        from gaze_engine._shared.slider_schema import SliderPacket
         from gaze_engine.delivery_pipeline import run_delivery_from_packet
 
         pkt_dict = json.loads(body.decode("utf-8"))
@@ -144,7 +144,7 @@ class Handler(SimpleHTTPRequestHandler):
         frames_dir.mkdir(exist_ok=True)
 
         print(f"[workbench] 渲染 {frame_count} 帧工程底模...", flush=True)
-        from gaze_engine.affine_renderer import CANONICAL_KEYS
+        from gaze_engine.human.affine_renderer import CANONICAL_KEYS
         for t in range(frame_count):
             frame_data = {k: channels_data[k][t] for k in CANONICAL_KEYS if k in channels_data}
             img = renderer.render_frame(frame_data)  # (H,W,3) RGB工程底模
@@ -193,19 +193,19 @@ class Handler(SimpleHTTPRequestHandler):
     # 管线编译
     # ═══════════════════════════════════════════════════════
     def _load_context(self) -> dict:
-        from gaze_engine.workbench_context import read_workbench_context
+        from gaze_engine._shared.workbench_context import read_workbench_context
         return read_workbench_context()
 
     def _compile_pipeline_all(self, pkt_dict: dict) -> dict:
-        from gaze_engine.envelope_compile import (
+        from gaze_engine._shared.envelope_compile import (
             channels_from_packet,
             export_envelope_series,
             make_delivery_stub,
         )
-        from gaze_engine.human_prior import apply_human_prior
-        from gaze_engine.packet_finalize import finalize_packet
-        from gaze_engine.pulse_quality import fix_pulse_quality
-        from gaze_engine.slider_schema import SliderPacket
+        from gaze_engine.human.human_prior import apply_human_prior
+        from gaze_engine._shared.packet_finalize import finalize_packet
+        from gaze_engine.human.pulse_quality import fix_pulse_quality
+        from gaze_engine._shared.slider_schema import SliderPacket
 
         pkt, fin_rep = finalize_packet(SliderPacket.from_dict(pkt_dict))
         env_doc = export_envelope_series(pkt)
@@ -257,7 +257,7 @@ class Handler(SimpleHTTPRequestHandler):
         }
 
     def _load_dense04(self) -> dict:
-        from gaze_engine.pipeline_io import F_DENSE_ENV, read_dense
+        from gaze_engine._shared.pipeline_io import F_DENSE_ENV, read_dense
         from asset_lib import cmd_dir
         p = cmd_dir() / F_DENSE_ENV
         if not p.is_file():
@@ -286,12 +286,12 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(out)
 
     def _save_packet(self, body: bytes) -> None:
-        from gaze_engine.envelope_compile import channels_from_packet, make_delivery_stub
-        from gaze_engine.human_prior import apply_human_prior
-        from gaze_engine.pipeline_io import F_DENSE_PRIOR, F_DENSE_QUALITY, cmd_dir, write_dense
-        from gaze_engine.pulse_quality import fix_pulse_quality
-        from gaze_engine.slider_schema import SliderPacket
-        from gaze_engine.workbench_io import finalize_and_write_l1, read_slider_packet, write_slider_packet
+        from gaze_engine._shared.envelope_compile import channels_from_packet, make_delivery_stub
+        from gaze_engine.human.human_prior import apply_human_prior
+        from gaze_engine._shared.pipeline_io import F_DENSE_PRIOR, F_DENSE_QUALITY, cmd_dir, write_dense
+        from gaze_engine.human.pulse_quality import fix_pulse_quality
+        from gaze_engine._shared.slider_schema import SliderPacket
+        from gaze_engine._shared.workbench_io import finalize_and_write_l1, read_slider_packet, write_slider_packet
 
         pkt = SliderPacket.from_dict(json.loads(body.decode("utf-8")))
         p01 = write_slider_packet(pkt)
@@ -320,7 +320,7 @@ class Handler(SimpleHTTPRequestHandler):
         self._json_response(self._compile_pipeline_all(pkt_dict))
 
     def _save_context(self, body: bytes) -> None:
-        from gaze_engine.workbench_context import write_workbench_context
+        from gaze_engine._shared.workbench_context import write_workbench_context
         data = json.loads(body.decode("utf-8"))
         p = write_workbench_context(
             natural_language=data.get("natural_language"),
@@ -329,7 +329,7 @@ class Handler(SimpleHTTPRequestHandler):
         )
         nl = (data.get("natural_language") or "").strip()
         if nl:
-            from gaze_engine.pipeline_io import F_NL, cmd_dir
+            from gaze_engine._shared.pipeline_io import F_NL, cmd_dir
             (cmd_dir() / F_NL).write_text(nl + "\n", encoding="utf-8")
         self._json_response({"ok": True, "path": str(p)})
 
@@ -377,7 +377,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not nl:
             self._json_response({"ok": False, "error": "缺少 nl"}, status=400)
             return
-        from gaze_engine.llm_openai import chatgpt_customer_nl, openai_configured
+        from gaze_engine._shared.llm_openai import chatgpt_customer_nl, openai_configured
         from gaze_engine.nl_to_packet import packet_from_natural_language
         from gaze_engine.nl_intent import INTENT_APPLY
 
@@ -434,7 +434,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not pkt_dict:
             nl = (data.get("nl") or "").strip()
             if nl:
-                from gaze_engine.llm_openai import chatgpt_customer_nl, openai_configured
+                from gaze_engine._shared.llm_openai import chatgpt_customer_nl, openai_configured
                 from gaze_engine.nl_intent import INTENT_APPLY
                 from gaze_engine.nl_to_packet import packet_from_natural_language
 
@@ -459,11 +459,11 @@ class Handler(SimpleHTTPRequestHandler):
                 return
 
         # 跑全管线
-        from gaze_engine.slider_schema import SliderPacket
+        from gaze_engine._shared.slider_schema import SliderPacket
         from gaze_engine.delivery_pipeline import run_delivery_from_packet
-        from gaze_engine.envelope_compile import channels_from_packet, export_envelope_series
-        from gaze_engine.packet_finalize import finalize_packet
-        from gaze_engine.human_prior import dense_to_baked_sparse
+        from gaze_engine._shared.envelope_compile import channels_from_packet, export_envelope_series
+        from gaze_engine._shared.packet_finalize import finalize_packet
+        from gaze_engine.human.human_prior import dense_to_baked_sparse
 
         pkt = SliderPacket.from_dict(pkt_dict)
         pkt, fin_rep = finalize_packet(pkt)
@@ -473,7 +473,7 @@ class Handler(SimpleHTTPRequestHandler):
         # 跑交付链
         baked, dense_out, prior_rep, pq_rep = run_delivery_from_packet(pkt)
         # 扩散节拍
-        from gaze_engine.export_diffusion_metronome import build_metronome_text
+        from gaze_engine._shared.export_diffusion_metronome import build_metronome_text
         metronome = build_metronome_text(baked)
 
         self._json_response({
@@ -502,7 +502,7 @@ class Handler(SimpleHTTPRequestHandler):
         data = json.loads(body.decode("utf-8"))
         baked = data.get("baked")
         if baked:
-            from gaze_engine.export_diffusion_metronome import build_metronome_text
+            from gaze_engine._shared.export_diffusion_metronome import build_metronome_text
             text = build_metronome_text(baked)
             self._json_response({"ok": True, "metronome": text})
             return
@@ -514,7 +514,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self._json_response({"ok": False, "error": f"文件不存在: {path}"}, status=404)
                 return
             baked = json.loads(path.read_text("utf-8"))
-            from gaze_engine.export_diffusion_metronome import build_metronome_text
+            from gaze_engine._shared.export_diffusion_metronome import build_metronome_text
             text = build_metronome_text(baked, source_path=str(path))
             self._json_response({"ok": True, "metronome": text})
             return
@@ -598,7 +598,7 @@ class Handler(SimpleHTTPRequestHandler):
         # 生成扩散节拍表
         metronome = ""
         try:
-            from gaze_engine.export_diffusion_metronome import build_metronome_text
+            from gaze_engine._shared.export_diffusion_metronome import build_metronome_text
             metronome = build_metronome_text(baked, source_path=str(baked_path))
         except Exception:
             pass

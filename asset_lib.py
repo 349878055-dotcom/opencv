@@ -109,7 +109,7 @@ def delivery_template_metadata(
     persona_id: str | None = None, gaze_id: str | None = None
 ) -> dict:
     """参考片反推 / 候选稿用的元数据壳（非稀疏关键帧真源）。"""
-    from gaze_engine.channel_contract import CANONICAL_KEYS
+    from gaze_engine._shared.channel_contract import CANONICAL_KEYS
 
     em = load_emotion_manifest(persona_id, gaze_id)
     gid = gaze_id or active_gaze_id()

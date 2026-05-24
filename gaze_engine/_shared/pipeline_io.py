@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from gaze_engine.channel_contract import CANONICAL_KEYS
-from gaze_engine.slider_schema import SliderPacket
+from gaze_engine._shared.channel_contract import CANONICAL_KEYS
+from gaze_engine._shared.slider_schema import SliderPacket
 
 F_NL = "01_自然语言.txt"
 F_SYSTEM_PROMPT = "01_系统Prompt.txt"
@@ -32,19 +32,19 @@ def _write(path: Path, data: dict[str, Any]) -> str:
     return str(path.resolve())
 
 def read_packet(path: str = "") -> tuple[SliderPacket, Path]:
-    from gaze_engine.workbench_io import read_slider_packet
+    from gaze_engine._shared.workbench_io import read_slider_packet
 
     return read_slider_packet(path or None)
 
 def write_packet(packet: SliderPacket, path: Path | None = None) -> str:
-    from gaze_engine.workbench_io import write_slider_packet
+    from gaze_engine._shared.workbench_io import write_slider_packet
 
     if path is None:
         return str(write_slider_packet(packet).resolve())
     return _write(path, packet.to_dict())
 
 def write_envelope(packet: SliderPacket, path: Path | None = None) -> str:
-    from gaze_engine.envelope_compile import export_envelope_series
+    from gaze_engine._shared.envelope_compile import export_envelope_series
 
     p = path or cmd_dir() / F_ENVELOPE
     return _write(p, export_envelope_series(packet))

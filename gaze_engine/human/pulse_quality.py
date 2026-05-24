@@ -14,8 +14,8 @@ import os
 from dataclasses import dataclass, field
 from typing import Any
 
-from gaze_engine.human_prior import HOLD_T0, HOLD_T1, SACCADE_T0, SACCADE_T1
-from gaze_engine.slider_schema import HoldSegment, SliderPacket
+from gaze_engine.human.human_prior import HOLD_T0, HOLD_T1, SACCADE_T0, SACCADE_T1
+from gaze_engine._shared.slider_schema import HoldSegment, SliderPacket
 
 FRAME_COUNT_DEFAULT = 150
 

@@ -8,9 +8,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from gaze_engine.control_surface import PRESETS as ACTING_PULSE_PRESETS, MACRO_IDS
-from gaze_engine.slider_bounds import load_rules
-from gaze_engine.slider_schema import SliderPacket
+from gaze_engine.human.control_surface import PRESETS as ACTING_PULSE_PRESETS, MACRO_IDS
+from gaze_engine._shared.slider_bounds import load_rules
+from gaze_engine._shared.slider_schema import SliderPacket
 
 @dataclass
 class FinalizeReport:

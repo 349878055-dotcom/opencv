@@ -10,7 +10,7 @@ affine_renderer.py · 工程底模渲染引擎（供扩散引擎消费）
 
 用法:
   # 渲染单帧
-  python -c "from gaze_engine.affine_renderer import AffineRenderer; r=AffineRenderer(); img=r.render_frame(channels_dict)"
+  python -c "from gaze_engine.human.affine_renderer import AffineRenderer; r=AffineRenderer(); img=r.render_frame(channels_dict)"
   
   # 批量烘焙 150 帧
   python gaze_engine/affine_renderer.py --batch 资产库/.../02_烘焙_真人律.json --out /tmp/render

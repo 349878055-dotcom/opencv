@@ -14,7 +14,7 @@ if str(_PKG) not in sys.path:
     sys.path.insert(0, str(_PKG))
 
 from asset_lib import ensure_dirs  # noqa: E402
-from gaze_engine.control_surface import PRESETS as ACTING_PULSE_PRESETS, packet_from_acting_preset  # noqa: E402
+from gaze_engine.human.control_surface import PRESETS as ACTING_PULSE_PRESETS, packet_from_acting_preset  # noqa: E402
 from gaze_engine.delivery_pipeline import run_delivery_from_packet, write_delivery_json  # noqa: E402
 
 FIVE_ACTING_SAMPLES: tuple[str, ...] = (

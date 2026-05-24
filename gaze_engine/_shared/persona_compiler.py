@@ -20,7 +20,7 @@ import json
 import os
 from typing import Dict, List, Tuple
 
-from gaze_engine.channel_contract import CANONICAL_KEYS
+from gaze_engine._shared.channel_contract import CANONICAL_KEYS
 
 # ──────────────────────────────────────────────
 # 0. 常量

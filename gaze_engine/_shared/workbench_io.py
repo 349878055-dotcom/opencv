@@ -5,7 +5,7 @@ import json
 import shutil
 from pathlib import Path
 
-from gaze_engine.slider_schema import SliderPacket
+from gaze_engine._shared.slider_schema import SliderPacket
 
 _PKG_ROOT = Path(__file__).resolve().parent.parent
 _TOOLS_PACKET = _PKG_ROOT / "tools" / "slider_packet.json"
@@ -38,8 +38,8 @@ def read_slider_packet(path: str | None = None) -> tuple[SliderPacket, Path]:
 def finalize_and_write_l1(packet: SliderPacket | None = None) -> Path:
     """操作台出厂：L1 finalize → 02_滑杆_L1纠正.json（Comfy ② 包络读此文件）。"""
     from asset_lib import cmd_dir, ensure_dirs
-    from gaze_engine.packet_finalize import finalize_packet
-    from gaze_engine.pipeline_io import F_PACKET_L1, write_packet
+    from gaze_engine._shared.packet_finalize import finalize_packet
+    from gaze_engine._shared.pipeline_io import F_PACKET_L1, write_packet
 
     ensure_dirs()
     pkt = packet

@@ -25,7 +25,7 @@ def _load_embedded_pipeline() -> dict:
     return out
 
 def main() -> None:
-    from gaze_engine.control_surface import export_workbench_json
+    from gaze_engine.human.control_surface import export_workbench_json
 
     html = ORIG.read_text(encoding="utf-8")
     ui_js = UI_JS.read_text(encoding="utf-8")

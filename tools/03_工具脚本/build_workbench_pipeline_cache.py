@@ -11,9 +11,9 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from gaze_engine.control_surface import PRESETS as ACTING_PULSE_PRESETS, packet_from_acting_preset  # noqa: E402
+from gaze_engine.human.control_surface import PRESETS as ACTING_PULSE_PRESETS, packet_from_acting_preset  # noqa: E402
 from gaze_engine.delivery_pipeline import run_delivery_from_packet  # noqa: E402
-from gaze_engine.envelope_compile import (  # noqa: E402
+from gaze_engine._shared.envelope_compile import (  # noqa: E402
     channels_from_packet,
     export_envelope_series,
 )

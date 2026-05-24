@@ -14,16 +14,16 @@ _PKG = Path(__file__).resolve().parent.parent
 if str(_PKG) not in sys.path:
     sys.path.insert(0, str(_PKG))
 
-from gaze_engine.channel_contract import validate_baked_delivery  # noqa: E402
-from gaze_engine.human_prior import (  # noqa: E402
+from gaze_engine._shared.channel_contract import validate_baked_delivery  # noqa: E402
+from gaze_engine.human.human_prior import (  # noqa: E402
     FRAME_COUNT_DEFAULT,
     FPS_DEFAULT,
     PriorReport,
     apply_human_prior,
     dense_to_baked_sparse,
 )
-from gaze_engine.pulse_quality import PulseQualityReport, fix_pulse_quality  # noqa: E402
-from gaze_engine.slider_schema import SliderPacket  # noqa: E402
+from gaze_engine.human.pulse_quality import PulseQualityReport, fix_pulse_quality  # noqa: E402
+from gaze_engine._shared.slider_schema import SliderPacket  # noqa: E402
 
 _PIPELINE_DOC = "contracts/全量帧指令集规范.md · envelope-v1"
 
@@ -70,7 +70,7 @@ def run_delivery(
 ) -> tuple[dict[str, Any], dict[str, list[float]], PriorReport, PulseQualityReport]:
     draft = copy.deepcopy(context)
     pkt = packet or _packet_from_context(draft) or SliderPacket()
-    from gaze_engine.packet_finalize import finalize_packet
+    from gaze_engine._shared.packet_finalize import finalize_packet
 
     pkt, fin_rep = finalize_packet(pkt)
     if fin_rep.changed:
@@ -82,7 +82,7 @@ def run_delivery(
     if channels_precomputed is not None:
         channels = {k: list(v[:frame_count]) for k, v in channels_precomputed.items()}
     else:
-        from gaze_engine.envelope_compile import channels_from_packet
+        from gaze_engine._shared.envelope_compile import channels_from_packet
 
         P, A, D = _emotion_pad(pkt.emotion)
         channels = channels_from_packet(pkt, frame_count, P=P, A=A, D=D)
@@ -127,7 +127,7 @@ def run_delivery_from_packet(
     A: float | None = None,
     D: float | None = None,
 ) -> tuple[dict[str, Any], dict[str, list[float]], PriorReport, PulseQualityReport]:
-    from gaze_engine.envelope_compile import channels_from_packet, make_delivery_stub
+    from gaze_engine._shared.envelope_compile import channels_from_packet, make_delivery_stub
 
     if P is None or A is None or D is None:
         _P, _A, _D = _emotion_pad(packet.emotion)

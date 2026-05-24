@@ -8,12 +8,12 @@ import os
 from dataclasses import dataclass, field
 from typing import Any
 
-from gaze_engine.channel_contract import CANONICAL_KEYS
-from gaze_engine.micro_jitter import (
+from gaze_engine._shared.channel_contract import CANONICAL_KEYS
+from gaze_engine._shared.micro_jitter import (
     _phase_at_each_frame,
     apply_jitter_to_channels,
 )
-from gaze_engine.slider_schema import HoldSegment, SliderPacket, packet_to_compile_params
+from gaze_engine._shared.slider_schema import HoldSegment, SliderPacket, packet_to_compile_params
 
 FRAME_COUNT_DEFAULT = 150
 FPS_DEFAULT = 30

@@ -42,7 +42,7 @@ def _pulse_frames(sparse: dict) -> list[int]:
     return sorted(frames)
 
 def build_metronome_text(sparse: dict, *, source_path: str = "") -> str:
-    from gaze_engine.channel_contract import CANONICAL_KEYS, CHANNEL_LABELS_ZH, DIFFUSION_HINTS
+    from gaze_engine._shared.channel_contract import CANONICAL_KEYS, CHANNEL_LABELS_ZH, DIFFUSION_HINTS
 
     baked = _is_baked_sparse(sparse)
     lines = [

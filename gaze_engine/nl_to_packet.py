@@ -4,8 +4,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from gaze_engine.control_surface import PRESETS as ACTING_PULSE_PRESETS, packet_from_acting_preset
-from gaze_engine.slider_schema import HOLD_IDS, MACRO_IDS, HoldSegment, MacroSliders, SliderPacket, apply_macro_delta
+from gaze_engine.human.control_surface import PRESETS as ACTING_PULSE_PRESETS, packet_from_acting_preset
+from gaze_engine._shared.slider_schema import HOLD_IDS, MACRO_IDS, HoldSegment, MacroSliders, SliderPacket, apply_macro_delta
 
 # ─── 关键词 → 预设名（先匹配长的） ───────────────────────────
 _KEYWORDS: list[tuple[str, str]] = [
@@ -246,7 +246,7 @@ def packet_from_natural_language(
     llm_model: str = "",
 ) -> SliderPacket:
     """自然语言 → 滑杆包。use_llm=None 时：有 OPENAI_API_KEY 则用 ChatGPT。"""
-    from gaze_engine.llm_openai import chatgpt_nl_to_packet, openai_configured
+    from gaze_engine._shared.llm_openai import chatgpt_nl_to_packet, openai_configured
 
     want_llm = openai_configured() if use_llm is None else bool(use_llm)
     if want_llm and text.strip():

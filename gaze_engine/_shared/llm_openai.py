@@ -7,9 +7,9 @@ import re
 from dataclasses import asdict
 from typing import Any
 
-from gaze_engine.control_surface import PRESETS as ACTING_PULSE_PRESETS, packet_from_acting_preset
+from gaze_engine.human.control_surface import PRESETS as ACTING_PULSE_PRESETS, packet_from_acting_preset
 from gaze_engine.nl_to_packet import match_preset_from_text
-from gaze_engine.slider_schema import HOLD_IDS, MACRO_IDS, HoldSegment, SliderPacket, apply_llm_delta
+from gaze_engine._shared.slider_schema import HOLD_IDS, MACRO_IDS, HoldSegment, SliderPacket, apply_llm_delta
 
 DEFAULT_MODEL = os.environ.get("ECURSOR_OPENAI_MODEL", "gpt-4o-mini")
 CHEAP_MODEL = os.environ.get("ECURSOR_CHEAP_MODEL", "gpt-4o-mini")  # 非关键任务用轻量模型省Token
@@ -67,7 +67,7 @@ def _packet_from_llm_apply_json(
     if isinstance(macro, dict) and macro:
         d = {k: int(macro[k]) for k in MACRO_IDS if k in macro}
         if d:
-            from gaze_engine.slider_schema import MacroSliders
+            from gaze_engine._shared.slider_schema import MacroSliders
 
             pkt.macro = MacroSliders(**{**{k: getattr(pkt.macro, k) for k in MACRO_IDS}, **d})  # type: ignore[arg-type]
 
@@ -97,7 +97,7 @@ def _packet_from_llm_apply_json(
 
 def resolve_node1_system_prompt(custom: str) -> str:
     """留空 → prompts/node1_system_prompt.txt → 短内置回退。"""
-    from gaze_engine.node1_defaults import default_system_prompt_text, resolve_system_prompt_input
+    from gaze_engine._shared.node1_defaults import default_system_prompt_text, resolve_system_prompt_input
 
     t = resolve_system_prompt_input(custom)
     if t:
@@ -141,7 +141,7 @@ def chatgpt_customer_nl(
 
     from openai import OpenAI
 
-    from gaze_engine.node1_defaults import format_previous_packet_for_llm, resolve_knowledge_base
+    from gaze_engine._shared.node1_defaults import format_previous_packet_for_llm, resolve_knowledge_base
 
     nl = (text or "").strip()
     kb = resolve_knowledge_base(knowledge_base)

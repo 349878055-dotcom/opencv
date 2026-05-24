@@ -175,7 +175,7 @@ def apply_llm_delta(packet: SliderPacket, macro_delta: dict[str, str | int] | No
         else:
             d[k] = _clamp_i(raw)
     p.macro = MacroSliders(**d)  # type: ignore[arg-type]
-    from gaze_engine.packet_finalize import finalize_packet
+    from gaze_engine._shared.packet_finalize import finalize_packet
 
     return finalize_packet(p.clamped())[0]
 

@@ -191,7 +191,7 @@ def validate_all() -> list[str]:
     return out
 
 def packet_from_acting_preset(name: str) -> "SliderPacket":
-    from gaze_engine.slider_schema import HoldSegment, MacroSliders, SliderPacket
+    from gaze_engine._shared.slider_schema import HoldSegment, MacroSliders, SliderPacket
 
     data = PRESETS.get(name)
     if not data:

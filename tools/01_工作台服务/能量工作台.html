@@ -118,8 +118,14 @@ body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color
     </div>
 
     <div class="card emotion-card">
-      <div class="card-hd">16 种情绪预设</div>
-      <p class="preset-hint">选情绪 = 自动填充滑杆 · 再微调 = 自定义</p>
+      <div class="card-hd" id="emotion-card-title">16 种情绪预设
+        <span style="float:right;font-weight:400;font-size:0.7rem;">
+          <button class="btn sm species-btn on" data-species="human" style="background:#1a56db;color:#fff;border:none;">🙂 人</button>
+          <button class="btn sm species-btn" data-species="cat" style="margin-left:4px;">🐱 猫</button>
+          <button class="btn sm species-btn" data-species="dog" style="margin-left:4px;">🐶 狗</button>
+        </span>
+      </div>
+      <p class="preset-hint" id="preset-hint">选情绪 = 自动填充滑杆 · 再微调 = 自定义</p>
       <button class="btn" id="btn-neutral" style="display:block;width:calc(100% - 10px);margin:6px 5px 8px">◎ 回归中性</button>
       <div class="preset-check ok" id="preset-check">启动中…</div>
       <div class="preset-scroll" id="preset-list"></div>
@@ -230,6 +236,68 @@ let macro = { ...NEUTRAL.macro }, hold_seg = { ...NEUTRAL.hold_seg };
 let activePreset = '', pipelineData = null, activePipeTab = '1_slider_packet';
 let _loadToken = 0, _loading = false;
 
+// ─── 物种切换 ──────────────────────────────────────────
+let currentSpecies = 'human';
+const SPECIES_DATA = {
+  human: {
+    label: '人类',
+    icon: '🙂',
+    channelCount: 12,
+    presets: null,  // 从后端加载
+    hint: '选情绪 = 自动填充滑杆 · 再微调 = 自定义'
+  },
+  cat: {
+    label: '猫',
+    icon: '🐱',
+    channelCount: 13,
+    presets: {
+      'cat_alarm_stare':   { note: '警觉·盯 · 竖耳缩瞳' },
+      'cat_hunt_fixate':   { note: '狩猎·锁定 · 伏低' },
+      'cat_startle_fluff': { note: '惊吓·炸毛 · 飞机耳' },
+      'cat_curious_tilt':  { note: '好奇·歪头 · 一耳前一耳后' },
+      'cat_cuddle_squint': { note: '撒娇·眯眼 · 慢眨眼' },
+      'cat_content_bliss': { note: '满足·飘然 · 眯眼成线' },
+      'cat_annoyed_swish': { note: '不耐烦 · 耳朵背过去' },
+      'cat_scared_flatten': { note: '恐惧·贴地 · 全飞机耳' },
+      'cat_sad_whimper':   { note: '委屈·呜咽 · 眼湿润' },
+      'cat_angry_hiss':    { note: '愤怒·哈气 · 瞳孔缩线' },
+      'cat_sleepy_droop':  { note: '困倦·迷离 · 眼皮下垂' },
+      'cat_play_pounce':   { note: '玩耍·扑击 · 瞳孔放大' },
+    },
+    groups: [
+      { label: '警觉 · 攻击', keys: ['cat_alarm_stare','cat_hunt_fixate','cat_angry_hiss'] },
+      { label: '恐惧 · 退缩', keys: ['cat_startle_fluff','cat_scared_flatten','cat_sad_whimper'] },
+      { label: '亲昵 · 放松', keys: ['cat_cuddle_squint','cat_content_bliss','cat_sleepy_droop'] },
+      { label: '好奇 · 玩耍', keys: ['cat_curious_tilt','cat_play_pounce','cat_annoyed_swish'] },
+    ],
+    hint: '🐱 猫情绪预设 · 参数待填充'
+  },
+  dog: {
+    label: '狗',
+    icon: '🐶',
+    channelCount: 13,
+    presets: {
+      'dog_alert_bark':    { note: '警觉·吠 · 竖耳' },
+      'dog_happy_wag':     { note: '开心·摇尾 · 放松眼' },
+      'dog_sad_puppy':     { note: '委屈·幼犬眼 · 挑眉上翻' },
+      'dog_scared_tuck':   { note: '恐惧·夹尾 · 耳后贴' },
+      'dog_angry_growl':   { note: '愤怒·低吼 · 竖耳前倾' },
+      'dog_curious_cock':  { note: '好奇·歪头 · 单耳竖' },
+      'dog_submissive_look': { note: '服从·回避 · 眼神避开' },
+      'dog_play_bow':      { note: '邀玩·趴 · 瞳孔放大' },
+      'dog_guilty_side':   { note: '心虚·偷瞄 · 耳耷拉' },
+      'dog_content_sigh':  { note: '满足·叹气 · 半闭眼' },
+    },
+    groups: [
+      { label: '警觉 · 攻击', keys: ['dog_alert_bark','dog_angry_growl','dog_scared_tuck'] },
+      { label: '亲昵 · 放松', keys: ['dog_happy_wag','dog_content_sigh','dog_sad_puppy'] },
+      { label: '好奇 · 玩耍', keys: ['dog_curious_cock','dog_play_bow','dog_guilty_side'] },
+      { label: '服从 · 回避', keys: ['dog_submissive_look'] },
+    ],
+    hint: '🐶 狗情绪预设 · 参数待填充'
+  }
+};
+
 const clamp = v => Math.max(0, Math.min(100, Math.round(Number(v))));
 const lerp01 = (a, b, t) => a + (b - a) * (clamp(t) / 100);
 
@@ -269,13 +337,22 @@ async function loadControlSurface() {
 // ─── §2 · 预设按钮 ─────────────────────────────────────
 function buildPresets() {
   PLIST.innerHTML = '';
-  PRESET_GROUPS.forEach(function(g) {
+  var species = SPECIES_DATA[currentSpecies];
+  var groups, presets;
+  if (currentSpecies === 'human') {
+    groups = PRESET_GROUPS;
+    presets = PRESETS;
+  } else {
+    groups = species.groups;
+    presets = species.presets;
+  }
+  groups.forEach(function(g) {
     var hd = document.createElement('div');
     hd.className = 'preset-group';
     hd.textContent = g.label;
     PLIST.appendChild(hd);
     g.keys.forEach(function(key) {
-      var data = PRESETS[key];
+      var data = presets[key];
       if (!data) return;
       var b = document.createElement('button');
       b.className = 'preset-btn'; b.dataset.preset = key;
@@ -284,6 +361,31 @@ function buildPresets() {
       PLIST.appendChild(b);
     });
   });
+}
+
+// ─── 物种切换 ──────────────────────────────────────────
+function switchSpecies(species) {
+  currentSpecies = species;
+  // 更新按钮高亮
+  document.querySelectorAll('.species-btn').forEach(function(b) {
+    b.classList.toggle('on', b.dataset.species === species);
+    if (b.dataset.species === species) {
+      b.style.background = '#1a56db'; b.style.color = '#fff'; b.style.border = 'none';
+    } else {
+      b.style.background = '#fff'; b.style.color = ''; b.style.border = '1px solid var(--line)';
+    }
+  });
+  // 更新提示文字
+  var hint = SPECIES_DATA[species].hint;
+  document.getElementById('preset-hint').textContent = hint;
+  // 更新标题
+  var count = species === 'human' ? Object.keys(PRESETS).length : Object.keys(SPECIES_DATA[species].presets).length;
+  document.getElementById('emotion-card-title').childNodes[0].textContent = count + ' 种情绪预设';
+  // 重建预设列表
+  buildPresets();
+  highlightPreset('');
+  // 重置滑杆到中性
+  resetToNeutral();
 }
 
 function highlightPreset(name) {
@@ -907,6 +1009,10 @@ $('btn-copy').onclick = function() { navigator.clipboard.writeText(PJ.textConten
 PFULL.onchange = function() { renderPipeJson(); };
 $('btn-neutral').onclick = resetToNeutral;
 NB_RENDER.onclick = renderNeonControlVideo;
+// 物种切换按钮
+document.querySelectorAll('.species-btn').forEach(function(b) {
+  b.onclick = function() { switchSpecies(b.dataset.species); };
+});
 
 // ─── 启动 ──────────────────────────────────────────────
 (async function boot() {
