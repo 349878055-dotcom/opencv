@@ -1,0 +1,36 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "british_cat",
+  "label": "英短/憨厚型",
+  "species": "cat",
+  "notes": "英短/憨厚型 品种风格偏移",
+  "default_emotion": "",
+  "base_offset": {
+    "pupil_x": 0.45,
+    "pupil_y": 0.45,
+    "blink": 0.52,
+    "eyebrow": 0.42,
+    "brow_raise": 0.42,
+    "pupil_scale": 0.45,
+    "iris_scale": 0.48,
+    "cornea_bulge": 0.48,
+    "squint": 0.48,
+    "lid_upper": 0.48,
+    "lid_lower": 0.48,
+    "eye_gloss": 0.45
+  },
+  "scale_factor": {
+    "pupil_x": 0.02,
+    "pupil_y": 0.02,
+    "blink": 0.18,
+    "eyebrow": 0.04,
+    "brow_raise": 0.04,
+    "pupil_scale": 0.06,
+    "iris_scale": 0.06,
+    "cornea_bulge": 0.08,
+    "squint": 0.1,
+    "lid_upper": 0.08,
+    "lid_lower": 0.08,
+    "eye_gloss": 0.03
+  }
+}

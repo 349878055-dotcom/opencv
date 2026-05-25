@@ -1,25 +1,32 @@
 """
-狗情绪预设 · 10 个
-TODO: 按 pet_eye_engine_migration_plan.md 第四章填充
+狗情绪预设 · 10 个（当前已实现: 委屈）
 """
 from __future__ import annotations
 
 from typing import Any
 
+from gaze_engine._shared.slider_schema import EarParams, HoldSegment, MacroSliders, SliderPacket
+
 DOG_PRESETS: dict[str, dict[str, Any]] = {
-    # "dog_alert_bark":       { ... },  # 警觉·吠
-    # "dog_happy_wag":        { ... },  # 开心·摇尾
-    # "dog_sad_puppy":        { ... },  # 委屈·幼犬眼
-    # "dog_scared_tuck":      { ... },  # 恐惧·夹尾
-    # "dog_angry_growl":      { ... },  # 愤怒·低吼
-    # "dog_curious_cock":     { ... },  # 好奇·歪头
-    # "dog_submissive_look":  { ... },  # 服从·回避
-    # "dog_play_bow":         { ... },  # 邀玩·趴
-    # "dog_guilty_side":      { ... },  # 心虚·偷瞄
-    # "dog_content_sigh":     { ... },  # 满足·叹气
+    "dog_sad_puppy": {
+        "note": "委屈·幼犬眼：耳朵耷拉、眼湿润、慢眨眼",
+        "macro": {"push": 15, "power": 26, "speed": 22, "steady": 62, "grip": 68, "outro": 22},
+        "hold_seg": {"shape": "tremble", "pulse_rate": 18, "pulse_depth": 22, "swell": 8},
+        "ear": {"left": [-0.6, -0.2], "right": [-0.6, -0.2]},
+    },
 }
 
 
-def dog_packet_from_preset(name: str) -> "SliderPacket":
-    """狗预设名 → SliderPacket"""
-    raise NotImplementedError("Dog presets not yet configured")
+def dog_packet_from_preset(name: str) -> SliderPacket:
+    """狗预设名 → SliderPacket（含 EarParams）"""
+    data = DOG_PRESETS.get(name)
+    if not data:
+        raise KeyError(f"未知狗预设: {name}，可选: {', '.join(DOG_PRESETS)}")
+    ear = EarParams.from_preset_dict(data.get("ear") or {})
+    return SliderPacket(
+        emotion=name,
+        style="default",
+        macro=MacroSliders(**data["macro"]),  # type: ignore[arg-type]
+        hold_seg=HoldSegment(**data["hold_seg"]),  # type: ignore[arg-type]
+        ear=ear,
+    ).clamped()

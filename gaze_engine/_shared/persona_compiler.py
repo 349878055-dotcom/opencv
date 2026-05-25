@@ -94,7 +94,7 @@ class Persona:
 
 
 def load_persona_matrix(path: str = _MATRIX_PATH) -> Dict[str, Persona]:
-    """从 JSON 文件加载九大人格矩阵。
+    """从 JSON 文件加载人格矩阵 + 物种品种矩阵。
 
     Args:
         path: JSON 文件路径，默认指向同目录下的 persona_matrix.json
@@ -112,6 +112,16 @@ def load_persona_matrix(path: str = _MATRIX_PATH) -> Dict[str, Persona]:
         matrix[pid] = Persona(
             persona_id=pid,
             label=data["label"],
+            base_offset=dict(data["base_offset"]),
+            scale_factor=dict(data["scale_factor"]),
+        )
+
+    # 加载品种矩阵（猫/狗等），合并到同一命名空间
+    raw_breeds: dict = raw.get("breed_personas") or {}
+    for pid, data in raw_breeds.items():
+        matrix[pid] = Persona(
+            persona_id=pid,
+            label=data.get("label", pid),
             base_offset=dict(data["base_offset"]),
             scale_factor=dict(data["scale_factor"]),
         )

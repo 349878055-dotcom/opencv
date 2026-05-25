@@ -1,0 +1,31 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "困惑·歪头",
+  "note": "困惑好奇：歪头、眼珠转动、眉毛起伏",
+  "style": "default",
+  "species": "dog",
+  "macro": {
+    "push": 58,
+    "power": 42,
+    "speed": 48,
+    "steady": 52,
+    "grip": 62,
+    "outro": 42
+  },
+  "hold_seg": {
+    "shape": "swell",
+    "pulse_rate": 22,
+    "pulse_depth": 18,
+    "swell": 38
+  },
+  "ear": {
+    "left": [
+      0.7,
+      0.3
+    ],
+    "right": [
+      -0.2,
+      -0.3
+    ]
+  }
+}

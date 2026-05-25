@@ -1,0 +1,35 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "魅惑者_温碧霞",
+  "label": "魅惑者/温碧霞",
+  "species": "human",
+  "notes": "温碧霞风格，眼波流转",
+  "base_offset": {
+    "pupil_x": 0.5,
+    "pupil_y": 0.5,
+    "blink": 0.5,
+    "eyebrow": 0.5,
+    "pupil_scale": 0.5,
+    "iris_scale": 0.5,
+    "cornea_bulge": 0.5,
+    "squint": 0.5,
+    "brow_raise": 0.5,
+    "lid_upper": 0.58,
+    "lid_lower": 0.42,
+    "eye_gloss": 0.9
+  },
+  "scale_factor": {
+    "pupil_x": 0.55,
+    "pupil_y": 0.5,
+    "blink": 0.75,
+    "eyebrow": 0.55,
+    "pupil_scale": 0.5,
+    "iris_scale": 0.5,
+    "cornea_bulge": 0.55,
+    "squint": 0.4,
+    "brow_raise": 0.45,
+    "lid_upper": 0.55,
+    "lid_lower": 0.5,
+    "eye_gloss": 0.55
+  }
+}

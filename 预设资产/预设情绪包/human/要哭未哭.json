@@ -1,0 +1,21 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "要哭未哭",
+  "note": "更轻更慢、颤",
+  "style": "default",
+  "species": "human",
+  "macro": {
+    "push": 12,
+    "power": 18,
+    "speed": 16,
+    "steady": 55,
+    "grip": 52,
+    "outro": 20
+  },
+  "hold_seg": {
+    "shape": "tremble",
+    "pulse_rate": 14,
+    "pulse_depth": 16,
+    "swell": 5
+  }
+}

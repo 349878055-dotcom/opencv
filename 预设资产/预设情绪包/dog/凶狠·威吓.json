@@ -1,0 +1,31 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "凶狠·威吓",
+  "note": "凶狠威吓：耳朵前竖、瞳孔收缩、怒视钉死",
+  "style": "default",
+  "species": "dog",
+  "macro": {
+    "push": 92,
+    "power": 94,
+    "speed": 78,
+    "steady": 86,
+    "grip": 88,
+    "outro": 22
+  },
+  "hold_seg": {
+    "shape": "flat",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  },
+  "ear": {
+    "left": [
+      -0.6,
+      0.8
+    ],
+    "right": [
+      -0.6,
+      0.8
+    ]
+  }
+}

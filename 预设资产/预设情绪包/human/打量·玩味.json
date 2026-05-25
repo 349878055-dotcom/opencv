@@ -1,0 +1,21 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "打量·玩味",
+  "note": "中外放、慢拱、中等粘",
+  "style": "default",
+  "species": "human",
+  "macro": {
+    "push": 70,
+    "power": 45,
+    "speed": 30,
+    "steady": 42,
+    "grip": 72,
+    "outro": 62
+  },
+  "hold_seg": {
+    "shape": "swell",
+    "pulse_rate": 18,
+    "pulse_depth": 15,
+    "swell": 42
+  }
+}

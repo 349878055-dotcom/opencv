@@ -1,0 +1,32 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "cat_curious_tilt",
+  "note": "歪头、竖耳、瞳孔放大",
+  "style": "default",
+  "species": "cat",
+  "macro": {
+    "push": 58,
+    "power": 42,
+    "speed": 48,
+    "steady": 52,
+    "grip": 62,
+    "outro": 42
+  },
+  "hold_seg": {
+    "shape": "swell",
+    "pulse_rate": 22,
+    "pulse_depth": 18,
+    "swell": 38
+  },
+  "ear": {
+    "left": [
+      0.8,
+      0.2
+    ],
+    "right": [
+      0.3,
+      -0.2
+    ]
+  },
+  "label": "好奇歪头"
+}

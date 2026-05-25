@@ -1,0 +1,21 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "魅惑·勾人",
+  "note": "外放、中力、脉冲更明显、粘、慢收",
+  "style": "default",
+  "species": "human",
+  "macro": {
+    "push": 72,
+    "power": 62,
+    "speed": 40,
+    "steady": 70,
+    "grip": 82,
+    "outro": 72
+  },
+  "hold_seg": {
+    "shape": "pulse",
+    "pulse_rate": 46,
+    "pulse_depth": 58,
+    "swell": 32
+  }
+}

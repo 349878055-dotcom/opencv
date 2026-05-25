@@ -1,0 +1,32 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "cat_angry_hiss",
+  "note": "飞机耳、瞳孔缩成线、怒视",
+  "style": "default",
+  "species": "cat",
+  "macro": {
+    "push": 92,
+    "power": 94,
+    "speed": 78,
+    "steady": 86,
+    "grip": 88,
+    "outro": 22
+  },
+  "hold_seg": {
+    "shape": "flat",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  },
+  "ear": {
+    "left": [
+      -0.8,
+      0.2
+    ],
+    "right": [
+      -0.8,
+      0.2
+    ]
+  },
+  "label": "愤怒嘶哈"
+}

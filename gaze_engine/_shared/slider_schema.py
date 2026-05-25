@@ -54,11 +54,39 @@ class HoldSegment:
         )
 
 @dataclass
+class EarParams:
+    """猫/狗耳位参数：角度和偏移（-1~1 范围）"""
+    left_angle: float = 0.0
+    left_offset: float = 0.0
+    right_angle: float = 0.0
+    right_offset: float = 0.0
+
+    @classmethod
+    def from_preset_dict(cls, d: dict[str, list[float]]) -> EarParams:
+        """从预设 ear 字典解析，如 {"left": [0.3, 0.0], "right": [0.3, 0.0]}"""
+        left = d.get("left") or [0.0, 0.0]
+        right = d.get("right") or [0.0, 0.0]
+        return cls(
+            left_angle=float(left[0]) if len(left) > 0 else 0.0,
+            left_offset=float(left[1]) if len(left) > 1 else 0.0,
+            right_angle=float(right[0]) if len(right) > 0 else 0.0,
+            right_offset=float(right[1]) if len(right) > 1 else 0.0,
+        )
+
+    def to_dict(self) -> dict[str, list[float]]:
+        return {
+            "left": [self.left_angle, self.left_offset],
+            "right": [self.right_angle, self.right_offset],
+        }
+
+
+@dataclass
 class SliderPacket:
     emotion: str = "s01_pressure"
     style: str = "default"
     macro: MacroSliders = field(default_factory=MacroSliders)
     hold_seg: HoldSegment = field(default_factory=HoldSegment)
+    ear: EarParams | None = None
     schema: str = SCHEMA_ID
 
     def clamped(self) -> SliderPacket:
@@ -67,6 +95,7 @@ class SliderPacket:
             style=self.style or "default",
             macro=self.macro.clamped(),
             hold_seg=self.hold_seg.clamped(),
+            ear=self.ear,
             schema=SCHEMA_ID,
         )
 
@@ -74,18 +103,23 @@ class SliderPacket:
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        d: dict[str, Any] = {
             "schema": SCHEMA_ID,
             "emotion": self.emotion,
             "style": self.style,
             "macro": asdict(self.macro),
             "hold_seg": asdict(self.hold_seg),
         }
+        if self.ear is not None:
+            d["ear"] = self.ear.to_dict()
+        return d
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> SliderPacket:
         macro_d = d.get("macro") or {}
         hold_d = d.get("hold_seg") or {}
+        ear_d = d.get("ear")
+        ear = EarParams.from_preset_dict(ear_d) if ear_d else None
         return cls(
             emotion=str(d.get("emotion") or "s01_pressure"),
             style=str(d.get("style") or "default"),
@@ -98,6 +132,7 @@ class SliderPacket:
                 pulse_depth=int(hold_d.get("pulse_depth", 0)),
                 swell=int(hold_d.get("swell", 0)),
             ),
+            ear=ear,
         ).clamped()
 
 # 情绪默认点位（风格用 delta 叠在上面）

@@ -9,8 +9,6 @@
 | 优化措施 | 改动文件 | 省 Token 量（预估） | 原理 |
 |---------|---------|-------------------|------|
 | **AI_INDEX.md**（代码图谱） | [`AI_INDEX.md`](AI_INDEX.md) | 首次进入节省 3000-8000 | Agent 不再遍历目录，一次读完即理解全项目 |
-| **Prompt 压缩** | [`prompts/node1_system_prompt.txt`](prompts/node1_system_prompt.txt) | 每次调用节省 **40%** (550→320 tokens) | 去掉冗余解释，紧凑格式化 |
-| **知识库压缩** | [`prompts/node1_knowledge_base.txt`](prompts/node1_knowledge_base.txt) | 每次调用节省 **50%** (400→200 tokens) | 去掉示例语气，只留规则 |
 | **内置 Prompt 压缩** | [`gaze_engine/llm_openai.py`](gaze_engine/llm_openai.py) | 回退路径节省 **55%** (380→170 tokens) | `_router_system_prompt()` 精简 |
 | **模型分档** | [`gaze_engine/llm_openai.py`](gaze_engine/llm_openai.py) | consult 场景节省 **60-90%** | consult 走 CHEAP_MODEL |
 | **知识库按需截短** | [`gaze_engine/llm_openai.py`](gaze_engine/llm_openai.py) | 轻量模型场景节省 50% | 知识库从 8000→4000/2000 chars |

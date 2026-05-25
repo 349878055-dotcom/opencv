@@ -13,7 +13,7 @@ affine_renderer.py · 工程底模渲染引擎（供扩散引擎消费）
   python -c "from gaze_engine.human.affine_renderer import AffineRenderer; r=AffineRenderer(); img=r.render_frame(channels_dict)"
   
   # 批量烘焙 150 帧
-  python gaze_engine/affine_renderer.py --batch 资产库/.../02_烘焙_真人律.json --out /tmp/render
+  python gaze_engine/affine_renderer.py --batch 预设资产/.../02_烘焙_真人律.json --out /tmp/render
 """
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ _AFFINE_DISABLED = False
 
 # ── 路径 ─────────────────────────────────────────────
 _PKG = Path(__file__).resolve().parent.parent
-TEXTURE_PATH = _PKG / "eye_asset" / "derived" / "eyelid_raw.png"
+TEXTURE_PATH = _PKG / "_shared" / "assets" / "eyelid_raw.png"
 OUTPUT_W, OUTPUT_H = 690, 361  # 匹配参照图 5.png 尺寸
 
 # ── 12 通道规范（全部参与） ──────────────────────────

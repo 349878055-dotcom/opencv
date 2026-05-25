@@ -1,0 +1,32 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "cat_hunt_fixate",
+  "note": "狩猎锁定、伏低、瞳孔放大",
+  "style": "default",
+  "species": "cat",
+  "macro": {
+    "push": 88,
+    "power": 92,
+    "speed": 72,
+    "steady": 98,
+    "grip": 96,
+    "outro": 12
+  },
+  "hold_seg": {
+    "shape": "flat",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  },
+  "ear": {
+    "left": [
+      0.6,
+      0.3
+    ],
+    "right": [
+      0.6,
+      0.3
+    ]
+  },
+  "label": "狩猎锁定"
+}

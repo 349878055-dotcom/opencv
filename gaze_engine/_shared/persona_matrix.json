@@ -121,5 +121,89 @@
         "squint": 0.50, "brow_raise": 0.50, "lid_upper": 0.50, "lid_lower": 0.50, "eye_gloss": 0.50
       }
     }
+  },
+  "breed_personas": {
+    "ragdoll_cat": {
+      "species": "cat",
+      "label": "布偶猫 / 温顺型",
+      "base_offset": {
+        "pupil_x": 0.48, "pupil_y": 0.46, "blink": 0.65,
+        "eyebrow": 0.30, "brow_raise": 0.30,
+        "pupil_scale": 0.45, "iris_scale": 0.48, "cornea_bulge": 0.48,
+        "squint": 0.55, "lid_upper": 0.52, "lid_lower": 0.48, "eye_gloss": 0.50
+      },
+      "scale_factor": {
+        "pupil_x": 0.03, "pupil_y": 0.03, "blink": 0.30,
+        "eyebrow": 0.05, "brow_raise": 0.05,
+        "pupil_scale": 0.08, "iris_scale": 0.08, "cornea_bulge": 0.10,
+        "squint": 0.12, "lid_upper": 0.10, "lid_lower": 0.10, "eye_gloss": 0.04
+      }
+    },
+    "siamese_cat": {
+      "species": "cat",
+      "label": "暹罗猫 / 高冷型",
+      "base_offset": {
+        "pupil_x": 0.50, "pupil_y": 0.48, "blink": 0.50,
+        "eyebrow": 0.70, "brow_raise": 0.70,
+        "pupil_scale": 0.65, "iris_scale": 0.52, "cornea_bulge": 0.52,
+        "squint": 0.48, "lid_upper": 0.50, "lid_lower": 0.50, "eye_gloss": 0.48
+      },
+      "scale_factor": {
+        "pupil_x": 0.06, "pupil_y": 0.05, "blink": 0.20,
+        "eyebrow": 0.12, "brow_raise": 0.12,
+        "pupil_scale": 0.30, "iris_scale": 0.15, "cornea_bulge": 0.18,
+        "squint": 0.22, "lid_upper": 0.15, "lid_lower": 0.15, "eye_gloss": 0.05
+      }
+    },
+    "stray_cat": {
+      "species": "cat",
+      "label": "田园猫 / 机敏型",
+      "base_offset": {
+        "pupil_x": 0.60, "pupil_y": 0.58, "blink": 0.38,
+        "eyebrow": 0.55, "brow_raise": 0.55,
+        "pupil_scale": 0.58, "iris_scale": 0.52, "cornea_bulge": 0.52,
+        "squint": 0.42, "lid_upper": 0.48, "lid_lower": 0.48, "eye_gloss": 0.52
+      },
+      "scale_factor": {
+        "pupil_x": 0.08, "pupil_y": 0.08, "blink": 0.15,
+        "eyebrow": 0.12, "brow_raise": 0.12,
+        "pupil_scale": 0.22, "iris_scale": 0.12, "cornea_bulge": 0.15,
+        "squint": 0.20, "lid_upper": 0.14, "lid_lower": 0.14, "eye_gloss": 0.06
+      }
+    },
+    "british_cat": {
+      "species": "cat",
+      "label": "英短 / 憨厚型",
+      "base_offset": {
+        "pupil_x": 0.45, "pupil_y": 0.45, "blink": 0.52,
+        "eyebrow": 0.42, "brow_raise": 0.42,
+        "pupil_scale": 0.45, "iris_scale": 0.48, "cornea_bulge": 0.48,
+        "squint": 0.48, "lid_upper": 0.48, "lid_lower": 0.48, "eye_gloss": 0.45
+      },
+      "scale_factor": {
+        "pupil_x": 0.02, "pupil_y": 0.02, "blink": 0.18,
+        "eyebrow": 0.04, "brow_raise": 0.04,
+        "pupil_scale": 0.06, "iris_scale": 0.06, "cornea_bulge": 0.08,
+        "squint": 0.10, "lid_upper": 0.08, "lid_lower": 0.08, "eye_gloss": 0.03
+      }
+    },
+    "poodle_giant": {
+      "species": "dog",
+      "label": "巨型贵宾犬 / 优雅型",
+      "base_offset": {
+        "pupil_x": 0.50, "pupil_y": 0.48, "blink": 0.55,
+        "eyebrow": 0.25,
+        "pupil_scale": 0.50, "iris_scale": 0.45, "cornea_bulge": 0.45,
+        "squint": 0.50, "brow_raise": 0.40,
+        "lid_upper": 0.48, "lid_lower": 0.52, "eye_gloss": 0.55
+      },
+      "scale_factor": {
+        "pupil_x": 0.04, "pupil_y": 0.04, "blink": 0.25,
+        "eyebrow": 0.08,
+        "pupil_scale": 0.12, "iris_scale": 0.10, "cornea_bulge": 0.12,
+        "squint": 0.15, "brow_raise": 0.08,
+        "lid_upper": 0.12, "lid_lower": 0.12, "eye_gloss": 0.05
+      }
+    }
   }
 }

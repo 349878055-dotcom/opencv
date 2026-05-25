@@ -1,0 +1,31 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "委屈·幼犬眼",
+  "note": "委屈可怜：耳朵耷拉、眼湿润、慢颤眨",
+  "style": "default",
+  "species": "dog",
+  "macro": {
+    "push": 15,
+    "power": 26,
+    "speed": 22,
+    "steady": 62,
+    "grip": 68,
+    "outro": 22
+  },
+  "hold_seg": {
+    "shape": "tremble",
+    "pulse_rate": 18,
+    "pulse_depth": 22,
+    "swell": 8
+  },
+  "ear": {
+    "left": [
+      -0.7,
+      -0.3
+    ],
+    "right": [
+      -0.7,
+      -0.3
+    ]
+  }
+}

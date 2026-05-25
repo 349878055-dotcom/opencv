@@ -1,0 +1,21 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "惊惧·一怔",
+  "note": "急、中力、颤、快收",
+  "style": "default",
+  "species": "human",
+  "macro": {
+    "push": 38,
+    "power": 58,
+    "speed": 96,
+    "steady": 58,
+    "grip": 42,
+    "outro": 14
+  },
+  "hold_seg": {
+    "shape": "tremble",
+    "pulse_rate": 28,
+    "pulse_depth": 32,
+    "swell": 0
+  }
+}

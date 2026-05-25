@@ -1,0 +1,32 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "cat_sleepy_droop",
+  "note": "眼皮下垂、瞳孔放大、慢眨眼",
+  "style": "default",
+  "species": "cat",
+  "macro": {
+    "push": 12,
+    "power": 12,
+    "speed": 10,
+    "steady": 48,
+    "grip": 22,
+    "outro": 58
+  },
+  "hold_seg": {
+    "shape": "decay",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  },
+  "ear": {
+    "left": [
+      -0.2,
+      -0.1
+    ],
+    "right": [
+      -0.2,
+      -0.1
+    ]
+  },
+  "label": "困倦垂眼"
+}

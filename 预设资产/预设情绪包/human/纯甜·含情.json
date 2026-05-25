@@ -1,0 +1,21 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "纯甜·含情",
+  "note": "轻、慢脉冲、很粘、慢收",
+  "style": "default",
+  "species": "human",
+  "macro": {
+    "push": 65,
+    "power": 32,
+    "speed": 28,
+    "steady": 74,
+    "grip": 90,
+    "outro": 82
+  },
+  "hold_seg": {
+    "shape": "pulse",
+    "pulse_rate": 32,
+    "pulse_depth": 28,
+    "swell": 18
+  }
+}

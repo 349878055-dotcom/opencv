@@ -1,0 +1,35 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "癫狂者_疯僧",
+  "label": "癫狂者/疯僧",
+  "species": "human",
+  "notes": "疯癫狂乱，不可预测",
+  "base_offset": {
+    "pupil_x": 0.5,
+    "pupil_y": 0.5,
+    "blink": 0.5,
+    "eyebrow": 0.5,
+    "pupil_scale": 0.5,
+    "iris_scale": 0.5,
+    "cornea_bulge": 0.5,
+    "squint": 0.5,
+    "brow_raise": 0.5,
+    "lid_upper": 0.5,
+    "lid_lower": 0.5,
+    "eye_gloss": 0.5
+  },
+  "scale_factor": {
+    "pupil_x": 0.5,
+    "pupil_y": 0.5,
+    "blink": 0.5,
+    "eyebrow": 0.5,
+    "pupil_scale": 0.5,
+    "iris_scale": 0.5,
+    "cornea_bulge": 0.5,
+    "squint": 0.5,
+    "brow_raise": 0.5,
+    "lid_upper": 0.5,
+    "lid_lower": 0.5,
+    "eye_gloss": 0.5
+  }
+}

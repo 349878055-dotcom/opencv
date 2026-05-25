@@ -204,12 +204,28 @@ def packet_from_acting_preset(name: str) -> "SliderPacket":
     ).clamped()
 
 def export_workbench_json() -> dict[str, Any]:
+    """导出工作台 UI 数据。
+
+    优先级：
+      1. 预设资产/通用情绪预设/ 下的文件（可编辑，资产包优先）
+      2. 本文件中的 Python 代码 PRESETS（回退）
+    """
+    from asset_lib import (
+        load_generic_presets_from_files,
+        load_generic_preset_groups_from_files,
+        load_generic_preset_neutral_from_files,
+    )
+
+    file_presets = load_generic_presets_from_files()
+    file_groups = load_generic_preset_groups_from_files()
+    file_neutral = load_generic_preset_neutral_from_files()
+
     return {
         "schema": SCHEMA_ID,
-        "source": "gaze_engine/control_surface.py",
-        "preset_groups": list(PRESET_GROUP for PRESET_GROUP in PRESET_GROUPS),
-        "presets": PRESETS,
-        "neutral": NEUTRAL_PRESET,
+        "source": "预设资产/human/" if file_presets else "gaze_engine/human/control_surface.py",
+        "preset_groups": file_groups or [dict(g) for g in PRESET_GROUPS],
+        "presets": file_presets or PRESETS,
+        "neutral": file_neutral or NEUTRAL_PRESET,
         "zones": ZONES,
         "shape_opts": list(SHAPE_OPTS),
         "macro_ids": list(MACRO_IDS),

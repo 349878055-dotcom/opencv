@@ -4,102 +4,26 @@
 <meta charset="utf-8" />
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>能量控制台 v12</title>
-<style>
-:root {
-  --bg: #e8eaef; --card: #fff; --line: #d0d4dc;
-  --text: #12151a; --muted: #5a6270; --accent: #1a56db;
-  --rise: #dbeafe; --move: #fef3c7; --fall: #e0e7ff;
-  --rise-bd: #3b82f6; --move-bd: #d97706; --fall-bd: #6366f1;
-}
-* { box-sizing: border-box; margin: 0; }
-body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color: var(--text); background: var(--bg); }
-.hd { background: var(--card); border-bottom: 1px solid var(--line); padding: 10px 20px; }
-.hd h1 { font-size: 1.05rem; font-weight: 700; }
-.hd p { margin-top: 4px; font-size: 0.78rem; color: var(--muted); }
-.grid { display: grid; grid-template-columns: 180px 1fr minmax(380px, 500px); gap: 10px; max-width: 1480px; margin: 0 auto; padding: 12px 14px 28px; }
-@media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-.card-hd { padding: 8px 12px; font-weight: 700; font-size: 0.82rem; border-bottom: 1px solid var(--line); background: #f8f9fb; }
-.input-block { padding: 6px 10px; }
-.input-block label { display: block; font-size: 0.68rem; color: var(--muted); margin-bottom: 3px; }
-.input-block textarea { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; font-size: 0.74rem; resize: vertical; font-family: inherit; }
-.btn-row { padding: 4px 10px 8px; }
-.btn { padding: 6px 12px; font-size: 0.76rem; border-radius: 6px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
-.btn:hover { border-color: #93b4f0; }
-.btn.primary { background: var(--accent); color: #fff; border: none; }
-.btn.primary:hover { opacity: 0.88; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn.sm { padding: 3px 8px; font-size: 0.66rem; }
-.emotion-card { margin-top: 10px; }
-.preset-hint { padding: 4px 10px; font-size: 0.64rem; color: var(--muted); }
-.preset-check { padding: 4px 10px; font-size: 0.66rem; }
-.preset-check.ok { color: #166534; }
-.preset-check.err { color: #b91c1c; }
-.preset-scroll { max-height: 360px; overflow-y: auto; padding: 0 6px 6px; }
-.preset-group { padding: 6px 4px 2px; font-size: 0.68rem; font-weight: 600; color: var(--muted); }
-.preset-btn { display: block; width: 100%; text-align: left; padding: 6px 8px; margin: 2px 0; border: 1px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; font-size: 0.72rem; line-height: 1.3; }
-.preset-btn:hover { border-color: var(--accent); background: #f0f5ff; }
-.preset-btn.on { border-color: var(--accent); background: #eff6ff; font-weight: 700; }
-.preset-btn small { display: block; font-size: 0.6rem; color: var(--muted); font-weight: 400; }
-.pulse-viz { padding: 10px 14px 0; }
-.pulse-viz h2 { font-size: 0.85rem; margin-bottom: 4px; }
-.pulse-labels { display: flex; gap: 10px; font-size: 0.64rem; margin-bottom: 6px; }
-.pulse-labels .r { color: var(--rise-bd); }
-.pulse-labels .m { color: var(--move-bd); }
-.pulse-labels .f { color: var(--fall-bd); }
-.pulse-viz svg { width: 100%; height: 100px; border: 1px solid var(--line); border-radius: 6px; background: #fafbfd; }
-.pulse-info { font-size: 0.64rem; color: var(--muted); margin-top: 4px; }
-#l1-fix-msg { font-size: 0.62rem; color: #c2410c; margin-top: 2px; }
-.zone { padding: 8px 14px; border-top: 1px solid var(--line); }
-.zone.rise { background: var(--rise); border-left: 4px solid var(--rise-bd); }
-.zone.move { background: var(--move); border-left: 4px solid var(--move-bd); }
-.zone.fall { background: var(--fall); border-left: 4px solid var(--fall-bd); }
-.zone-hd { font-size: 0.74rem; font-weight: 600; margin-bottom: 6px; display: flex; gap: 8px; align-items: baseline; }
-.zone-hd span { font-size: 0.62rem; color: var(--muted); font-weight: 400; }
-.shapes { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
-.shapes button { padding: 4px 8px; font-size: 0.66rem; border: 1px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; }
-.shapes button.on { border-color: var(--move-bd); background: #fffbeb; font-weight: 700; }
-.knob { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-.knob label { width: 64px; font-size: 0.66rem; color: var(--muted); flex-shrink: 0; }
-.knob input[type=range] { flex: 1; height: 6px; }
-.knob .val { width: 32px; text-align: right; font-size: 0.64rem; font-weight: 600; }
-.neon-section { border-top: 1px solid var(--line); padding: 12px 14px 14px; }
-.neon-section h2 { font-size: 0.85rem; margin-bottom: 4px; }
-.neon-section .hint { font-size: 0.64rem; color: var(--muted); margin-bottom: 8px; }
-#neon-video-box { background: #000; border-radius: 8px; min-height: 200px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-#neon-placeholder { color: #94a3b8; text-align: center; padding: 30px; }
-#neon-placeholder .icon { font-size: 2rem; }
-#neon-video { width: 100%; max-height: 380px; display: none; object-fit: contain; }
-.neon-ctrl { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
-#neon-status { font-size: 0.66rem; color: var(--muted); }
-.pipe-hint { margin: 0; padding: 6px 10px; font-size: 0.66rem; color: var(--muted); border-bottom: 1px solid var(--line); background: #fafbfc; }
-.pipe-hint.ok { color: #166534; background: #f0fdf4; }
-.pipe-hint.warn { color: #92400e; background: #fffbeb; }
-.pipe-flow { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--line); background: #f6f7f9; }
-.pipe-flow span { font-size: 0.6rem; color: var(--muted); padding: 2px 4px; }
-.pipe-tabs { display: flex; flex-wrap: wrap; gap: 3px; padding: 6px 8px; border-bottom: 1px solid var(--line); }
-.pipe-tab { padding: 5px 8px; font-size: 0.66rem; border: 1px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; line-height: 1.2; }
-.pipe-tab.on { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
-.pipe-tab small { display: block; font-size: 0.56rem; opacity: 0.85; font-weight: 400; }
-.pipe-json { margin: 0; padding: 10px; background: #151820; color: #b7c0cc; font: 0.64rem/1.4 ui-monospace, monospace; max-height: 52vh; overflow: auto; white-space: pre; }
-.pipe-acts { padding: 8px 10px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.pipe-acts label { font-size: 0.66rem; color: var(--muted); cursor: pointer; }
-</style>
+<title>能量工作台 v12</title>
+<link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
 
-<header class="hd">
-  <h1>能量控制台</h1>
-  <p>自然语言 → 16情绪预设 → 能量滑杆 → 全量帧编译 → 2D霓虹控制流 → 扩散成片</p>
+<!-- ═══ 头部 ═══ -->
+<header class="header">
+  <h1>⚡ 能量工作台</h1>
+  <p>自然语言 → 情绪预设 → 能量滑杆 → 全量帧编译 → 2D 霓虹控制流 → 扩散成片</p>
 </header>
 
-<div class="grid">
+<!-- ═══ 三栏网格 ═══ -->
+<div class="workbench-grid">
 
   <!-- ═══ 栏1：输入 + 情绪 ═══ -->
   <aside>
+
+    <!-- 输入卡片 -->
     <div class="card">
-      <div class="card-hd">📝 输入</div>
+      <div class="card-header">📝 输入</div>
       <div class="input-block">
         <label for="nl-input">自然语言</label>
         <textarea id="nl-input" rows="2" placeholder="描述你想要的表演…"></textarea>
@@ -117,47 +41,90 @@ body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color
       </div>
     </div>
 
-    <div class="card emotion-card">
-      <div class="card-hd" id="emotion-card-title">16 种情绪预设
-        <span style="float:right;font-weight:400;font-size:0.7rem;">
-          <button class="btn sm species-btn on" data-species="human" style="background:#1a56db;color:#fff;border:none;">🙂 人</button>
-          <button class="btn sm species-btn" data-species="cat" style="margin-left:4px;">🐱 猫</button>
-          <button class="btn sm species-btn" data-species="dog" style="margin-left:4px;">🐶 狗</button>
+    <!-- 情绪预设卡片 -->
+    <div class="card">
+      <div class="card-header">
+        <span id="emotion-title">16 种情绪预设</span>
+        <span class="species-toggle">
+          <button class="species-btn active" data-species="human">🙂 人</button>
+          <button class="species-btn" data-species="cat">🐱 猫</button>
+          <button class="species-btn" data-species="dog">🐶 狗</button>
         </span>
       </div>
       <p class="preset-hint" id="preset-hint">选情绪 = 自动填充滑杆 · 再微调 = 自定义</p>
-      <button class="btn" id="btn-neutral" style="display:block;width:calc(100% - 10px);margin:6px 5px 8px">◎ 回归中性</button>
-      <div class="preset-check ok" id="preset-check">启动中…</div>
+      <button class="btn" id="btn-neutral" style="display:block;width:calc(100% - 14px);margin:6px 7px 8px">◎ 回归中性</button>
+      <p class="preset-status" id="preset-status">启动中…</p>
       <div class="preset-scroll" id="preset-list"></div>
     </div>
 
-    <!-- ═══ 人格矩阵 ═══ -->
-    <div class="card" style="margin-top:10px">
-      <div class="card-hd">🧬 人格矩阵</div>
+    <!-- 人格矩阵 -->
+    <div class="card">
+      <div class="card-header">🧬 人格矩阵</div>
       <div class="input-block">
         <label for="persona-select">选择人格</label>
-        <select id="persona-select" style="width:100%;padding:5px 6px;border:1px solid var(--line);border-radius:6px;font-size:0.74rem"></select>
+        <select id="persona-select"></select>
       </div>
-      <div id="persona-sliders" style="padding:2px 6px 8px;max-height:320px;overflow-y:auto"></div>
+      <div class="persona-sliders" id="persona-sliders"></div>
     </div>
 
-    <!-- ═══ 资产库浏览器 ═══ -->
-    <div class="card" style="margin-top:10px">
-      <div class="card-hd">📂 资产库浏览器</div>
-      <div style="padding:2px 6px 8px;max-height:360px;overflow-y:auto" id="asset-tree">
-        <p style="font-size:0.66rem;color:var(--muted);padding:8px;text-align:center">加载中…</p>
+    <!-- 客户资产库卡片 -->
+    <div class="card">
+      <div class="card-header">👤 客户资产库</div>
+      <div class="input-block">
+        <label for="customer-select">选择客户</label>
+        <div style="display:flex;gap:4px">
+          <select id="customer-select" style="flex:1"></select>
+          <button class="btn btn-sm" id="btn-customer-new" title="新建客户">➕</button>
+        </div>
+      </div>
+      <div class="input-block" id="customer-project-block" style="display:none">
+        <label for="project-select">选择项目</label>
+        <div style="display:flex;gap:4px">
+          <select id="project-select" style="flex:1"></select>
+          <button class="btn btn-sm" id="btn-project-new" title="新建项目">➕</button>
+        </div>
+      </div>
+      <div id="customer-actions" style="display:none">
+        <div class="btn-row" style="margin-top:4px">
+          <button class="btn btn-sm" id="btn-customer-save-ctx">💾 设为当前</button>
+          <button class="btn btn-sm" id="btn-customer-save-adj">📝 保存调整</button>
+        </div>
+        <div id="customer-status" class="text-sm text-muted" style="padding:4px 0"></div>
       </div>
     </div>
+
+    <!-- 资产库浏览器 -->
+    <div class="card">
+      <div class="card-header">📂 资产库浏览器</div>
+      <div class="asset-tree" id="asset-tree">
+        <p class="text-muted text-sm" style="padding:8px;text-align:center">加载中…</p>
+      </div>
+    </div>
+
+    <!-- 狗全身体验测试 -->
+    <div class="card">
+      <div class="card-header">🐶 狗全身体验测试</div>
+      <div class="input-block">
+        <label for="dog-nl-input">自然语言（描述笼中委屈场景）</label>
+        <textarea id="dog-nl-input" rows="2">狗子被关进笼子里面的委屈样子</textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="btn-dog-test">🎞 生成狗测试资产</button>
+      </div>
+      <div class="dog-test-status" id="dog-test-status"></div>
+    </div>
+
   </aside>
 
-  <!-- ═══ 栏2：脉冲曲线 + 滑杆 + 2D控制视频 ═══ -->
+  <!-- ═══ 栏2：脉冲曲线 + 滑杆 + 2D 控制流 ═══ -->
   <main class="card">
-    <section class="pulse-viz">
+
+    <section class="pulse-section">
       <h2>能量脉冲 · 5秒容器</h2>
       <div class="pulse-labels">
-        <span class="r">起 · 上升沿</span>
-        <span class="m">动 · 平顶段</span>
-        <span class="f">收 · 下降沿</span>
+        <span class="rise">起 · 上升沿</span>
+        <span class="move">动 · 平顶段</span>
+        <span class="fall">收 · 下降沿</span>
       </div>
       <svg id="curve" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
       <p class="pulse-info" id="pulse-info">固定 5 秒 · 拖滑杆 = 改脉冲形状</p>
@@ -173,7 +140,10 @@ body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color
       <h2>🎬 工程底模 · 12通道视觉化</h2>
       <p class="hint">🟢眉(G) · 🔴眼眶(R) · 🔵瞳孔(B) — RGB三色分离 · 0-noise闭合路径 · 供扩散引擎消费</p>
       <div id="neon-video-box">
-        <div id="neon-placeholder"><span class="icon">🎬</span><p style="font-size:0.7rem;margin-top:6px">点「渲染 2D 控制流」生成预览</p></div>
+        <div id="neon-placeholder">
+          <span class="icon">🎬</span>
+          <p style="font-size:0.7rem;margin-top:6px">点「渲染 2D 控制流」生成预览</p>
+        </div>
         <video id="neon-video" controls loop muted playsinline></video>
       </div>
       <div class="neon-ctrl">
@@ -181,853 +151,32 @@ body { font-family: "PingFang SC", system-ui, sans-serif; font-size: 14px; color
         <span id="neon-status"></span>
       </div>
     </section>
+
   </main>
 
   <!-- ═══ 栏3：交付链 JSON ═══ -->
-  <aside class="col-pipeline">
+  <aside>
+
     <div class="card">
-      <div class="card-hd">📦 交付链 · 逐段真值</div>
-      <p class="pipe-hint warn" id="pipe-source">加载中…</p>
+      <div class="card-header">📦 交付链 · 逐段真值</div>
+      <p class="pipe-source" id="pipe-source">加载中…</p>
       <div class="pipe-flow">
         <span>①滑杆</span><span>→</span><span>②包络</span><span>→</span>
         <span>③全量</span><span>→</span><span>④真人</span><span>→</span><span>⑤烘焙</span>
       </div>
       <div class="pipe-tabs" id="pipe-tabs"></div>
       <pre class="pipe-json" id="pipe-json">{}</pre>
-      <div class="pipe-acts">
+      <div class="pipe-actions">
         <label><input type="checkbox" id="pipe-full" /> 完整（150帧）</label>
         <button class="btn primary" id="btn-save-packet">💾 保存到资产库</button>
         <button class="btn" id="btn-copy">📋 复制</button>
       </div>
     </div>
+
   </aside>
 
 </div>
 
-<script src="/02_前端插件/workbench_pipeline_ui.js"></script>
-<script src="/02_前端插件/slider_forbidden_bounds.js"></script>
-<script src="/02_前端插件/packet_finalize_ui.js"></script>
-
-<script>
-/* ═══════════════════════════════════════════════════════
-   能量控制台 v12 · 全量重写 (clean generation)
-   控制面数据从 /control_surface.json API 获取，不内嵌硬编码数据
-   ═══════════════════════════════════════════════════════ */
-
-const $ = id => document.getElementById(id);
-
-// ─── DOM ───────────────────────────────────────────────
-const NL = $('nl-input'), PROMPT = $('prompt-input'), KB = $('kb-input');
-const PCHECK = $('preset-check'), PLIST = $('preset-list');
-const PINFO = $('pulse-info'), L1MSG = $('l1-fix-msg');
-const CURVE = $('curve');
-const ZR = $('zone-rise'), ZM = $('zone-move'), ZF = $('zone-fall');
-const NPLACE = $('neon-placeholder'), NVID = $('neon-video');
-const NSTATUS = $('neon-status'), NB_RENDER = $('btn-render-neon');
-const PTABS = $('pipe-tabs'), PJ = $('pipe-json'), PSRC = $('pipe-source');
-const PFULL = $('pipe-full');
-
-// ─── 状态 ──────────────────────────────────────────────
-let SCHEMA = 'slider-packet-v1';
-let ZONES = {}, PRESET_GROUPS = [], PRESETS = {}, SHAPE_OPTS = [];
-let MACRO_IDS = [], HOLD_IDS = [], VALID_SHAPES = [], PIPE_TABS = [];
-let NEUTRAL = { macro: { push:50,power:50,speed:50,steady:50,grip:50,outro:50 }, hold_seg: { shape:'flat',pulse_rate:0,pulse_depth:0,swell:0 } };
-let macro = { ...NEUTRAL.macro }, hold_seg = { ...NEUTRAL.hold_seg };
-let activePreset = '', pipelineData = null, activePipeTab = '1_slider_packet';
-let _loadToken = 0, _loading = false;
-
-// ─── 物种切换 ──────────────────────────────────────────
-let currentSpecies = 'human';
-const SPECIES_DATA = {
-  human: {
-    label: '人类',
-    icon: '🙂',
-    channelCount: 12,
-    presets: null,  // 从后端加载
-    hint: '选情绪 = 自动填充滑杆 · 再微调 = 自定义'
-  },
-  cat: {
-    label: '猫',
-    icon: '🐱',
-    channelCount: 13,
-    presets: {
-      'cat_alarm_stare':   { note: '警觉·盯 · 竖耳缩瞳' },
-      'cat_hunt_fixate':   { note: '狩猎·锁定 · 伏低' },
-      'cat_startle_fluff': { note: '惊吓·炸毛 · 飞机耳' },
-      'cat_curious_tilt':  { note: '好奇·歪头 · 一耳前一耳后' },
-      'cat_cuddle_squint': { note: '撒娇·眯眼 · 慢眨眼' },
-      'cat_content_bliss': { note: '满足·飘然 · 眯眼成线' },
-      'cat_annoyed_swish': { note: '不耐烦 · 耳朵背过去' },
-      'cat_scared_flatten': { note: '恐惧·贴地 · 全飞机耳' },
-      'cat_sad_whimper':   { note: '委屈·呜咽 · 眼湿润' },
-      'cat_angry_hiss':    { note: '愤怒·哈气 · 瞳孔缩线' },
-      'cat_sleepy_droop':  { note: '困倦·迷离 · 眼皮下垂' },
-      'cat_play_pounce':   { note: '玩耍·扑击 · 瞳孔放大' },
-    },
-    groups: [
-      { label: '警觉 · 攻击', keys: ['cat_alarm_stare','cat_hunt_fixate','cat_angry_hiss'] },
-      { label: '恐惧 · 退缩', keys: ['cat_startle_fluff','cat_scared_flatten','cat_sad_whimper'] },
-      { label: '亲昵 · 放松', keys: ['cat_cuddle_squint','cat_content_bliss','cat_sleepy_droop'] },
-      { label: '好奇 · 玩耍', keys: ['cat_curious_tilt','cat_play_pounce','cat_annoyed_swish'] },
-    ],
-    hint: '🐱 猫情绪预设 · 参数待填充'
-  },
-  dog: {
-    label: '狗',
-    icon: '🐶',
-    channelCount: 13,
-    presets: {
-      'dog_alert_bark':    { note: '警觉·吠 · 竖耳' },
-      'dog_happy_wag':     { note: '开心·摇尾 · 放松眼' },
-      'dog_sad_puppy':     { note: '委屈·幼犬眼 · 挑眉上翻' },
-      'dog_scared_tuck':   { note: '恐惧·夹尾 · 耳后贴' },
-      'dog_angry_growl':   { note: '愤怒·低吼 · 竖耳前倾' },
-      'dog_curious_cock':  { note: '好奇·歪头 · 单耳竖' },
-      'dog_submissive_look': { note: '服从·回避 · 眼神避开' },
-      'dog_play_bow':      { note: '邀玩·趴 · 瞳孔放大' },
-      'dog_guilty_side':   { note: '心虚·偷瞄 · 耳耷拉' },
-      'dog_content_sigh':  { note: '满足·叹气 · 半闭眼' },
-    },
-    groups: [
-      { label: '警觉 · 攻击', keys: ['dog_alert_bark','dog_angry_growl','dog_scared_tuck'] },
-      { label: '亲昵 · 放松', keys: ['dog_happy_wag','dog_content_sigh','dog_sad_puppy'] },
-      { label: '好奇 · 玩耍', keys: ['dog_curious_cock','dog_play_bow','dog_guilty_side'] },
-      { label: '服从 · 回避', keys: ['dog_submissive_look'] },
-    ],
-    hint: '🐶 狗情绪预设 · 参数待填充'
-  }
-};
-
-const clamp = v => Math.max(0, Math.min(100, Math.round(Number(v))));
-const lerp01 = (a, b, t) => a + (b - a) * (clamp(t) / 100);
-
-// ─── §1 · 控制面加载 ───────────────────────────────────
-function applyControlSurface(data) {
-  SCHEMA = data.schema || SCHEMA;
-  ZONES = data.zones || {};
-  PRESET_GROUPS = data.preset_groups || [];
-  PRESETS = data.presets || {};
-  SHAPE_OPTS = data.shape_opts || [];
-  MACRO_IDS = data.macro_ids || [];
-  HOLD_IDS = data.hold_ids || [];
-  VALID_SHAPES = data.valid_shapes || [];
-  NEUTRAL = data.neutral || NEUTRAL;
-  PIPE_TABS = data.pipe_tabs || [];
-}
-
-async function loadControlSurface() {
-  let data = null;
-  if (location.protocol !== 'file:') {
-    try {
-      const r = await fetch('/control_surface.json', { cache: 'no-store' });
-      if (r.ok) data = await r.json();
-    } catch (e) { /* ignore */ }
-  }
-  if (!data) {
-    PCHECK.className = 'preset-check err';
-    PCHECK.textContent = '⚠ 控制面数据缺失 · 请双击启动脚本';
-    return false;
-  }
-  applyControlSurface(data);
-  PCHECK.className = 'preset-check ok';
-  PCHECK.textContent = '✅ v12 就绪 · ' + Object.keys(PRESETS).length + ' 种情绪';
-  return true;
-}
-
-// ─── §2 · 预设按钮 ─────────────────────────────────────
-function buildPresets() {
-  PLIST.innerHTML = '';
-  var species = SPECIES_DATA[currentSpecies];
-  var groups, presets;
-  if (currentSpecies === 'human') {
-    groups = PRESET_GROUPS;
-    presets = PRESETS;
-  } else {
-    groups = species.groups;
-    presets = species.presets;
-  }
-  groups.forEach(function(g) {
-    var hd = document.createElement('div');
-    hd.className = 'preset-group';
-    hd.textContent = g.label;
-    PLIST.appendChild(hd);
-    g.keys.forEach(function(key) {
-      var data = presets[key];
-      if (!data) return;
-      var b = document.createElement('button');
-      b.className = 'preset-btn'; b.dataset.preset = key;
-      b.innerHTML = key + '<small>' + (data.note || '') + '</small>';
-      b.onclick = function() { selectEmotion(key); };
-      PLIST.appendChild(b);
-    });
-  });
-}
-
-// ─── 物种切换 ──────────────────────────────────────────
-function switchSpecies(species) {
-  currentSpecies = species;
-  // 更新按钮高亮
-  document.querySelectorAll('.species-btn').forEach(function(b) {
-    b.classList.toggle('on', b.dataset.species === species);
-    if (b.dataset.species === species) {
-      b.style.background = '#1a56db'; b.style.color = '#fff'; b.style.border = 'none';
-    } else {
-      b.style.background = '#fff'; b.style.color = ''; b.style.border = '1px solid var(--line)';
-    }
-  });
-  // 更新提示文字
-  var hint = SPECIES_DATA[species].hint;
-  document.getElementById('preset-hint').textContent = hint;
-  // 更新标题
-  var count = species === 'human' ? Object.keys(PRESETS).length : Object.keys(SPECIES_DATA[species].presets).length;
-  document.getElementById('emotion-card-title').childNodes[0].textContent = count + ' 种情绪预设';
-  // 重建预设列表
-  buildPresets();
-  highlightPreset('');
-  // 重置滑杆到中性
-  resetToNeutral();
-}
-
-function highlightPreset(name) {
-  document.querySelectorAll('.preset-btn').forEach(function(b) {
-    b.classList.toggle('on', b.dataset.preset === name);
-  });
-}
-
-async function selectEmotion(name) {
-  var data = PRESETS[name];
-  if (!data || (!_loading && activePreset === name)) {
-    highlightPreset(name);
-    return true;
-  }
-  var token = ++_loadToken;
-  _loading = true;
-  activePreset = name;
-  macro = { ...data.macro };
-  hold_seg = { ...data.hold_seg };
-  pipelineData = null;
-  highlightPreset(name);
-  try {
-    if (typeof WorkbenchPipeline !== 'undefined') {
-      try {
-        var r = await fetch('/03_工具脚本/pipeline_cache/' + WorkbenchPipeline.slug(name) + '.json');
-        if (r.ok) pipelineData = await r.json();
-      } catch (e) { /* no cache yet */ }
-    }
-    if (token === _loadToken) paint();
-  } finally {
-    if (token === _loadToken) _loading = false;
-  }
-  return true;
-}
-
-function resetToNeutral() {
-  _loadToken++;
-  activePreset = '';
-  macro = { ...NEUTRAL.macro };
-  hold_seg = { ...NEUTRAL.hold_seg };
-  pipelineData = null;
-  highlightPreset('');
-  paint();
-}
-
-// ─── §3 · 滑杆构建 ─────────────────────────────────────
-function buildZones() {
-  ['rise','move','fall'].forEach(function(zid) {
-    var z = ZONES[zid];
-    var root = document.getElementById('zone-' + zid);
-    if (!z) { root.innerHTML = ''; return; }
-    root.innerHTML = '<h3 class="zone-hd">' + z.title + '<span>' + (z.sub || '') + '</span></h3>';
-    if (z.shapes) {
-      var row = document.createElement('div');
-      row.className = 'shapes';
-      SHAPE_OPTS.forEach(function(s) {
-        var b = document.createElement('button');
-        b.textContent = s.label; b.dataset.shape = s.id;
-        b.onclick = function() { hold_seg.shape = s.id; paint(); };
-        row.appendChild(b);
-      });
-      root.appendChild(row);
-    }
-    (z.knobs || []).forEach(function(spec) {
-      if (spec.type === 'shape') return;
-      root.appendChild(buildKnob(spec.k, spec));
-    });
-  });
-}
-
-function buildKnob(k, spec) {
-  var div = document.createElement('div');
-  div.className = 'knob';
-  var label = document.createElement('label');
-  label.textContent = spec.label;
-  var input = document.createElement('input');
-  input.type = 'range'; input.min = 0; input.max = 100;
-  input.dataset.key = k;
-  input.dataset.spec = spec.id;
-  input.value = (k === 'macro' ? macro[spec.id] : hold_seg[spec.id]) || 0;
-  var val = document.createElement('span');
-  val.className = 'val';
-  val.textContent = input.value;
-  var update = function() {
-    var v = Number(input.value);
-    if (k === 'macro') macro[spec.id] = v;
-    else hold_seg[spec.id] = v;
-    val.textContent = v;
-    activePreset = '';
-    highlightPreset('');
-    paint();
-  };
-  input.oninput = update;
-  div.appendChild(label); div.appendChild(input); div.appendChild(val);
-  return div;
-}
-
-// ─── §4 · SVG 脉冲曲线 ─────────────────────────────────
-function paint() {
-  // update knobs via data attributes
-  document.querySelectorAll('.knob input').forEach(function(inp) {
-    var k = inp.dataset.key;
-    var id = inp.dataset.spec;
-    if (!k || !id) return;
-    if (k === 'macro' && macro[id] !== undefined) inp.value = macro[id];
-    if (k === 'hold_seg' && hold_seg[id] !== undefined) inp.value = hold_seg[id];
-    var valSpan = inp.nextElementSibling;
-    if (valSpan && valSpan.className === 'val') valSpan.textContent = inp.value;
-  });
-  document.querySelectorAll('.shapes button').forEach(function(b) {
-    b.classList.toggle('on', b.dataset.shape === hold_seg.shape);
-  });
-
-  // draw SVG curve
-  var svg = CURVE;
-  var W = 300, H = 100;
-  var html = '<rect width="300" height="100" fill="#fafbfd"/>';
-  html += '<rect x="0" y="0" width="60" height="100" fill="#dbeafe" opacity="0.4"/>';
-  html += '<rect x="60" y="0" width="180" height="100" fill="#fef3c7" opacity="0.4"/>';
-  html += '<rect x="240" y="0" width="60" height="100" fill="#e0e7ff" opacity="0.4"/>';
-
-  var push = macro.push / 100;
-  var power = macro.power / 100;
-  var speed = macro.speed / 100;
-  var steady = macro.steady / 100;
-  var grip = macro.grip / 100;
-  var outro = macro.outro / 100;
-
-  var tPeak = 14 + (1 - speed) * 10;
-  var peakY = H - (15 + power * 65);
-  var tHold = 30 + steady * 60;
-  var tOutro = tHold + (1 - outro) * 40;
-  var holdY = peakY + (1 - grip) * 10;
-
-  var d = 'M0,' + H;
-  for (var t = 0; t <= tPeak; t++) {
-    var u = t / tPeak;
-    var y = H - u * (H - peakY) * (push > 0.5 ? 1 + (push - 0.5) * 0.4 : 1);
-    d += ' L' + (t / 150 * W) + ',' + Math.round(y);
-  }
-  for (var t = tPeak + 1; t <= tHold; t++) {
-    var u = (t - tPeak) / (tHold - tPeak);
-    var y = peakY + (holdY - peakY) * u;
-    if (hold_seg.shape === 'tremble') y += Math.sin(u * 20) * 4;
-    if (hold_seg.shape === 'pulse') y += Math.sin(u * hold_seg.pulse_rate * 0.3) * hold_seg.pulse_depth * 0.3;
-    if (hold_seg.shape === 'decay') y += u * 20;
-    if (hold_seg.shape === 'swell') y -= Math.sin(Math.PI * u) * hold_seg.swell * 0.3;
-    d += ' L' + (t / 150 * W) + ',' + Math.round(Math.max(peakY - 10, Math.min(H, y)));
-  }
-  for (var t = tHold + 1; t <= 150; t++) {
-    var u = (t - tHold) / (150 - tHold);
-    var ease = u < 0.5 ? 2 * u * u : -1 + (4 - 2 * u) * u;
-    var y = holdY + (H - holdY) * ease;
-    d += ' L' + (t / 150 * W) + ',' + Math.round(y);
-  }
-
-  html += '<path d="' + d + '" fill="none" stroke="' + (macro.push > 50 ? '#3b82f6' : '#d97706') + '" stroke-width="2.5" stroke-linejoin="round"/>';
-  html += '<line x1="' + (tPeak / 150 * W) + '" y1="0" x2="' + (tPeak / 150 * W) + '" y2="100" stroke="#3b82f6" stroke-width="0.5" stroke-dasharray="3,4" opacity="0.5"/>';
-  html += '<line x1="' + (tHold / 150 * W) + '" y1="0" x2="' + (tHold / 150 * W) + '" y2="100" stroke="#d97706" stroke-width="0.5" stroke-dasharray="3,4" opacity="0.5"/>';
-  svg.innerHTML = html;
-
-  PINFO.textContent = '起峰:' + Math.round(tPeak) + 'f · 盯住:' + Math.round(tPeak) + '→' + Math.round(tHold) + 'f · 收场:' + Math.round(tHold) + '→150f · 力度:' + macro.power;
-}
-
-// ─── §5 · 管线 ─────────────────────────────────────────
-function buildPipeTabs() {
-  PTABS.innerHTML = '';
-  PIPE_TABS.forEach(function(tab) {
-    var b = document.createElement('button');
-    b.className = 'pipe-tab';
-    b.innerHTML = tab.title + (tab.sub ? '<small>' + tab.sub + '</small>' : '');
-    b.dataset.tab = tab.id;
-    b.onclick = function() { activePipeTab = tab.id; renderPipeJson(); };
-    PTABS.appendChild(b);
-  });
-}
-
-function renderPipeJson() {
-  PTABS.querySelectorAll('.pipe-tab').forEach(function(b) {
-    b.classList.toggle('on', b.dataset.tab === activePipeTab);
-  });
-  if (!pipelineData) {
-    PJ.textContent = JSON.stringify(buildPacket(), null, 2);
-    PSRC.textContent = '⚠ 前端草稿（非出厂定稿）· 选情绪或点编译';
-    PSRC.className = 'pipe-hint warn';
-    return;
-  }
-  var tab = activePipeTab;
-  var obj;
-  if (tab === '1_slider_packet') {
-    obj = pipelineData.slider_packet || buildPacket();
-  } else if (tab === '2_envelope') {
-    obj = pipelineData.energy_envelope || pipelineData.envelope || {};
-  } else if (tab === '3_dense_env' || tab === '4_dense_prior' || tab === '4b_pulse_quality_report') {
-    obj = pipelineData.channel_tracks || pipelineData.channels || {};
-    if (!PFULL.checked) {
-      var summary = {};
-      Object.keys(obj).forEach(function(k) {
-        if (Array.isArray(obj[k]) && obj[k].length > 10) {
-          summary[k] = '[150 frames, first 5]: ' + JSON.stringify(obj[k].slice(0, 5));
-        } else {
-          summary[k] = obj[k];
-        }
-      });
-      obj = summary;
-    }
-  } else if (tab === '5_baked_02_delivery') {
-    obj = pipelineData.channel_tracks || pipelineData.channels || {};
-  } else if (tab === '6_human_prior_report') {
-    obj = pipelineData.human_prior_report || pipelineData.prior_report || {};
-  } else {
-    obj = pipelineData;
-  }
-  PJ.textContent = JSON.stringify(obj, null, 2);
-  PSRC.textContent = '✓ 出厂定稿 · ' + (pipelineData.emotion || pipelineData.mood || '');
-  PSRC.className = 'pipe-hint ok';
-}
-
-// ─── §6 · 数据包构建 ──────────────────────────────────
-function buildPacket() {
-  return {
-    schema: SCHEMA,
-    emotion: activePreset || '',
-    macro: { ...macro },
-    hold_seg: { ...hold_seg }
-  };
-}
-
-// ─── §7 · API 通信 ─────────────────────────────────────
-async function fetchJSON(url, opts) {
-  if (!opts) opts = {};
-  var r = await fetch(url, opts);
-  var text = await r.text();
-  if (!r.ok) throw new Error(text.slice(0, 200));
-  try { return JSON.parse(text); } catch (e) {
-    throw new Error('非 JSON 响应 — 请重启工作台');
-  }
-}
-
-async function loadContext() {
-  try {
-    var r = await fetch('/workbench_context.json', { cache: 'no-cache' });
-    if (!r.ok) return;
-    var c = await r.json();
-    if (c.natural_language) NL.value = c.natural_language;
-    if (c.energy_map_note || c.prompt) PROMPT.value = c.energy_map_note || c.prompt;
-    if (c.knowledge_base) KB.value = c.knowledge_base;
-  } catch (e) { /* ignore */ }
-}
-
-async function loadSliderPacket() {
-  try {
-    var r = await fetch('/slider_packet.json', { cache: 'no-cache' });
-    if (r.ok) {
-      var pkt = await r.json();
-      if (pkt && pkt.macro) {
-        macro = { ...pkt.macro };
-        hold_seg = { ...pkt.hold_seg };
-        if (pkt.emotion && PRESETS[pkt.emotion]) activePreset = pkt.emotion;
-        pipelineData = null;
-        paint();
-      }
-    }
-  } catch (e) { /* no saved packet yet */ }
-}
-
-async function saveContext() {
-  var body = {
-    natural_language: NL.value.trim(),
-    energy_map_note: PROMPT.value.trim(),
-    knowledge_base: KB.value.trim()
-  };
-  try {
-    var j = await fetchJSON('/save_context', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    alert(j.ok ? '✅ 已保存' : '保存失败');
-  } catch (e) { alert('请先运行启动脚本'); }
-}
-
-async function savePacket() {
-  try {
-    var j = await fetchJSON('/save_packet', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(buildPacket())
-    });
-    alert(j.ok ? '✅ 已保存' : '保存失败');
-  } catch (e) { alert('保存失败'); }
-}
-
-// ─── §8 · 2D 霓虹控制视频 ─────────────────────────────
-async function renderNeonControlVideo() {
-  if (location.protocol === 'file:') {
-    NSTATUS.textContent = '⚠ 请通过 http://127.0.0.1:8765 访问';
-    return;
-  }
-  NB_RENDER.disabled = true;
-  NB_RENDER.textContent = '⏳ 渲染中…';
-  NSTATUS.textContent = '⏳ 编译管线: 滑杆→12×150→人律→平庸→视频…';
-  NPLACE.style.display = 'none';
-  NVID.style.display = 'none';
-  try {
-    var pkt = buildPacket();
-    var r = await fetch('/render_control_video', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(pkt)
-    });
-    var j = await r.json();
-    if (!j.ok) {
-      NSTATUS.textContent = '渲染失败: ' + (j.error || j.message || JSON.stringify(j));
-      return;
-    }
-    var url = (j.path || '/control_video.mp4') + '?t=' + Date.now();
-    NVID.src = url;
-    NVID.style.display = 'block';
-    NVID.load();
-    NVID.onloadeddata = function() {
-      NSTATUS.textContent = '✓ 2D 霓虹控制流就绪 · 播放中';
-      NVID.play().catch(function() {
-        NSTATUS.textContent += ' (点击播放)';
-      });
-    };
-    NVID.onerror = function() {
-      NSTATUS.textContent = '视频加载失败，请右键检查浏览器控制台';
-      NVID.style.display = 'none';
-      NPLACE.style.display = 'flex';
-    };
-  } catch (e) {
-    NSTATUS.textContent = '网络错误: ' + (e.message || e) + ' · 确认服务已启动';
-  } finally {
-    NB_RENDER.disabled = false;
-    NB_RENDER.textContent = '🎞 渲染 2D 控制流';
-  }
-}
-
-async function healthCheck() {
-  if (location.protocol === 'file:') {
-    PSRC.textContent = '⚠ 请启动工作台';
-    PSRC.className = 'pipe-hint warn';
-    return false;
-  }
-  try {
-    var r = await fetch('/health', { cache: 'no-store' });
-    var h = await r.json();
-    if (h.ok) {
-      PSRC.textContent = '✓ 服务 v' + h.version;
-      PSRC.className = 'pipe-hint ok';
-      return true;
-    }
-  } catch (e) { /* ignore */ }
-  PSRC.textContent = '⚠ 服务异常';
-  PSRC.className = 'pipe-hint warn';
-  return false;
-}
-
-// ─── §9 · 人格矩阵 ─────────────────────────────────────
-var CANONICAL_KEYS = [
-  "pupil_x","pupil_y","blink","eyebrow","pupil_scale","iris_scale",
-  "cornea_bulge","squint","brow_raise","lid_upper","lid_lower","eye_gloss"
-];
-var CHANNEL_LABELS = {
-  pupil_x:"视线左右",pupil_y:"视线上下",blink:"眼睑开合",eyebrow:"眉压",
-  pupil_scale:"瞳孔缩放",iris_scale:"虹膜圈",cornea_bulge:"角膜鼓起",
-  squint:"眯眼眶压",brow_raise:"挑眉",lid_upper:"上眼睑",lid_lower:"下眼睑",
-  eye_gloss:"眼湿润高光"
-};
-
-var personaMatrix = null;
-var selectedPersonaId = '';
-
-async function loadPersonaMatrix() {
-  if (location.protocol === 'file:') return;
-  try {
-    var r = await fetch('/persona_matrix.json', { cache: 'no-store' });
-    if (!r.ok) return;
-    personaMatrix = await r.json();
-    var sel = document.getElementById('persona-select');
-    sel.innerHTML = '';
-    var ids = Object.keys(personaMatrix.personas || {});
-    ids.forEach(function(pid) {
-      var opt = document.createElement('option');
-      opt.value = pid;
-      opt.textContent = personaMatrix.personas[pid].label + ' (' + pid + ')';
-      sel.appendChild(opt);
-    });
-    if (ids.length > 0) {
-      sel.value = ids[0];
-      selectedPersonaId = ids[0];
-      renderPersonaSliders(ids[0]);
-    }
-    sel.onchange = function() {
-      selectedPersonaId = sel.value;
-      renderPersonaSliders(sel.value);
-    };
-  } catch (e) {
-    console.warn('人格矩阵加载失败', e);
-  }
-}
-
-function renderPersonaSliders(pid) {
-  var container = document.getElementById('persona-sliders');
-  var p = personaMatrix && personaMatrix.personas && personaMatrix.personas[pid];
-  if (!p) {
-    container.innerHTML = '<p style="font-size:0.66rem;color:var(--muted);padding:8px">无此人格数据</p>';
-    return;
-  }
-
-  var html = '';
-  CANONICAL_KEYS.forEach(function(key) {
-    var label = CHANNEL_LABELS[key] || key;
-    var base = (p.base_offset && p.base_offset[key] !== undefined) ? p.base_offset[key] : 0.5;
-    var scale = (p.scale_factor && p.scale_factor[key] !== undefined) ? p.scale_factor[key] : 0.3;
-
-    html += '<div style="margin:4px 0;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fafbfd">';
-    html += '<div style="font-size:0.66rem;font-weight:600;margin-bottom:2px">' + label + ' <span style="color:var(--muted);font-weight:400">(' + key + ')</span></div>';
-
-    html += '<div class="knob" style="margin-bottom:1px;gap:4px">';
-    html += '<label style="width:auto;font-size:0.6rem">偏置</label>';
-    html += '<input type="range" min="0" max="1" step="0.01" value="' + base + '" data-pid="' + pid + '" data-key="' + key + '" data-field="base_offset" style="flex:1;height:4px">';
-    html += '<span class="val" style="width:28px;font-size:0.6rem">' + base.toFixed(2) + '</span>';
-    html += '</div>';
-
-    html += '<div class="knob" style="margin-bottom:1px;gap:4px">';
-    html += '<label style="width:auto;font-size:0.6rem">系数</label>';
-    html += '<input type="range" min="0" max="1" step="0.01" value="' + scale + '" data-pid="' + pid + '" data-key="' + key + '" data-field="scale_factor" style="flex:1;height:4px">';
-    html += '<span class="val" style="width:28px;font-size:0.6rem">' + scale.toFixed(2) + '</span>';
-    html += '</div>';
-
-    html += '</div>';
-  });
-
-  html += '<div style="display:flex;gap:6px;padding:6px 2px 0">';
-  html += '<button class="btn sm" id="btn-persona-reset" style="flex:1">↺ 重置当前人格</button>';
-  html += '<button class="btn sm primary" id="btn-persona-save" style="flex:1">💾 保存到 JSON</button>';
-  html += '</div>';
-
-  container.innerHTML = html;
-
-  container.querySelectorAll('.knob input[type=range]').forEach(function(inp) {
-    inp.oninput = function() {
-      var valSpan = inp.nextElementSibling;
-      if (valSpan) valSpan.textContent = parseFloat(inp.value).toFixed(2);
-    };
-  });
-
-  document.getElementById('btn-persona-reset').addEventListener('click', function() {
-    renderPersonaSliders(pid);
-  });
-
-  document.getElementById('btn-persona-save').addEventListener('click', async function() {
-    if (!personaMatrix || !personaMatrix.personas[pid]) return;
-    var pData = personaMatrix.personas[pid];
-    container.querySelectorAll('.knob input[type=range]').forEach(function(inp) {
-      var dataKey = inp.dataset.key;
-      var field = inp.dataset.field;
-      if (dataKey && field && pData[field]) {
-        pData[field][dataKey] = parseFloat(inp.value);
-      }
-    });
-    try {
-      var res = await fetch('/persona_matrix.json', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'save', persona_id: pid, data: pData })
-      });
-      var result = await res.json();
-      if (result.ok) {
-        alert('✅ 已保存到 persona_matrix.json');
-      } else {
-        alert('❌ 保存失败: ' + (result.error || ''));
-      }
-    } catch (err) {
-      alert('❌ 网络错误: ' + err.message);
-    }
-  });
-}
-
-// ─── §10 · 资产库浏览器 ─────────────────────────────────
-async function loadAssetBrowser() {
-  var tree = document.getElementById('asset-tree');
-  if (location.protocol === 'file:') {
-    tree.innerHTML = '<p style="font-size:0.66rem;color:var(--muted);padding:8px;text-align:center">⚠ 请通过 HTTP 访问</p>';
-    return;
-  }
-  try {
-    var r = await fetch('/api/asset-browser', { cache: 'no-cache' });
-    if (!r.ok) throw new Error(r.statusText);
-    var data = await r.json();
-    if (!data.ok || !data.root) throw new Error('无效响应');
-    renderAssetTree(tree, data.root);
-  } catch (e) {
-    tree.innerHTML = '<p style="font-size:0.66rem;color:var(--muted);padding:8px;text-align:center">⚠ 加载失败: ' + e.message + '</p>';
-  }
-}
-
-function renderAssetTree(container, items, depth) {
-  if (depth === undefined) depth = 0;
-  if (!items || items.length === 0) {
-    container.innerHTML = '<p style="font-size:0.66rem;color:var(--muted);padding:8px;text-align:center">（空）</p>';
-    return;
-  }
-  var html = '';
-  items.forEach(function(item) {
-    var pad = depth * 14;
-    if (item.type === 'dir') {
-      html += '<div style="padding:2px 0;font-size:0.68rem">';
-      html += '<span style="display:inline-block;width:' + pad + 'px"></span>';
-      html += '<span style="color:var(--muted)">📁</span> ';
-      html += '<strong>' + item.name + '</strong>';
-      html += '</div>';
-      if (item.children) {
-        item.children.forEach(function(child) {
-          var cpad = (depth + 1) * 14;
-          if (child.type === 'dir') {
-            html += '<div style="padding:2px 0;font-size:0.68rem">';
-            html += '<span style="display:inline-block;width:' + cpad + 'px"></span>';
-            html += '<span style="color:var(--muted)">📁</span> ';
-            html += child.name;
-            html += '</div>';
-            if (child.children) {
-              child.children.forEach(function(grand) {
-                html += renderFileItem(grand, (depth + 2) * 14);
-              });
-            }
-          } else {
-            html += renderFileItem(child, cpad);
-          }
-        });
-      }
-    }
-  });
-  container.innerHTML = html;
-}
-
-function renderFileItem(item, pad) {
-  var icon = '📄';
-  if (item.tag === '烘焙') icon = '🎯';
-  else if (item.tag === '节拍表') icon = '📋';
-  else if (item.tag === '人格') icon = '🧬';
-  else if (item.tag === '情绪') icon = '🎭';
-  var tagHtml = '';
-  if (item.tag) {
-    tagHtml = ' <span style="font-size:0.55rem;color:#1a56db;background:#dbeafe;padding:1px 5px;border-radius:4px">' + item.tag + '</span>';
-  }
-  var sizeHtml = '';
-  if (item.size) {
-    sizeHtml = ' <span style="font-size:0.55rem;color:var(--muted)">' + (item.size > 1024 ? (item.size/1024).toFixed(1)+'KB' : item.size+'B') + '</span>';
-  }
-  var clickAttr = '';
-  var cursor = 'default';
-  if (item.tag === '烘焙' && item.ext === '.json') {
-    clickAttr = ' onclick="loadBakedAsset(this, \'' + item.name.replace(/'/g, "\\'") + '\')"';
-    cursor = 'pointer';
-  }
-  return '<div style="padding:2px 0;font-size:0.66rem;cursor:' + cursor + '"' + clickAttr + '>'
-    + '<span style="display:inline-block;width:' + pad + 'px"></span>'
-    + '<span>' + icon + '</span> '
-    + item.name + tagHtml + sizeHtml
-    + '</div>';
-}
-
-async function loadBakedAsset(el, filename) {
-  var grandParent = el.closest('#asset-tree');
-  if (!grandParent) return;
-  try {
-    var r = await fetch('/api/asset-browser', { cache: 'no-cache' });
-    var data = await r.json();
-    var foundPath = '';
-    function search(items, prefix) {
-      for (var idx = 0; idx < items.length; idx++) {
-        var item = items[idx];
-        if (item.type === 'dir' && item.children) {
-          search(item.children, prefix + item.name + '/');
-        } else if (item.name === filename) {
-          foundPath = prefix + item.name;
-        }
-      }
-    }
-    search(data.root, '资产库/');
-    if (!foundPath) { alert('未找到文件路径'); return; }
-
-    var pkt = buildPacket();
-    var r2 = await fetch('/api/asset-load-baked', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: foundPath, packet: pkt })
-    });
-    var result = await r2.json();
-    if (!result.ok) { alert('加载失败: ' + (result.error || '')); return; }
-
-    if (result.baked) {
-      pipelineData = result.baked;
-      activePipeTab = '5_baked_02_delivery';
-      renderPipeJson();
-      if (result.packet && result.packet.macro) {
-        macro = { ...result.packet.macro };
-        if (result.packet.hold_seg) hold_seg = { ...result.packet.hold_seg };
-        if (result.packet.emotion) activePreset = result.packet.emotion;
-        highlightPreset(activePreset);
-        paint();
-      }
-      PSRC.textContent = '✓ 已加载: ' + foundPath;
-      PSRC.className = 'pipe-hint ok';
-      if (result.metronome) {
-        console.log('📋 扩散节拍表已加载 (' + result.metronome.length + ' chars)');
-      }
-    }
-  } catch (e) {
-    alert('加载失败: ' + e.message);
-  }
-}
-
-// ─── 事件绑定 ──────────────────────────────────────────
-$('btn-save-ctx').onclick = saveContext;
-$('btn-save-packet').onclick = savePacket;
-$('btn-copy').onclick = function() { navigator.clipboard.writeText(PJ.textContent); };
-PFULL.onchange = function() { renderPipeJson(); };
-$('btn-neutral').onclick = resetToNeutral;
-NB_RENDER.onclick = renderNeonControlVideo;
-// 物种切换按钮
-document.querySelectorAll('.species-btn').forEach(function(b) {
-  b.onclick = function() { switchSpecies(b.dataset.species); };
-});
-
-// ─── 启动 ──────────────────────────────────────────────
-(async function boot() {
-  await healthCheck();
-  var ok = await loadControlSurface();
-  if (!ok) return;
-  buildPipeTabs();
-  buildPresets();
-  buildZones();
-  loadContext();
-  try { await loadSliderPacket(); } catch (e) { /* ignore */ }
-  loadPersonaMatrix();
-  loadAssetBrowser();
-  resetToNeutral();
-})();
-</script>
+<script src="/static/app.js"></script>
 </body>
 </html>

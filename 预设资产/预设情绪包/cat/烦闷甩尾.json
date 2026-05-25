@@ -1,0 +1,32 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "cat_annoyed_swish",
+  "note": "耳朵背过去、半眯眼",
+  "style": "default",
+  "species": "cat",
+  "macro": {
+    "push": 52,
+    "power": 48,
+    "speed": 38,
+    "steady": 58,
+    "grip": 52,
+    "outro": 28
+  },
+  "hold_seg": {
+    "shape": "flat",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  },
+  "ear": {
+    "left": [
+      -0.3,
+      -0.6
+    ],
+    "right": [
+      -0.3,
+      -0.6
+    ]
+  },
+  "label": "烦闷甩尾"
+}

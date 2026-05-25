@@ -1,0 +1,31 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "兴奋·期待",
+  "note": "兴奋期待：耳朵竖立、瞳孔放大、快速扫视",
+  "style": "default",
+  "species": "dog",
+  "macro": {
+    "push": 68,
+    "power": 72,
+    "speed": 82,
+    "steady": 44,
+    "grip": 48,
+    "outro": 18
+  },
+  "hold_seg": {
+    "shape": "pulse",
+    "pulse_rate": 42,
+    "pulse_depth": 38,
+    "swell": 28
+  },
+  "ear": {
+    "left": [
+      0.9,
+      0.5
+    ],
+    "right": [
+      0.9,
+      0.5
+    ]
+  }
+}

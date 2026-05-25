@@ -1,0 +1,21 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "哀求·仰望",
+  "note": "内收、轻、慢收留韵",
+  "style": "default",
+  "species": "human",
+  "macro": {
+    "push": 8,
+    "power": 32,
+    "speed": 18,
+    "steady": 70,
+    "grip": 62,
+    "outro": 78
+  },
+  "hold_seg": {
+    "shape": "tremble",
+    "pulse_rate": 12,
+    "pulse_depth": 14,
+    "swell": 12
+  }
+}

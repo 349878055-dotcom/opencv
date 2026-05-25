@@ -1,0 +1,21 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "冷压·决心",
+  "note": "更狠更钉，起略缓",
+  "style": "default",
+  "species": "human",
+  "macro": {
+    "push": 88,
+    "power": 95,
+    "speed": 76,
+    "steady": 96,
+    "grip": 94,
+    "outro": 38
+  },
+  "hold_seg": {
+    "shape": "flat",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  }
+}

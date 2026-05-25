@@ -1,0 +1,21 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "威慑·一瞬",
+  "note": "极急、快收",
+  "style": "default",
+  "species": "human",
+  "macro": {
+    "push": 90,
+    "power": 92,
+    "speed": 98,
+    "steady": 90,
+    "grip": 86,
+    "outro": 10
+  },
+  "hold_seg": {
+    "shape": "flat",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  }
+}

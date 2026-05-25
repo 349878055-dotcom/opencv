@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""能量工作台 HTTP 服务：静态页 + 全管线 API（NL→滑杆→包络→真人→平庸→烘焙→扩散节拍）。
-替代 ComfyUI 节点链。"""
+"""能量工作台 HTTP 服务：静态页 + 全管线 API（NL→滑杆→包络→真人→平庸→烘焙→扩散节拍）。"""
 from __future__ import annotations
 
 import json
@@ -14,7 +13,7 @@ if str(PKG) not in sys.path:
     sys.path.insert(0, str(PKG))
 
 PORT = 8765
-API_VERSION = 11  # + NL-to-packet + metronome 导出
+API_VERSION = 11
 
 CONTROL_VIDEO_DIR = ROOT / "04_缓存数据" / "preview_cache"
 CONTROL_VIDEO_NAME = "control_video.mp4"
@@ -35,6 +34,14 @@ class Handler(SimpleHTTPRequestHandler):
     # ═══════════════════════════════════════════════════════
     def do_GET(self) -> None:
         path = self.path.split("?", 1)[0].rstrip("/")
+
+        # 根路径 → 重定向到能量工作台
+        if path in ("", "/", "/index.html"):
+            self.send_response(302)
+            self.send_header("Location", "/01_%E5%B7%A5%E4%BD%9C%E5%8F%B0%E6%9C%8D%E5%8A%A1/%E8%83%BD%E9%87%8F%E5%B7%A5%E4%BD%9C%E5%8F%B0.html")
+            self.end_headers()
+            return
+
         if path in ("/health", "/api/health"):
             self._json_response({
                 "ok": True,
@@ -46,6 +53,9 @@ class Handler(SimpleHTTPRequestHandler):
                     "GET  /workbench_context.json",
                     "GET  /persona_matrix.json",
                     "GET  /api/asset-browser",
+                    "GET  /api/customer-context",
+                    "GET  /api/customer-list",
+                    "POST /api/dog-test            ← 🐶 生成狗测试资产",
                     "POST /api/nl-to-packet",
                     "POST /api/run-pipeline",
                     "POST /api/asset-load-baked",
@@ -53,6 +63,14 @@ class Handler(SimpleHTTPRequestHandler):
                     "POST /save_packet",
                     "POST /save_context",
                     "POST /render_control_video",
+                    "POST /api/customer/create",
+                    "POST /api/customer/update",
+                    "POST /api/customer/delete",
+                    "POST /api/customer/{cid}/project/create",
+                    "POST /api/customer/{cid}/project/update",
+                    "POST /api/customer/{cid}/project/delete",
+                    "POST /api/customer/{cid}/project/{pid}/save-adjustment",
+                    "POST /api/customer-context/save",
                 ],
             })
             return
@@ -78,6 +96,12 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if path == "/api/asset-browser":
             self._asset_browser()
+            return
+        if path == "/api/customer-list":
+            self._customer_list()
+            return
+        if path == "/api/customer-context":
+            self._customer_context()
             return
         super().do_GET()
 
@@ -107,6 +131,33 @@ class Handler(SimpleHTTPRequestHandler):
                 self._export_metronome(body)
             elif path == "/api/asset-load-baked":
                 self._asset_load_baked(body)
+            elif path == "/api/dog-test":
+                self._dog_test(body)
+            # ── 客户资产库 API ──
+            elif path == "/api/customer/create":
+                self._customer_create(body)
+            elif path == "/api/customer/update":
+                self._customer_update(body)
+            elif path == "/api/customer/delete":
+                self._customer_delete(body)
+            elif path.startswith("/api/customer/") and path.endswith("/project/create"):
+                cid = path.split("/")[3]
+                self._customer_project_create(body, cid)
+            elif path.startswith("/api/customer/") and "/project/" in path:
+                parts = path.split("/")
+                # /api/customer/{cid}/project/{action}
+                # /api/customer/{cid}/project/{pid}/save-adjustment
+                if len(parts) == 6 and parts[5] in ("update", "delete"):
+                    cid, action = parts[3], parts[5]
+                    self._customer_project_update(body, cid, action)
+                elif len(parts) == 7 and parts[5] == "save-adjustment":
+                    cid, pid = parts[3], parts[5]
+                    self._customer_save_adjustment(body, cid, pid)
+                else:
+                    print(f"[workbench] 未知客户 POST 路径: {path!r}", flush=True)
+                    self.send_error(404)
+            elif path == "/api/customer-context/save":
+                self._customer_context_save(body)
             else:
                 print(f"[workbench] 未知 POST 路径: {path!r}", flush=True)
                 self.send_error(404)
@@ -423,9 +474,10 @@ class Handler(SimpleHTTPRequestHandler):
     # ═══════════════════════════════════════════════════════
     def _run_full_pipeline(self, body: bytes) -> None:
         """POST /api/run-pipeline — 滑杆包 → 全管线 → 烘焙 02 + 各阶段产物。
-        
-        请求体: {"packet": {...}}  或  {"nl": "..."}  # 自动先 NL→packet
-        返回: {"ok": true, "baked": {...}, "stages": {...}, "metronome": "..."}
+
+        请求体: {"packet": {...}}  或  {"nl": "..."}
+        可选: {"customer_id": "C001", "project_id": "P001"}
+        返回: {"ok": true, "baked": {...}, "stages": {...}, "metronome": "...", "archive": {...}}
         """
         data = json.loads(body.decode("utf-8"))
 
@@ -476,6 +528,11 @@ class Handler(SimpleHTTPRequestHandler):
         from gaze_engine._shared.export_diffusion_metronome import build_metronome_text
         metronome = build_metronome_text(baked)
 
+        # 归档到客户项目（如果提供了客户上下文）
+        archive_info = self._archive_pipeline_to_customer(
+            data, baked, metronome, pkt.to_dict(),
+        )
+
         self._json_response({
             "ok": True,
             "emotion": pkt.emotion,
@@ -488,7 +545,87 @@ class Handler(SimpleHTTPRequestHandler):
             },
             "baked": baked,
             "metronome": metronome,
+            "archive": archive_info,
         })
+
+    def _archive_pipeline_to_customer(
+        self,
+        data: dict,
+        baked: dict,
+        metronome: str,
+        packet_dict: dict,
+    ) -> dict:
+        """将管线输出归档到客户项目（如果请求中包含客户上下文）。
+
+        请求体重可选字段：customer_id, project_id
+        若无客户上下文，返回空 dict。
+        """
+        cid = (data.get("customer_id") or "").strip()
+        pid = (data.get("project_id") or "").strip()
+        if not cid or not pid:
+            # 尝试从工作台上下文读取
+            try:
+                from gaze_engine._shared.customer_db import load_workbench_context
+                ctx = load_workbench_context()
+                cid = ctx.get("customer_id", "")
+                pid = ctx.get("project_id", "")
+            except Exception:
+                pass
+        if not cid or not pid:
+            return {}
+
+        try:
+            from gaze_engine._shared.customer_db import (
+                get_project, save_adjustment,
+            )
+            from asset_lib import project_output_dir
+
+            # 确认项目存在
+            project = get_project(cid, pid)
+            if not project:
+                return {"error": f"项目 {cid}/{pid} 不存在"}
+
+            out_dir = project_output_dir(cid, pid)
+            out_dir.mkdir(parents=True, exist_ok=True)
+
+            # 写 02_烘焙_真人律.json
+            baked_path = out_dir / "02_烘焙_真人律.json"
+            import json as _json_mod
+            baked_path.write_text(
+                _json_mod.dumps(baked, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            # 写 05_扩散节拍表.txt
+            metronome_path = out_dir / "05_扩散节拍表.txt"
+            metronome_path.write_text(metronome, encoding="utf-8")
+
+            # 写 01_滑杆包.json
+            packet_path = out_dir / "01_滑杆包.json"
+            packet_path.write_text(
+                _json_mod.dumps(packet_dict, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            # 保存调整记录
+            save_adjustment(
+                cid, pid, packet_dict,
+                note="管线自动归档",
+                extra={"emotion": packet_dict.get("emotion", "")},
+            )
+
+            return {
+                "customer_id": cid,
+                "project_id": pid,
+                "output_dir": str(out_dir),
+                "baked": str(baked_path),
+                "metronome": str(metronome_path),
+                "packet": str(packet_path),
+            }
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return {"error": str(e)}
 
     # ═══════════════════════════════════════════════════════
     # API: 导出扩散节拍表
@@ -525,8 +662,12 @@ class Handler(SimpleHTTPRequestHandler):
     # 资产库浏览器
     # ═══════════════════════════════════════════════════════
     def _asset_browser(self) -> None:
-        """GET /api/asset-browser — 列出资产库目录树（人格包 → 情绪 → 文件）。"""
-        from asset_lib import ASSET_LIB, PERSONAS
+        """GET /api/asset-browser — 列出预设资产 + 客户资产库目录树。"""
+        from asset_lib import (
+            ASSET_LIB, CUSTOMER_DB,
+            PERSONA_DIR, PERSONAS,
+            HUMAN_PRESETS_DIR, CAT_PRESETS_DIR, DOG_PRESETS_DIR,
+        )
 
         def _scan_dir(path: Path, max_depth: int = 3) -> list:
             if max_depth <= 0 or not path.is_dir():
@@ -541,7 +682,6 @@ class Handler(SimpleHTTPRequestHandler):
                 else:
                     item["size"] = entry.stat().st_size
                     item["ext"] = entry.suffix.lower()
-                    # 标记关键文件类型
                     if entry.name.startswith("02_烘焙"):
                         item["tag"] = "烘焙"
                     elif entry.name.startswith("05_扩散"):
@@ -550,25 +690,70 @@ class Handler(SimpleHTTPRequestHandler):
                         item["tag"] = "人格"
                     elif entry.name == "情绪.json":
                         item["tag"] = "情绪"
+                    elif entry.name == "客户信息.json":
+                        item["tag"] = "客户"
+                    elif entry.name == "项目配置.json":
+                        item["tag"] = "项目"
+                    elif entry.name == "滑杆调整记录.json":
+                        item["tag"] = "调整"
                 items.append(item)
             return items
 
         root = []
-        for persona_dir in sorted(PERSONAS.iterdir()):
-            if persona_dir.is_dir() and not persona_dir.name.startswith("."):
-                persona_item = {
-                    "name": persona_dir.name,
-                    "type": "dir",
-                    "children": _scan_dir(persona_dir, max_depth=2),
-                }
-                root.append(persona_item)
 
-        self._json_response({"ok": True, "root": root, "asset_lib": str(ASSET_LIB)})
+        # ── 预设资产库 ──
+        preset_section = {
+            "name": "📚 预设资产库",
+            "type": "dir",
+            "tag": "preset_lib",
+            "children": [],
+        }
+
+        # 1. 物种预设（human/cat/dog）
+        SPECIES_LABELS = {"human": "🧑 人类预设", "cat": "🐱 猫预设", "dog": "🐶 狗预设"}
+        for sp_dir, sp_label in [(HUMAN_PRESETS_DIR, "🧑 人类预设"),
+                                  (CAT_PRESETS_DIR, "🐱 猫预设"),
+                                  (DOG_PRESETS_DIR, "🐶 狗预设")]:
+            if sp_dir.is_dir():
+                preset_section["children"].append({
+                    "name": sp_label,
+                    "type": "dir",
+                    "children": _scan_dir(sp_dir, max_depth=1),
+                })
+
+        # 2. 人格包（persona/ 新路径 or 人格包/ 旧路径回退）
+        persona_root = PERSONA_DIR if PERSONA_DIR.is_dir() else PERSONAS
+        if persona_root.is_dir():
+            for pd in sorted(persona_root.iterdir()):
+                if pd.is_dir() and not pd.name.startswith("."):
+                    preset_section["children"].append({
+                        "name": f"🎭 {pd.name}",
+                        "type": "dir",
+                        "children": _scan_dir(pd, max_depth=2),
+                    })
+
+        root.append(preset_section)
+
+        # ── 客户资产库 ──
+        customer_section = {
+            "name": "👤 客户资产库",
+            "type": "dir",
+            "tag": "customer_db",
+            "children": _scan_dir(CUSTOMER_DB, max_depth=3) if CUSTOMER_DB.is_dir() else [],
+        }
+        root.append(customer_section)
+
+        self._json_response({
+            "ok": True,
+            "root": root,
+            "asset_lib": str(ASSET_LIB),
+            "customer_db": str(CUSTOMER_DB),
+        })
 
     def _asset_load_baked(self, body: bytes) -> None:
         """POST /api/asset-load-baked — 加载指定烘焙文件到工作台。
 
-        请求体: {"path": "资产库/人格包/.../02_烘焙_真人律.json"}
+        请求体: {"path": "预设资产/人格包/.../02_烘焙_真人律.json"}
         返回: {"ok": true, "baked": {...}, "packet": {...}, "metronome": "..."}
         """
         data = json.loads(body.decode("utf-8"))
@@ -612,6 +797,263 @@ class Handler(SimpleHTTPRequestHandler):
             "emotion": baked.get("mood") or baked.get("emotion") or "",
         })
 
+    # ═══════════════════════════════════════════════════════
+    # 狗全身体验测试 API
+    # ═══════════════════════════════════════════════════════
+    def _dog_test(self, body: bytes) -> None:
+        """POST /api/dog-test — 狗全身体验测试。
+
+        请求体::
+            {
+                "preset": "dog_sad_puppy",      # 狗预设名
+                "nl": "狗子被关进笼子里面的委屈样子",  # 自然语言描述
+                "out_dir": "/tmp/dog_test",      # 输出目录（仅无客户时有效）
+                "skip_body": false,              # 跳过全身体视频
+                "skip_mesh": false,              # 跳过工程底膜
+                "customer_id": "C001",           # 🆕 可选：客户 ID
+                "project_id": "P001",            # 🆕 可选：项目 ID（不传则自动创建）
+                "project_name": "贵宾犬委屈"      # 🆕 可选：自动创建项目时的名称
+            }
+
+        返回::
+            {
+                "ok": true,
+                "assets": { 所有输出文件路径 },
+                "report": { 管线报告 },
+                "archive": { 客户归档信息 }      # 🆕 有客户时返回
+            }
+        """
+        data = json.loads(body.decode("utf-8"))
+        preset = data.get("preset", "dog_sad_puppy")
+        nl = data.get("nl", "狗子被关进笼子里面的委屈样子")
+        skip_mesh = data.get("skip_mesh", False)
+
+        # 🆕 解析客户上下文
+        cid = (data.get("customer_id") or "").strip()
+        pid = (data.get("project_id") or "").strip()
+        project_name = (data.get("project_name") or nl or "狗测试").strip()
+
+        # 如果有客户 ID 但没有项目 ID，自动创建项目
+        if cid and not pid:
+            try:
+                from gaze_engine._shared.customer_db import (
+                    create_project, get_customer,
+                )
+                customer = get_customer(cid)
+                if customer:
+                    pid = create_project(
+                        cid, project_name,
+                        species="dog",
+                        base_persona=data.get("preset", ""),
+                    )
+            except Exception:
+                pass
+
+        # 确定输出目录
+        if cid and pid:
+            from asset_lib import project_output_dir
+            out_dir = str(project_output_dir(cid, pid))
+            out_dir_path = project_output_dir(cid, pid)
+            out_dir_path.mkdir(parents=True, exist_ok=True)
+        else:
+            out_dir = data.get("out_dir", "/tmp/dog_test")
+
+        try:
+            # 添加 tools/05_其他工具/ 到 sys.path
+            import sys as _sys
+            _tools_dir = Path(__file__).resolve().parent.parent
+            _other_tools = _tools_dir / "05_其他工具"
+            if str(_other_tools) not in _sys.path:
+                _sys.path.insert(0, str(_other_tools))
+
+            from dog_full_body_test import build_dog_test_assets
+
+            result = build_dog_test_assets(
+                preset_name=preset,
+                out_dir=out_dir,
+                natural_language=nl,
+                skip_render=skip_mesh,
+            )
+
+            response = {
+                "ok": True,
+                "assets": result,
+                "report": result.get("report"),
+            }
+
+            # 🆕 归档到客户项目
+            if cid and pid:
+                archive_info = self._archive_pipeline_to_customer(
+                    data,
+                    baked=result.get("baked", {}),
+                    metronome=result.get("metronome", ""),
+                    packet_dict=result.get("packet", {}),
+                )
+                if archive_info:
+                    response["archive"] = archive_info
+                    response["customer_id"] = cid
+                    response["project_id"] = pid
+
+            self._json_response(response)
+        except ImportError as e:
+            self._json_response({
+                "ok": False,
+                "error": f"导入失败: {e}",
+                "hint": "请确保 tools/05_其他工具/dog_full_body_test.py 存在",
+            }, status=500)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self._json_response({
+                "ok": False,
+                "error": str(e),
+            }, status=500)
+
+    # ═══════════════════════════════════════════════════════
+    # 客户资产库 API
+    # ═══════════════════════════════════════════════════════
+
+    # ── GET ──
+
+    def _customer_list(self) -> None:
+        """GET /api/customer-list — 列出所有客户。"""
+        from gaze_engine._shared.customer_db import list_customers
+        customers = list_customers()
+        self._json_response({"ok": True, "customers": customers})
+
+    def _customer_context(self) -> None:
+        """GET /api/customer-context — 加载当前工作台客户上下文。"""
+        from gaze_engine._shared.customer_db import load_workbench_context
+        ctx = load_workbench_context()
+        self._json_response({"ok": True, **ctx})
+
+    # ── POST 客户 CRUD ──
+
+    def _customer_create(self, body: bytes) -> None:
+        """POST /api/customer/create — 创建客户。
+        请求体: {"display_name": "...", "contact": "", "default_persona": ""}
+        """
+        from gaze_engine._shared.customer_db import create_customer, get_customer
+        data = json.loads(body.decode("utf-8"))
+        display_name = (data.get("display_name") or "").strip()
+        if not display_name:
+            self._json_response({"ok": False, "error": "缺少 display_name"}, status=400)
+            return
+        cid = create_customer(
+            display_name,
+            contact=data.get("contact", ""),
+            default_persona=data.get("default_persona", ""),
+            default_emotion=data.get("default_emotion", ""),
+            preferred_species=data.get("preferred_species", "human"),
+        )
+        info = get_customer(cid)
+        self._json_response({"ok": True, "customer_id": cid, "customer": info})
+
+    def _customer_update(self, body: bytes) -> None:
+        """POST /api/customer/update — 更新客户信息。
+        请求体: {"customer_id": "C001", "display_name": "...", ...}
+        """
+        from gaze_engine._shared.customer_db import update_customer
+        data = json.loads(body.decode("utf-8"))
+        cid = data.get("customer_id", "").strip()
+        if not cid:
+            self._json_response({"ok": False, "error": "缺少 customer_id"}, status=400)
+            return
+        ok = update_customer(cid, **{k: data[k] for k in data if k != "customer_id"})
+        self._json_response({"ok": ok})
+
+    def _customer_delete(self, body: bytes) -> None:
+        """POST /api/customer/delete — 删除客户。
+        请求体: {"customer_id": "C001"}
+        """
+        from gaze_engine._shared.customer_db import delete_customer
+        data = json.loads(body.decode("utf-8"))
+        cid = data.get("customer_id", "").strip()
+        if not cid:
+            self._json_response({"ok": False, "error": "缺少 customer_id"}, status=400)
+            return
+        ok = delete_customer(cid)
+        self._json_response({"ok": ok})
+
+    # ── POST 项目 CRUD ──
+
+    def _customer_project_create(self, body: bytes, customer_id: str) -> None:
+        """POST /api/customer/{cid}/project/create — 创建项目。
+        请求体: {"project_name": "...", "species": "dog", ...}
+        """
+        from gaze_engine._shared.customer_db import create_project, get_customer
+        if get_customer(customer_id) is None:
+            self._json_response({"ok": False, "error": f"客户 {customer_id} 不存在"}, status=404)
+            return
+        data = json.loads(body.decode("utf-8"))
+        project_name = (data.get("project_name") or "").strip()
+        if not project_name:
+            self._json_response({"ok": False, "error": "缺少 project_name"}, status=400)
+            return
+        pid = create_project(
+            customer_id,
+            project_name,
+            species=data.get("species", "human"),
+            base_persona=data.get("base_persona", ""),
+            base_emotion=data.get("base_emotion", ""),
+            reference_photo=data.get("reference_photo", ""),
+            custom_overrides=data.get("custom_overrides"),
+        )
+        self._json_response({"ok": True, "project_id": pid})
+
+    def _customer_project_update(self, body: bytes, action: str) -> None:
+        """POST /api/customer/{cid}/project/update 或 delete"""
+        from gaze_engine._shared.customer_db import update_project, delete_project
+        data = json.loads(body.decode("utf-8"))
+        cid = data.get("customer_id", "").strip()
+        pid = data.get("project_id", "").strip()
+        if not cid or not pid:
+            self._json_response({"ok": False, "error": "缺少 customer_id 或 project_id"}, status=400)
+            return
+        if action == "delete":
+            ok = delete_project(cid, pid)
+        else:
+            ok = update_project(cid, pid, **{k: data[k] for k in data
+                                              if k not in ("customer_id", "project_id")})
+        self._json_response({"ok": ok})
+
+    # ── POST 调整记录 ──
+
+    def _customer_save_adjustment(self, body: bytes, customer_id: str, project_id: str) -> None:
+        """POST /api/customer/{cid}/project/{pid}/save-adjustment — 保存调整快照。
+        请求体: {"packet": {...}, "note": "...", "diff": {...}}
+        """
+        from gaze_engine._shared.customer_db import save_adjustment, get_current_adjustment_version
+        data = json.loads(body.decode("utf-8"))
+        packet = data.get("packet")
+        if not packet:
+            self._json_response({"ok": False, "error": "缺少 packet"}, status=400)
+            return
+        ver = save_adjustment(
+            customer_id, project_id,
+            packet,
+            note=data.get("note", ""),
+            diff=data.get("diff"),
+        )
+        if ver is None:
+            self._json_response({"ok": False, "error": "项目不存在"}, status=404)
+            return
+        self._json_response({"ok": True, "version": ver})
+
+    # ── POST 客户上下文 ──
+
+    def _customer_context_save(self, body: bytes) -> None:
+        """POST /api/customer-context/save — 保存工作台上下文（当前客户/项目）。
+        请求体: {"customer_id": "C001", "project_id": "P001"}
+        """
+        from gaze_engine._shared.customer_db import save_workbench_context
+        data = json.loads(body.decode("utf-8"))
+        ctx = save_workbench_context(
+            customer_id=data.get("customer_id"),
+            project_id=data.get("project_id"),
+        )
+        self._json_response({"ok": True, "context": ctx})
+
     def log_message(self, fmt: str, *args) -> None:
         print(f"[workbench] {fmt % args}")
 
@@ -647,7 +1089,7 @@ def _stop_stale_server(port: int) -> None:
 
 
 def main() -> int:
-    host, port = "127.0.0.1", PORT
+    host, port = "0.0.0.0", PORT
     url = _workbench_url(host, port)
     httpd = None
     for attempt in range(3):

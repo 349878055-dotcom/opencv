@@ -1,0 +1,21 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "崩溃·泄劲",
+  "note": "内收、平顶下泄、快断",
+  "style": "default",
+  "species": "human",
+  "macro": {
+    "push": 10,
+    "power": 22,
+    "speed": 28,
+    "steady": 52,
+    "grip": 22,
+    "outro": 8
+  },
+  "hold_seg": {
+    "shape": "decay",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  }
+}

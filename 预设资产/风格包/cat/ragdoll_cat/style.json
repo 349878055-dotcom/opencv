@@ -1,0 +1,36 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "ragdoll_cat",
+  "label": "布偶猫/温顺型",
+  "species": "cat",
+  "notes": "布偶猫/温顺型 品种风格偏移",
+  "default_emotion": "",
+  "base_offset": {
+    "pupil_x": 0.48,
+    "pupil_y": 0.46,
+    "blink": 0.65,
+    "eyebrow": 0.3,
+    "brow_raise": 0.3,
+    "pupil_scale": 0.45,
+    "iris_scale": 0.48,
+    "cornea_bulge": 0.48,
+    "squint": 0.55,
+    "lid_upper": 0.52,
+    "lid_lower": 0.48,
+    "eye_gloss": 0.5
+  },
+  "scale_factor": {
+    "pupil_x": 0.03,
+    "pupil_y": 0.03,
+    "blink": 0.3,
+    "eyebrow": 0.05,
+    "brow_raise": 0.05,
+    "pupil_scale": 0.08,
+    "iris_scale": 0.08,
+    "cornea_bulge": 0.1,
+    "squint": 0.12,
+    "lid_upper": 0.1,
+    "lid_lower": 0.1,
+    "eye_gloss": 0.04
+  }
+}

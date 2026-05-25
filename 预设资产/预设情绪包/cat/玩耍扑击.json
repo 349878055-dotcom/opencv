@@ -1,0 +1,32 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "cat_play_pounce",
+  "note": "瞳孔放大、耳朵前竖、快速扫视",
+  "style": "default",
+  "species": "cat",
+  "macro": {
+    "push": 68,
+    "power": 62,
+    "speed": 82,
+    "steady": 44,
+    "grip": 48,
+    "outro": 18
+  },
+  "hold_seg": {
+    "shape": "pulse",
+    "pulse_rate": 42,
+    "pulse_depth": 38,
+    "swell": 28
+  },
+  "ear": {
+    "left": [
+      0.8,
+      0.4
+    ],
+    "right": [
+      0.8,
+      0.4
+    ]
+  },
+  "label": "玩耍扑击"
+}

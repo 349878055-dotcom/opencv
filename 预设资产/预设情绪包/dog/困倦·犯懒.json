@@ -1,0 +1,31 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "困倦·犯懒",
+  "note": "困倦慵懒：眼皮下垂、耳朵耷拉、慢眨眼至闭",
+  "style": "default",
+  "species": "dog",
+  "macro": {
+    "push": 12,
+    "power": 12,
+    "speed": 10,
+    "steady": 48,
+    "grip": 22,
+    "outro": 58
+  },
+  "hold_seg": {
+    "shape": "decay",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  },
+  "ear": {
+    "left": [
+      -0.3,
+      -0.1
+    ],
+    "right": [
+      -0.3,
+      -0.1
+    ]
+  }
+}

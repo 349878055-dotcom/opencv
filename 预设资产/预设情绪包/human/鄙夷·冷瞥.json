@@ -1,0 +1,21 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "鄙夷·冷瞥",
+  "note": "外放、快、钉、快收",
+  "style": "default",
+  "species": "human",
+  "macro": {
+    "push": 78,
+    "power": 42,
+    "speed": 72,
+    "steady": 86,
+    "grip": 82,
+    "outro": 12
+  },
+  "hold_seg": {
+    "shape": "flat",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  }
+}

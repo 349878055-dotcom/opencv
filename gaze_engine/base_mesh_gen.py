@@ -91,7 +91,7 @@ def generate() -> np.ndarray:
 
 
 def main() -> int:
-    out_dir = Path(__file__).resolve().parent.parent / "eye_asset" / "derived"
+    out_dir = Path(__file__).resolve().parent.parent / "_shared" / "assets"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "eyelid_raw.png"
 

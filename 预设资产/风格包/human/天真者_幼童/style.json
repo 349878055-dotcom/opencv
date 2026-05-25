@@ -1,0 +1,35 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "天真者_幼童",
+  "label": "天真者/幼童",
+  "species": "human",
+  "notes": "天真无邪，纯净明亮",
+  "base_offset": {
+    "pupil_x": 0.5,
+    "pupil_y": 0.5,
+    "blink": 0.5,
+    "eyebrow": 0.5,
+    "pupil_scale": 0.5,
+    "iris_scale": 0.5,
+    "cornea_bulge": 0.5,
+    "squint": 0.5,
+    "brow_raise": 0.5,
+    "lid_upper": 0.5,
+    "lid_lower": 0.5,
+    "eye_gloss": 0.5
+  },
+  "scale_factor": {
+    "pupil_x": 0.5,
+    "pupil_y": 0.5,
+    "blink": 0.5,
+    "eyebrow": 0.5,
+    "pupil_scale": 0.5,
+    "iris_scale": 0.5,
+    "cornea_bulge": 0.5,
+    "squint": 0.5,
+    "brow_raise": 0.5,
+    "lid_upper": 0.5,
+    "lid_lower": 0.5,
+    "eye_gloss": 0.5
+  }
+}

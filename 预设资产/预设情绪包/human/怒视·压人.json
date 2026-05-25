@@ -1,0 +1,21 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "怒视·压人",
+  "note": "外放、高力度、平顶",
+  "style": "default",
+  "species": "human",
+  "macro": {
+    "push": 92,
+    "power": 88,
+    "speed": 82,
+    "steady": 88,
+    "grip": 88,
+    "outro": 22
+  },
+  "hold_seg": {
+    "shape": "flat",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  }
+}

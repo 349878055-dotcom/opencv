@@ -1,0 +1,33 @@
+{
+  "schema": "slider_adjustment_v1",
+  "project_id": "P001",
+  "customer_id": "C001",
+  "version": 1,
+  "history": [
+    {
+      "version": 1,
+      "timestamp": "2026-05-25T19:33:07.963786+00:00",
+      "note": "初始贵宾犬委屈预设",
+      "packet": {
+        "schema": "slider-packet-v1",
+        "emotion": "dog_sad_puppy",
+        "style": "default",
+        "macro": {
+          "push": 50,
+          "power": 50,
+          "speed": 50,
+          "steady": 50,
+          "grip": 50,
+          "outro": 50
+        },
+        "hold_seg": {
+          "shape": "flat",
+          "pulse_rate": 0,
+          "pulse_depth": 0,
+          "swell": 0
+        }
+      }
+    }
+  ],
+  "current_version": 1
+}

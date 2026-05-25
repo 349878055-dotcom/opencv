@@ -1,0 +1,36 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "stray_cat",
+  "label": "田园猫/机敏型",
+  "species": "cat",
+  "notes": "田园猫/机敏型 品种风格偏移",
+  "default_emotion": "",
+  "base_offset": {
+    "pupil_x": 0.6,
+    "pupil_y": 0.58,
+    "blink": 0.38,
+    "eyebrow": 0.55,
+    "brow_raise": 0.55,
+    "pupil_scale": 0.58,
+    "iris_scale": 0.52,
+    "cornea_bulge": 0.52,
+    "squint": 0.42,
+    "lid_upper": 0.48,
+    "lid_lower": 0.48,
+    "eye_gloss": 0.52
+  },
+  "scale_factor": {
+    "pupil_x": 0.08,
+    "pupil_y": 0.08,
+    "blink": 0.15,
+    "eyebrow": 0.12,
+    "brow_raise": 0.12,
+    "pupil_scale": 0.22,
+    "iris_scale": 0.12,
+    "cornea_bulge": 0.15,
+    "squint": 0.2,
+    "lid_upper": 0.14,
+    "lid_lower": 0.14,
+    "eye_gloss": 0.06
+  }
+}

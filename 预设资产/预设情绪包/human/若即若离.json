@@ -1,0 +1,21 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "若即若离",
+  "note": "飘、慢拱、留韵",
+  "style": "default",
+  "species": "human",
+  "macro": {
+    "push": 68,
+    "power": 48,
+    "speed": 35,
+    "steady": 36,
+    "grip": 48,
+    "outro": 85
+  },
+  "hold_seg": {
+    "shape": "swell",
+    "pulse_rate": 22,
+    "pulse_depth": 18,
+    "swell": 65
+  }
+}

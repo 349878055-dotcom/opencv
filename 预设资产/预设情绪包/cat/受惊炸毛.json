@@ -1,0 +1,32 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "cat_startle_fluff",
+  "note": "飞机耳、瞳孔炸开、快速眨眼",
+  "style": "default",
+  "species": "cat",
+  "macro": {
+    "push": 38,
+    "power": 68,
+    "speed": 96,
+    "steady": 48,
+    "grip": 32,
+    "outro": 14
+  },
+  "hold_seg": {
+    "shape": "tremble",
+    "pulse_rate": 28,
+    "pulse_depth": 36,
+    "swell": 0
+  },
+  "ear": {
+    "left": [
+      -0.9,
+      -0.5
+    ],
+    "right": [
+      -0.9,
+      -0.5
+    ]
+  },
+  "label": "受惊炸毛"
+}

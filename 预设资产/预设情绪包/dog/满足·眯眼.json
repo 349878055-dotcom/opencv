@@ -1,0 +1,31 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "满足·眯眼",
+  "note": "满足惬意：耳朵放松、眯眼慢眨",
+  "style": "default",
+  "species": "dog",
+  "macro": {
+    "push": 42,
+    "power": 18,
+    "speed": 12,
+    "steady": 68,
+    "grip": 76,
+    "outro": 72
+  },
+  "hold_seg": {
+    "shape": "tremble",
+    "pulse_rate": 8,
+    "pulse_depth": 6,
+    "swell": 0
+  },
+  "ear": {
+    "left": [
+      0.2,
+      0.0
+    ],
+    "right": [
+      0.2,
+      0.0
+    ]
+  }
+}

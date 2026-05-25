@@ -1,0 +1,31 @@
+{
+  "schema": "slider-packet-v1",
+  "emotion": "守护·凝视",
+  "note": "守护盯视：耳朵中立或稍前、眼稳定钉住、慢收",
+  "style": "default",
+  "species": "dog",
+  "macro": {
+    "push": 78,
+    "power": 62,
+    "speed": 40,
+    "steady": 88,
+    "grip": 86,
+    "outro": 42
+  },
+  "hold_seg": {
+    "shape": "flat",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  },
+  "ear": {
+    "left": [
+      0.4,
+      0.3
+    ],
+    "right": [
+      0.4,
+      0.3
+    ]
+  }
+}
