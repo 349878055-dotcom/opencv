@@ -4,11 +4,11 @@ ecursor 预设资产库
 两大分类
 -------
 
-① 预设情绪包/       ← 基本情绪滑杆基准值（macro + hold_seg）
+① 预设情绪包/       ← 基本情绪滑杆基准值（macro + hold_seg + pad）
 │
 ├── human/           ← 16种（施压·凝视、可怜·委屈、魅惑·勾人…）
-├── cat/             ← 12种（警觉瞪视、狩猎锁定、愤怒嘶哈…含 ear）
-└── dog/             ← 10种（警觉·竖耳、委屈·幼犬眼…含 ear）
+├── cat/             ← 12种（警觉瞪视、狩猎锁定、愤怒嘶哈…含 ear + pad）
+└── dog/             ← 10种（警觉·竖耳、委屈·幼犬眼…含 ear + pad）
 
 
 ② 风格包/           ← 风格偏移（base_offset + scale_factor）
@@ -38,7 +38,7 @@ ecursor 预设资产库
 
 编辑指南
 --------
-改预设数值：   预设情绪包/human/可怜·委屈.json → 改 macro/hold_seg
+改预设数值：   预设情绪包/human/可怜·委屈.json → 改 macro/hold_seg/pad
 改风格偏移：   风格包/human/天选者_大祭司/style.json → 改 base_offset/scale_factor
 加新风格：     建 风格包/{species}/{风格名}/style.json
 客户自定义：   存到 客户资产库/

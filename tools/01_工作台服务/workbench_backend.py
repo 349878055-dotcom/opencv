@@ -127,7 +127,7 @@ async def control_video():
 
 @app.get("/persona_matrix.json")
 async def get_persona_matrix():
-    matrix_path = PKG / "gaze_engine" / "persona_matrix.json"
+    matrix_path = PKG / "gaze_engine" / "human" / "persona_matrix.json"
     if not matrix_path.exists():
         raise HTTPException(404, "persona_matrix.json not found")
     return _json(json.loads(matrix_path.read_text("utf-8")))
@@ -138,7 +138,6 @@ async def asset_browser():
     """列出预设资产 + 客户资产库目录树。"""
     from asset_lib import (
         ASSET_LIB, CUSTOMER_DB,
-        PERSONA_DIR, PERSONAS,
         HUMAN_PRESETS_DIR, CAT_PRESETS_DIR, DOG_PRESETS_DIR,
     )
 
@@ -192,17 +191,6 @@ async def asset_browser():
                 "type": "dir",
                 "children": _scan_dir(sp_dir, max_depth=1),
             })
-
-    # 2. 人格包（persona/ 新路径 or 人格包/ 旧路径回退）
-    persona_root = PERSONA_DIR if PERSONA_DIR.is_dir() else PERSONAS
-    if persona_root.is_dir():
-        for pd in sorted(persona_root.iterdir()):
-            if pd.is_dir() and not pd.name.startswith("."):
-                preset_section["children"].append({
-                    "name": f"🎭 {pd.name}",
-                    "type": "dir",
-                    "children": _scan_dir(pd, max_depth=2),
-                })
 
     root.append(preset_section)
 
@@ -413,7 +401,7 @@ async def save_persona_matrix(request: Request):
     if not persona_id or not persona_data:
         return _json({"ok": False, "error": "缺少 persona_id 或 data"})
 
-    matrix_path = PKG / "gaze_engine" / "persona_matrix.json"
+    matrix_path = PKG / "gaze_engine" / "human" / "persona_matrix.json"
     if not matrix_path.exists():
         return _json({"ok": False, "error": "persona_matrix.json 不存在"})
 
@@ -517,8 +505,8 @@ async def run_full_pipeline(request: Request):
     env_series = export_envelope_series(pkt)
     baked, dense_out, prior_rep, pq_rep = run_delivery_from_packet(pkt)
 
-    from gaze_engine._shared.export_diffusion_metronome import build_metronome_text
-    metronome = build_metronome_text(baked)
+    from gaze_engine._shared.rhythm_compiler import build_metronome_text
+    metronome = build_metronome_text(baked, species="human")
 
     return _json({
         "ok": True,
@@ -541,8 +529,8 @@ async def export_metronome(request: Request):
     data = await request.json()
     baked = data.get("baked")
     if baked:
-        from gaze_engine._shared.export_diffusion_metronome import build_metronome_text
-        text = build_metronome_text(baked)
+        from gaze_engine._shared.rhythm_compiler import build_metronome_text
+        text = build_metronome_text(baked, species="human")
         return _json({"ok": True, "metronome": text})
 
     path_str = data.get("sparse_json_path") or data.get("path") or ""
@@ -551,8 +539,8 @@ async def export_metronome(request: Request):
         if not path.is_file():
             raise HTTPException(404, f"文件不存在: {path}")
         baked = json.loads(path.read_text("utf-8"))
-        from gaze_engine._shared.export_diffusion_metronome import build_metronome_text
-        text = build_metronome_text(baked, source_path=str(path))
+        from gaze_engine._shared.rhythm_compiler import build_metronome_text
+        text = build_metronome_text(baked, source_path=str(path), species="human")
         return _json({"ok": True, "metronome": text})
 
     return _json({"ok": False, "error": "需要 baked 或 sparse_json_path"}, status=400)
@@ -583,8 +571,8 @@ async def asset_load_baked(request: Request):
 
     metronome = ""
     try:
-        from gaze_engine._shared.export_diffusion_metronome import build_metronome_text
-        metronome = build_metronome_text(baked, source_path=str(baked_path))
+        from gaze_engine._shared.rhythm_compiler import build_metronome_text
+        metronome = build_metronome_text(baked, source_path=str(baked_path), species="human")
     except Exception:
         pass
 
@@ -596,48 +584,6 @@ async def asset_load_baked(request: Request):
         "path": str(baked_path),
         "emotion": baked.get("mood") or baked.get("emotion") or "",
     })
-
-
-@app.post("/api/dog-test")
-async def dog_test(request: Request):
-    """狗全身体验测试。"""
-    data = await request.json()
-    preset = data.get("preset", "dog_sad_puppy")
-    nl = data.get("nl", "狗子被关进笼子里面的委屈样子")
-    out_dir = data.get("out_dir", "/tmp/dog_test")
-    skip_body = data.get("skip_body", False)
-    skip_mesh = data.get("skip_mesh", False)
-
-    try:
-        import sys as _sys
-        _tools_dir = Path(__file__).resolve().parent.parent
-        _other_tools = _tools_dir / "05_其他工具"
-        if str(_other_tools) not in _sys.path:
-            _sys.path.insert(0, str(_other_tools))
-
-        from dog_full_body_test import build_dog_test_assets
-
-        result = build_dog_test_assets(
-            preset_name=preset,
-            out_dir=out_dir,
-            natural_language=nl,
-            skip_render=skip_mesh,
-        )
-        return _json({
-            "ok": True,
-            "assets": result,
-            "report": result.get("report"),
-        })
-    except ImportError as e:
-        raise HTTPException(500, {
-            "ok": False,
-            "error": f"导入失败: {e}",
-            "hint": "请确保 tools/05_其他工具/dog_full_body_test.py 存在",
-        })
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(500, str(e))
 
 
 # ═══════════════════════════════════════════════════════════

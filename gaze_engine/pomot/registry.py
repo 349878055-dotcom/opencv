@@ -63,10 +63,7 @@ class PomotRegistry:
         if breed_adjust:
             template.slider_packet["_breed_adjust"] = breed_adjust
 
-        # 3. 尝试从预设资产文件系统加载模板文本
-        self._try_load_preset_fs(template, preset_name)
-
-        # 4. 缓存
+        # 3. 缓存
         self._cache[cache_key] = template
         return template
 
@@ -81,12 +78,13 @@ class PomotRegistry:
                     pkt = packet_from_acting_preset(preset_name)
                     return pkt.to_dict()
             elif species == "dog":
-                from gaze_engine.dog.presets import DOG_PRESETS
-                from gaze_engine.dog.dog_pipeline import packet_from_dog_preset
+                from gaze_engine.dog.presets import dog_packet_from_file
 
-                if preset_name in DOG_PRESETS:
-                    pkt = packet_from_dog_preset(preset_name)
+                try:
+                    pkt = dog_packet_from_file(preset_name)
                     return pkt.to_dict()
+                except KeyError:
+                    pass
             elif species == "cat":
                 from gaze_engine.cat.presets import CAT_PRESETS
 
@@ -114,42 +112,6 @@ class PomotRegistry:
             pass
         return None
 
-    def _try_load_preset_fs(self, template: PresetPromptTemplate, preset_name: str) -> None:
-        """尝试从预设资产文件系统加载模板文本"""
-        try:
-            from asset_lib import PERSONAS
-
-            # 扫描人格包目录，匹配情绪名
-            if not PERSONAS.is_dir():
-                return
-
-            for persona_dir in sorted(PERSONAS.iterdir()):
-                if not persona_dir.is_dir():
-                    continue
-                emotion_dir = persona_dir / preset_name  # 直接匹配情绪名
-                if emotion_dir.is_dir():
-                    # 加载情绪.json
-                    ej = emotion_dir / "情绪.json"
-                    if ej.is_file():
-                        data = json.loads(ej.read_text(encoding="utf-8"))
-                        template.mood_tags = data.get("mood_tags", [])
-                        template.emotion_intensity = data.get("emotion_intensity", 100)
-                        template.emotion_id = data.get("id", preset_name)
-                        template.persona_id = data.get("persona_pack", persona_dir.name)
-
-                    # 加载 01_自然语言.txt
-                    nl_txt = emotion_dir / "指令" / "01_自然语言.txt"
-                    if nl_txt.is_file():
-                        template.nl_script = nl_txt.read_text(encoding="utf-8")
-
-                    # 加载 04_Prompt模板.txt
-                    p04 = emotion_dir / "指令" / "04_给视频生成的Prompt.txt"
-                    if p04.is_file():
-                        template.diffusion_prompt = p04.read_text(encoding="utf-8")
-
-                    break
-        except Exception:
-            pass
 
     def clear_cache(self) -> None:
         """清空缓存"""

@@ -3,10 +3,12 @@
 
 标准底图 eyelid_raw.png（复用人类底图 RGB 分离方案）
   R = 眼眶轮廓（狗眼更圆）
-  G = 耳廓几何 + 眉脊线（垂耳三角形 / 立耳片）
+  G = 眉脊短弧（眼上方）+ 垂耳廓线（眼外侧向下，巨型贵宾低置贴脸）
   B = 瞳孔/虹膜（圆形）
 
 输出尺寸 690×361，匹配扩散引擎输入。
+
+支持通过 template_constants 传入客户定制底膜参数。
 """
 from __future__ import annotations
 
@@ -25,53 +27,48 @@ except ImportError:
 else:
     HAS_CV2 = True
 
-from gaze_engine._shared.channel_contract import CANONICAL_KEYS
+from gaze_engine._shared.species_template import (
+    SpeciesTemplate,
+    species_default_template,
+    template_to_renderer_constants,
+)
 
 # ── 路径 ─────────────────────────────────────────────
 _PKG = Path(__file__).resolve().parent.parent
 TEXTURE_PATH = _PKG / "_shared" / "assets" / "eyelid_raw.png"
 OUTPUT_W, OUTPUT_H = 690, 361
 
-# ── 眼位常量（底图 1024x1024 坐标系，与人类底图一致）───
-LEFT_CX, LEFT_CY = 337, 325
-RIGHT_CX, RIGHT_CY = 687, 325
+# ── 狗默认渲染器常量（无模板参数时的回退值） ────────
+_DEFAULT_CONSTANTS = template_to_renderer_constants("dog", None)
 
-# ── 狗眼解剖参数（vs 人类：更圆、瞳孔占比更大）────
-EYE_W = 150               # 单眼半宽
-UPPER_PEAK = 38           # 上眼睑峰值（比人 45 更小 = 更圆）
-LOWER_BOT = 32            # 下眼睑谷值
-
-BLINK_DROP = 38           # 眨眼闭眼幅度
-SQUINT_LIFT = 22          # 眯眼抬升
-LID_UPPER_DROP = 12       # 上睑下垂
-LID_LOWER_LIFT = 8        # 下睑提升
-
-# ── 狗瞳孔/虹膜（圆形，比人更大更明显）────
-PUPIL_R_BASE = 18         # 瞳孔半径基础
-IRIS_R_BASE = 28          # 虹膜半径基础（比人 22 更大，狗眼水汪汪）
-PUPIL_X_RANGE = 80
-PUPIL_Y_RANGE = 40
-IRIS_SCALE_RANGE = 1.4
-PUPIL_SCALE_RANGE = 1.6
-
-# ── 狗眉脊（狗有眉毛肌，保留）────
-BROW_DOWN = 25
-BROW_RAISE_AMP = 20
-BROW_INNER_OFF = (-110, -80)
-BROW_PEAK_OFF = (0, -100)
-BROW_OUTER_OFF = (110, -80)
-
-# ── 狗耳廓几何（G 通道绘制）────
-# 垂耳（贵宾犬默认）：在眼外上方绘制弧形耳廓
-EAR_LEFT_BASE = [(-50, -140), (20, -155), (90, -130)]   # 左耳控制点
-EAR_RIGHT_BASE = [(610, -140), (680, -155), (750, -130)]  # 右耳控制点
-
-# ── 轮廓线宽 ────────────────────────────────────────
-EYELID_THICK = 7
-IRIS_RING_THICK = 5
-BROW_THICK = 10
-PUPIL_THICK = 2
-EAR_THICK = 10
+LEFT_CX = _DEFAULT_CONSTANTS["LEFT_CX"]
+LEFT_CY = _DEFAULT_CONSTANTS["LEFT_CY"]
+RIGHT_CX = _DEFAULT_CONSTANTS["RIGHT_CX"]
+RIGHT_CY = _DEFAULT_CONSTANTS["RIGHT_CY"]
+EYE_W = _DEFAULT_CONSTANTS["EYE_W"]
+UPPER_PEAK = _DEFAULT_CONSTANTS["UPPER_PEAK"]
+LOWER_BOT = _DEFAULT_CONSTANTS["LOWER_BOT"]
+PUPIL_R_BASE = _DEFAULT_CONSTANTS["PUPIL_R_BASE"]
+IRIS_R_BASE = _DEFAULT_CONSTANTS["IRIS_R_BASE"]
+BLINK_DROP = _DEFAULT_CONSTANTS["BLINK_DROP"]
+SQUINT_LIFT = _DEFAULT_CONSTANTS["SQUINT_LIFT"]
+LID_UPPER_DROP = _DEFAULT_CONSTANTS["LID_UPPER_DROP"]
+LID_LOWER_LIFT = _DEFAULT_CONSTANTS["LID_LOWER_LIFT"]
+BROW_DOWN = _DEFAULT_CONSTANTS["BROW_DOWN"]
+BROW_RAISE_AMP = _DEFAULT_CONSTANTS["BROW_RAISE_AMP"]
+PUPIL_X_RANGE = _DEFAULT_CONSTANTS["PUPIL_X_RANGE"]
+PUPIL_Y_RANGE = _DEFAULT_CONSTANTS["PUPIL_Y_RANGE"]
+IRIS_SCALE_RANGE = _DEFAULT_CONSTANTS["IRIS_SCALE_RANGE"]
+PUPIL_SCALE_RANGE = _DEFAULT_CONSTANTS["PUPIL_SCALE_RANGE"]
+EYELID_THICK = _DEFAULT_CONSTANTS["EYELID_THICK"]
+BROW_THICK = _DEFAULT_CONSTANTS["BROW_THICK"]
+PUPIL_THICK = _DEFAULT_CONSTANTS["PUPIL_THICK"]
+EAR_THICK = _DEFAULT_CONSTANTS["EAR_THICK"]
+BROW_INNER_OFF = tuple(_DEFAULT_CONSTANTS["BROW_INNER_OFF"])
+BROW_PEAK_OFF = tuple(_DEFAULT_CONSTANTS["BROW_PEAK_OFF"])
+BROW_OUTER_OFF = tuple(_DEFAULT_CONSTANTS["BROW_OUTER_OFF"])
+EAR_LEFT_BASE = list(_DEFAULT_CONSTANTS["EAR_LEFT_BASE"])
+EAR_RIGHT_BASE = list(_DEFAULT_CONSTANTS["EAR_RIGHT_BASE"])
 
 
 def _calc_scale() -> tuple[float, float]:
@@ -79,42 +76,62 @@ def _calc_scale() -> tuple[float, float]:
 
 
 class DogEyeMesh:
-    """单眼三角形控制网格（狗版）"""
+    """单眼三角形控制网格（狗版，接受模板参数）"""
 
-    def __init__(self, cx: int, cy: int, side: int):
+    def __init__(
+        self,
+        cx: int, cy: int, side: int, *,
+        eye_w: int = EYE_W,
+        upper_peak: int = UPPER_PEAK,
+        lower_bot: int = LOWER_BOT,
+        iris_r: int = IRIS_R_BASE,
+        brow_inner_off: tuple = BROW_INNER_OFF,
+        brow_peak_off: tuple = BROW_PEAK_OFF,
+        brow_outer_off: tuple = BROW_OUTER_OFF,
+    ):
         self.cx = cx
         self.cy = cy
-        self.side = side  # -1=左, 1=右
+        self.side = side
+        self.eye_w = eye_w
+        self.upper_peak = upper_peak
+        self.lower_bot = lower_bot
+        self.iris_r = iris_r
+        # 眉脊常量按右眼定义（inner 为 -x 朝鼻）；左眼需镜像 x
+        if side == -1:
+            brow_inner_off = (-brow_inner_off[0], brow_inner_off[1])
+            brow_outer_off = (-brow_outer_off[0], brow_outer_off[1])
+        self.brow_inner_off = brow_inner_off
+        self.brow_peak_off = brow_peak_off
+        self.brow_outer_off = brow_outer_off
         self.src = self._build_source()
         self.triangles = self._build_triangles()
 
     def _build_source(self) -> dict[str, tuple[float, float]]:
-        ew = EYE_W
+        ew = self.eye_w
+        up = self.upper_peak
+        lb = self.lower_bot
+        ir = self.iris_r
         return {
             "corner_inner": (-ew, 0),
             "corner_outer": (ew, 0),
-            # 上眼睑：抛物线 (狗更圆，peak 更小)
-            "upper_0": (-int(ew * 0.85), -10),
-            "upper_1": (-int(ew * 0.5), -29),
-            "upper_2": (0, -UPPER_PEAK),
-            "upper_3": (int(ew * 0.5), -29),
-            "upper_4": (int(ew * 0.85), -10),
-            # 下眼睑
-            "lower_0": (-int(ew * 0.85), 8),
-            "lower_1": (-int(ew * 0.5), 24),
-            "lower_2": (0, LOWER_BOT),
-            "lower_3": (int(ew * 0.5), 24),
-            "lower_4": (int(ew * 0.85), 8),
-            # 虹膜（圆形）
-            "iris_top": (0, -IRIS_R_BASE),
-            "iris_bottom": (0, IRIS_R_BASE),
-            "iris_left": (-IRIS_R_BASE, 0),
-            "iris_right": (IRIS_R_BASE, 0),
+            "upper_0": (-int(ew * 0.85), -int(up * 0.26)),
+            "upper_1": (-int(ew * 0.5), -int(up * 0.76)),
+            "upper_2": (0, -up),
+            "upper_3": (int(ew * 0.5), -int(up * 0.76)),
+            "upper_4": (int(ew * 0.85), -int(up * 0.26)),
+            "lower_0": (-int(ew * 0.85), int(lb * 0.25)),
+            "lower_1": (-int(ew * 0.5), int(lb * 0.75)),
+            "lower_2": (0, lb),
+            "lower_3": (int(ew * 0.5), int(lb * 0.75)),
+            "lower_4": (int(ew * 0.85), int(lb * 0.25)),
+            "iris_top": (0, -ir),
+            "iris_bottom": (0, ir),
+            "iris_left": (-ir, 0),
+            "iris_right": (ir, 0),
             "pupil": (0, 0),
-            # 眉脊（狗有眉毛肌）
-            "brow_inner": BROW_INNER_OFF,
-            "brow_peak": BROW_PEAK_OFF,
-            "brow_outer": BROW_OUTER_OFF,
+            "brow_inner": self.brow_inner_off,
+            "brow_peak": self.brow_peak_off,
+            "brow_outer": self.brow_outer_off,
         }
 
     def _build_triangles(self) -> list[list[str]]:
@@ -139,16 +156,22 @@ class DogEyeMesh:
             ["brow_peak", "brow_outer", "upper_4"],
         ]
 
-    def deform(self, channels: dict[str, float]) -> dict[str, tuple[int, int]]:
-        """
-        12 通道驱动变形。
-        狗版映射：
-          - eyebrow → 耳位（垂耳/立耳）
-          - brow_raise → 眉脊微动
-          - 其余同人类
-        """
+    def deform(
+        self,
+        channels: dict[str, float], *,
+        blink_drop: int = BLINK_DROP,
+        squint_lift: int = SQUINT_LIFT,
+        lid_upper_drop: int = LID_UPPER_DROP,
+        lid_lower_lift: int = LID_LOWER_LIFT,
+        brow_down: int = BROW_DOWN,
+        brow_raise_amp: int = BROW_RAISE_AMP,
+        pupil_x_range: int = PUPIL_X_RANGE,
+        pupil_y_range: int = PUPIL_Y_RANGE,
+        iris_scale_range: float = IRIS_SCALE_RANGE,
+        pupil_scale_range: float = PUPIL_SCALE_RANGE,
+    ) -> dict[str, tuple[int, int]]:
         dst = {}
-        cx, cy, ew = self.cx, self.cy, EYE_W
+        cx, cy, ew = self.cx, self.cy, self.eye_w
 
         blink = channels.get("blink", 0.0)
         squint = channels.get("squint", 0.0)
@@ -167,7 +190,7 @@ class DogEyeMesh:
         dst["corner_outer"] = (x1, cy)
 
         # ── 上眼睑抛物线 ──
-        upper_peak = max(-2, UPPER_PEAK - blink * BLINK_DROP - lid_upper * LID_UPPER_DROP)
+        upper_peak = max(-2, self.upper_peak - blink * blink_drop - lid_upper * lid_upper_drop)
         for name, x in [("upper_0", x0 + 22), ("upper_1", x0 + 75),
                          ("upper_2", cx), ("upper_3", x1 - 75),
                          ("upper_4", x1 - 22)]:
@@ -176,7 +199,7 @@ class DogEyeMesh:
             dst[name] = (x, int(cy - y_offset))
 
         # ── 下眼睑抛物线 ──
-        lower_bot = max(-2, LOWER_BOT - squint * SQUINT_LIFT - lid_lower * LID_LOWER_LIFT)
+        lower_bot = max(-2, self.lower_bot - squint * squint_lift - lid_lower * lid_lower_lift)
         for name, x in [("lower_4", x1 - 22), ("lower_3", x1 - 75),
                          ("lower_2", cx), ("lower_1", x0 + 75),
                          ("lower_0", x0 + 22)]:
@@ -185,63 +208,75 @@ class DogEyeMesh:
             dst[name] = (x, int(cy + y_offset))
 
         # ── 瞳孔中心 ──
-        pupil_s = 1.0 + channels.get("pupil_scale", 0.0) * (PUPIL_SCALE_RANGE - 1.0)
-        pupil_cx = int(cx + px * PUPIL_X_RANGE * pupil_s)
-        pupil_cy = int(cy + py * PUPIL_Y_RANGE * pupil_s)
+        pupil_s = 1.0 + channels.get("pupil_scale", 0.0) * (pupil_scale_range - 1.0)
+        pupil_cx = int(cx + px * pupil_x_range * pupil_s)
+        pupil_cy = int(cy + py * pupil_y_range * pupil_s)
         dst["pupil"] = (pupil_cx, pupil_cy)
 
-        # ── 虹膜（刚体跟随瞳孔）──
-        iris_s = 1.0 + i_scale * (IRIS_SCALE_RANGE - 1.0)
+        # ── 虹膜 ──
+        iris_s = 1.0 + i_scale * (iris_scale_range - 1.0)
         bulge_s = 1.0 + cornea_bulge * 0.15
         iris_scale_val = iris_s * bulge_s
-        for name, dx, dy in [("iris_top", 0, -IRIS_R_BASE),
-                              ("iris_bottom", 0, IRIS_R_BASE),
-                              ("iris_left", -IRIS_R_BASE, 0),
-                              ("iris_right", IRIS_R_BASE, 0)]:
+        ir = self.iris_r
+        for name, dx, dy in [("iris_top", 0, -ir), ("iris_bottom", 0, ir),
+                              ("iris_left", -ir, 0), ("iris_right", ir, 0)]:
             dst[name] = (int(pupil_cx + dx * iris_scale_val),
                          int(pupil_cy + dy * iris_scale_val))
 
-        # ── 眉脊（狗有眉毛肌，受 brow_raise 影响）──
-        # eyebrow 通道影响耳位（不在 deform 中处理）
-        brow_offset = b_raise * BROW_RAISE_AMP
-        for name, dx, dy in [("brow_inner", *BROW_INNER_OFF),
-                              ("brow_peak", *BROW_PEAK_OFF),
-                              ("brow_outer", *BROW_OUTER_OFF)]:
+        # ── 眉脊 ──
+        brow_offset = b_raise * brow_raise_amp
+        for name, dx, dy in [("brow_inner", *self.brow_inner_off),
+                              ("brow_peak", *self.brow_peak_off),
+                              ("brow_outer", *self.brow_outer_off)]:
             dst[name] = (int(cx + dx), int(cy + dy + brow_offset))
 
         return dst
 
 
 class DogAffineRenderer:
-    """狗工程底膜渲染引擎"""
+    """狗工程底膜渲染引擎（支持模板参数）"""
 
-    def __init__(self):
+    def __init__(self, template_constants: dict[str, Any] | None = None):
         if not HAS_CV2:
             raise RuntimeError("OpenCV (cv2) 未安装")
-        self.meshes = [DogEyeMesh(LEFT_CX, LEFT_CY, -1),
-                       DogEyeMesh(RIGHT_CX, RIGHT_CY, 1)]
+        c = template_constants or _DEFAULT_CONSTANTS
+        self.c = c
+        self.meshes = [
+            DogEyeMesh(c["LEFT_CX"], c["LEFT_CY"], -1,
+                       eye_w=c["EYE_W"],
+                       upper_peak=c["UPPER_PEAK"],
+                       lower_bot=c["LOWER_BOT"],
+                       iris_r=c["IRIS_R_BASE"],
+                       brow_inner_off=tuple(c["BROW_INNER_OFF"]),
+                       brow_peak_off=tuple(c["BROW_PEAK_OFF"]),
+                       brow_outer_off=tuple(c["BROW_OUTER_OFF"])),
+            DogEyeMesh(c["RIGHT_CX"], c["RIGHT_CY"], 1,
+                       eye_w=c["EYE_W"],
+                       upper_peak=c["UPPER_PEAK"],
+                       lower_bot=c["LOWER_BOT"],
+                       iris_r=c["IRIS_R_BASE"],
+                       brow_inner_off=tuple(c["BROW_INNER_OFF"]),
+                       brow_peak_off=tuple(c["BROW_PEAK_OFF"]),
+                       brow_outer_off=tuple(c["BROW_OUTER_OFF"])),
+        ]
         self.sx, self.sy = _calc_scale()
 
     def _parametric_eyelid(self, mesh: DogEyeMesh, channels: dict[str, float],
                            steps: int = 40) -> np.ndarray:
-        """标准参数法：抛物线公式生成眼睑环"""
-        cx, cy, ew = mesh.cx, mesh.cy, EYE_W
+        c = self.c
+        cx, cy, ew = mesh.cx, mesh.cy, c["EYE_W"]
         blink = channels.get("blink", 0.0)
         squint = channels.get("squint", 0.0)
         lid_upper = channels.get("lid_upper", 0.0)
         lid_lower = channels.get("lid_lower", 0.0)
-
-        upper_peak = max(-2, UPPER_PEAK - blink * BLINK_DROP - lid_upper * LID_UPPER_DROP)
-        lower_bot = max(-2, LOWER_BOT - squint * SQUINT_LIFT - lid_lower * LID_LOWER_LIFT)
-
+        upper_peak = max(-2, c["UPPER_PEAK"] - blink * c["BLINK_DROP"] - lid_upper * c["LID_UPPER_DROP"])
+        lower_bot = max(-2, c["LOWER_BOT"] - squint * c["SQUINT_LIFT"] - lid_lower * c["LID_LOWER_LIFT"])
         pts = []
-        # 上眼睑：从左到右
         for i in range(steps + 1):
             t = i / steps
             x = int(cx - ew + 2 * ew * t)
             y_offset = upper_peak * (1 - (2 * t - 1) ** 2)
             pts.append((x, int(cy - y_offset)))
-        # 下眼睑：从右到左
         for i in range(steps + 1):
             t = i / steps
             x = int(cx + ew - 2 * ew * t)
@@ -250,54 +285,49 @@ class DogAffineRenderer:
         return np.array(pts, np.int32)
 
     def _ear_flap(self, mesh: DogEyeMesh, channels: dict[str, float]) -> np.ndarray:
-        """绘制狗耳廓几何（垂耳版本，G 通道）。
-
-        控制点基于 eyebrow 通道值变形：
-          - eyebrow=0（全耷拉）：耳朵完全下垂（委屈）
-          - eyebrow=1（全竖立）：耳朵完全竖起（警觉）
-
-        贵宾犬垂耳：从眼外上方垂下弧形片状。
-        """
+        c = self.c
         cx, cy = mesh.cx, mesh.cy
         eyebrow = channels.get("eyebrow", 0.5)
+        droop = 1.0 - eyebrow
 
-        # 耳廓控制点变换：eyebrow 控制下垂程度
-        droop = 1.0 - eyebrow  # 0=竖立, 1=全垂
+        # 从模板常量读取耳基点
+        if mesh.side == -1:
+            ear_base = list(c.get("EAR_LEFT_BASE", EAR_LEFT_BASE))
+        else:
+            ear_base = list(c.get("EAR_RIGHT_BASE", EAR_RIGHT_BASE))
 
-        # 左/右耳基点偏移
-        if mesh.side == -1:  # 左眼
-            base = [
-                (cx - 50, cy - 140 + int(droop * 20)),
-                (cx + 20, cy - 155 + int(droop * 35)),
-                (cx + 90, cy - 130 + int(droop * 25)),
-            ]
-        else:  # 右眼
-            base = [
-                (cx - 50, cy - 140 + int(droop * 20)),
-                (cx + 20, cy - 155 + int(droop * 35)),
-                (cx + 90, cy - 130 + int(droop * 25)),
-            ]
-
-        return np.array(base, np.int32)
+        # ear_droop 从模板读取（客户定制）
+        ear_tmpl_droop = c.get("EAR_DROOP", 0.5)
+        adjusted = []
+        for (bx, by) in ear_base:
+            # 耳位相对 cx,cy + 下垂动画
+            dx = bx  # 耳基相对于左眼中心的偏移
+            dy = by + int((droop - 0.5) * 30 * ear_tmpl_droop * 2)
+            adjusted.append((cx + dx, cy + dy))
+        return np.array(adjusted, np.int32)
 
     def render_frame(self, channels: dict[str, float]) -> np.ndarray:
-        """
-        输出 RGB 三色分离工程底模：
-          R = 眼眶轮廓（狗眼更圆抛物线）
-          G = 耳廓几何 + 眉脊线
-          B = 虹膜 + 瞳孔（圆形）
-
-        返回: (361, 690, 3) uint8
-        """
+        c = self.c
         canvas = np.zeros((1024, 1024, 3), dtype=np.uint8)
 
         for mesh in self.meshes:
-            dst_pts = mesh.deform(channels)
+            dst_pts = mesh.deform(channels,
+                blink_drop=c["BLINK_DROP"],
+                squint_lift=c["SQUINT_LIFT"],
+                lid_upper_drop=c["LID_UPPER_DROP"],
+                lid_lower_lift=c["LID_LOWER_LIFT"],
+                brow_down=c["BROW_DOWN"],
+                brow_raise_amp=c["BROW_RAISE_AMP"],
+                pupil_x_range=c["PUPIL_X_RANGE"],
+                pupil_y_range=c["PUPIL_Y_RANGE"],
+                iris_scale_range=c["IRIS_SCALE_RANGE"],
+                pupil_scale_range=c["PUPIL_SCALE_RANGE"],
+            )
 
             # ── R 通道：眼睑环 ──
             ring = self._parametric_eyelid(mesh, channels)
             cv2.polylines(canvas, [ring], True, (0, 0, 255),
-                          EYELID_THICK, cv2.LINE_8)
+                          c["EYELID_THICK"], cv2.LINE_8)
 
             # ── G 通道：眉脊 ──
             brow = np.array([
@@ -306,36 +336,73 @@ class DogAffineRenderer:
                 dst_pts["brow_outer"],
             ], dtype=np.int32)
             cv2.polylines(canvas, [brow], False, (0, 255, 0),
-                          BROW_THICK, cv2.LINE_8)
+                          c["BROW_THICK"], cv2.LINE_8)
 
-            # ── G 通道：耳廓线（垂耳片） ──
+            # ── G 通道：耳廓线 ──
             ear_pts = self._ear_flap(mesh, channels)
             cv2.polylines(canvas, [ear_pts], False, (0, 255, 0),
-                          EAR_THICK, cv2.LINE_8)
+                          c["EAR_THICK"], cv2.LINE_8)
 
-            # ── B 通道：虹膜实心圆 + 瞳孔环 ──
+            # ── B 通道：虹膜 + 瞳孔 ──
             i_scale = channels.get("iris_scale", 0.0)
             cornea_bulge = channels.get("cornea_bulge", 0.0)
             p_scale = channels.get("pupil_scale", 0.0)
             blink = channels.get("blink", 0.0)
 
-            iris_r = max(2, int(IRIS_R_BASE
-                                * (1.0 + i_scale * (IRIS_SCALE_RANGE - 1.0))
-                                * (1.0 + cornea_bulge * 0.15)))
+            iris_r = max(2, int(c["IRIS_R_BASE"]
+                * (1.0 + i_scale * (c["IRIS_SCALE_RANGE"] - 1.0))
+                * (1.0 + cornea_bulge * 0.15)))
             cv2.circle(canvas, dst_pts["pupil"], iris_r,
                        (255, 0, 0), -1, cv2.LINE_8)
 
             if blink < 0.95:
-                pupil_r = max(2, int(PUPIL_R_BASE * (1.0 + p_scale * 0.5)))
+                pupil_r = max(2, int(c["PUPIL_R_BASE"] * (1.0 + p_scale * 0.5)))
                 cv2.circle(canvas, dst_pts["pupil"], pupil_r,
-                           (255, 0, 0), PUPIL_THICK, cv2.LINE_8)
+                           (255, 0, 0), c["PUPIL_THICK"], cv2.LINE_8)
 
         final_output = cv2.resize(canvas, (OUTPUT_W, OUTPUT_H),
                                   interpolation=cv2.INTER_AREA)
         return final_output
 
+    def render_preview_frame(self, channels: dict[str, float]) -> np.ndarray:
+        """标定预览：保持 1024 正方形，避免压扁导致左右看起来不对称。"""
+        if not HAS_CV2:
+            raise RuntimeError("OpenCV (cv2) 未安装")
+        c = self.c
+        canvas = np.zeros((1024, 1024, 3), dtype=np.uint8)
+        for mesh in self.meshes:
+            dst_pts = mesh.deform(channels,
+                blink_drop=c["BLINK_DROP"],
+                squint_lift=c["SQUINT_LIFT"],
+                lid_upper_drop=c["LID_UPPER_DROP"],
+                lid_lower_lift=c["LID_LOWER_LIFT"],
+                brow_down=c["BROW_DOWN"],
+                brow_raise_amp=c["BROW_RAISE_AMP"],
+                pupil_x_range=c["PUPIL_X_RANGE"],
+                pupil_y_range=c["PUPIL_Y_RANGE"],
+                iris_scale_range=c["IRIS_SCALE_RANGE"],
+                pupil_scale_range=c["PUPIL_SCALE_RANGE"],
+            )
+            ring = self._parametric_eyelid(mesh, channels)
+            cv2.polylines(canvas, [ring], True, (0, 0, 255), c["EYELID_THICK"], cv2.LINE_8)
+            brow = np.array([dst_pts["brow_inner"], dst_pts["brow_peak"], dst_pts["brow_outer"]], dtype=np.int32)
+            cv2.polylines(canvas, [brow], False, (0, 255, 0), c["BROW_THICK"], cv2.LINE_8)
+            ear_pts = self._ear_flap(mesh, channels)
+            cv2.polylines(canvas, [ear_pts], False, (0, 255, 0), c["EAR_THICK"], cv2.LINE_8)
+            i_scale = channels.get("iris_scale", 0.0)
+            cornea_bulge = channels.get("cornea_bulge", 0.0)
+            p_scale = channels.get("pupil_scale", 0.0)
+            blink = channels.get("blink", 0.0)
+            iris_r = max(2, int(c["IRIS_R_BASE"]
+                * (1.0 + i_scale * (c["IRIS_SCALE_RANGE"] - 1.0))
+                * (1.0 + cornea_bulge * 0.15)))
+            cv2.circle(canvas, dst_pts["pupil"], iris_r, (255, 0, 0), -1, cv2.LINE_8)
+            if blink < 0.95:
+                pupil_r = max(2, int(c["PUPIL_R_BASE"] * (1.0 + p_scale * 0.5)))
+                cv2.circle(canvas, dst_pts["pupil"], pupil_r, (255, 0, 0), c["PUPIL_THICK"], cv2.LINE_8)
+        return canvas
+
     def render_batch(self, json_path: str | Path, out_dir: str | Path, fps: int = 30) -> Path:
-        """批量渲染 150 帧"""
         out_dir = Path(out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
         data = json.loads(Path(json_path).read_text(encoding="utf-8"))
@@ -347,8 +414,6 @@ class DogAffineRenderer:
         for t in range(fc):
             frame = self.render_frame({k: v[t] for k, v in ch_data.items()})
             cv2.imwrite(str(fd / f"frame_{t:04d}.png"), frame)
-
-        # 合成为 MP4
         import subprocess
         mp4 = out_dir / "dog_base_mesh.mp4"
         subprocess.run([

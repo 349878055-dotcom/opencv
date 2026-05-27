@@ -31,21 +31,24 @@ def inject_ear_into_channels(
     ear: EarParams,
 ) -> Dict[str, List[float]]:
     """
-    将 EarParams 注入编译后的 12 通道，覆盖 eyebrow / brow_raise。
+    将 EarParams 注入编译后的 12 通道：耳位基线 + 包络脉冲叠加。
 
     调用时机：在 compile_to_channels() 之后、affine_renderer 之前。
-
-    Args:
-        channels: compile_to_channels() 的输出，12 键 × 150 帧
-        ear: 来自 SliderPacket 的耳参数（-1~1 范围）
-
-    Returns:
-        覆盖耳通道后的同一 dict（原地修改 + 返回引用）
+    不再用常数覆盖整条 eyebrow 轨，保留 envelope 的时间节奏。
     """
     vals = ear_to_channel_values(ear)
     frame_count = len(next(iter(channels.values())))
+    env_eyebrow = channels.get("eyebrow") or [0.5] * frame_count
+    env_brow = channels.get("brow_raise") or [0.5] * frame_count
+    base_e, base_b = vals["eyebrow"], vals["brow_raise"]
 
-    channels["eyebrow"] = [vals["eyebrow"]] * frame_count
-    channels["brow_raise"] = [vals["brow_raise"]] * frame_count
+    channels["eyebrow"] = [
+        max(0.0, min(1.0, base_e + v * 0.35))
+        for v in env_eyebrow[:frame_count]
+    ]
+    channels["brow_raise"] = [
+        max(0.0, min(1.0, base_b + v * 0.25))
+        for v in env_brow[:frame_count]
+    ]
 
     return channels

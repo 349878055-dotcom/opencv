@@ -32,6 +32,12 @@ except ImportError:
 else:
     HAS_CV2 = True
 
+from gaze_engine._shared.species_template import (
+    SpeciesTemplate,
+    species_default_template,
+    template_to_renderer_constants,
+)
+
 # ── 仿射渲染模块 — 已启用 ────────────────────────────
 _AFFINE_DISABLED = False
 
@@ -47,39 +53,34 @@ CANONICAL_KEYS = [
     "squint", "brow_raise", "lid_upper", "lid_lower", "eye_gloss",
 ]
 
-# ── 眼位常量（底图 1024x1024 坐标系） ────────────────
-LEFT_CX, LEFT_CY = 337, 325
-RIGHT_CX, RIGHT_CY = 687, 325
+# ── 人类默认渲染器常量（无模板参数时的回退值） ────────
+_DEFAULT_CONSTANTS = template_to_renderer_constants("human", None)
 
-# 单眼尺寸
-EYE_W = 150
-EYE_H = 72
-
-# 瞳孔/虹膜
-PUPIL_R_BASE = 16
-IRIS_R_BASE = 44
-
-# ── 底图抛物线常量（匹配 base_mesh_gen._eye_ring）───
-UPPER_PEAK = 45      # 上眼睑抛物线峰值（px）
-LOWER_BOT = 38       # 下眼睑抛物线谷值（45 * 0.85）
-
-# ── 变形幅度常量 ─────────────────────────────────────
-BLINK_DROP = 40
-SQUINT_LIFT = 25
-LID_UPPER_DROP = 15
-LID_LOWER_LIFT = 10
-BROW_DOWN = 30
-BROW_RAISE = 25
-PUPIL_X_RANGE = 80
-PUPIL_Y_RANGE = 40
-IRIS_SCALE_RANGE = 1.3
-PUPIL_SCALE_RANGE = 1.5
-
-# ── 轮廓线宽（输出像素） ─────────────────────────────
-EYELID_THICK = 7       # 眼眶轮廓
-IRIS_RING_THICK = 5    # 虹膜圈
-BROW_THICK = 12        # 眉线
-PUPIL_THICK = 2        # 瞳孔轮廓线宽（参照图为细环）
+LEFT_CX = _DEFAULT_CONSTANTS["LEFT_CX"]
+LEFT_CY = _DEFAULT_CONSTANTS["LEFT_CY"]
+RIGHT_CX = _DEFAULT_CONSTANTS["RIGHT_CX"]
+RIGHT_CY = _DEFAULT_CONSTANTS["RIGHT_CY"]
+EYE_W = _DEFAULT_CONSTANTS["EYE_W"]
+UPPER_PEAK = _DEFAULT_CONSTANTS["UPPER_PEAK"]
+LOWER_BOT = _DEFAULT_CONSTANTS["LOWER_BOT"]
+PUPIL_R_BASE = _DEFAULT_CONSTANTS["PUPIL_R_BASE"]
+IRIS_R_BASE = _DEFAULT_CONSTANTS["IRIS_R_BASE"]
+BLINK_DROP = _DEFAULT_CONSTANTS["BLINK_DROP"]
+SQUINT_LIFT = _DEFAULT_CONSTANTS["SQUINT_LIFT"]
+LID_UPPER_DROP = _DEFAULT_CONSTANTS["LID_UPPER_DROP"]
+LID_LOWER_LIFT = _DEFAULT_CONSTANTS["LID_LOWER_LIFT"]
+BROW_DOWN = _DEFAULT_CONSTANTS["BROW_DOWN"]
+BROW_RAISE = _DEFAULT_CONSTANTS["BROW_RAISE_AMP"]
+PUPIL_X_RANGE = _DEFAULT_CONSTANTS["PUPIL_X_RANGE"]
+PUPIL_Y_RANGE = _DEFAULT_CONSTANTS["PUPIL_Y_RANGE"]
+IRIS_SCALE_RANGE = _DEFAULT_CONSTANTS["IRIS_SCALE_RANGE"]
+PUPIL_SCALE_RANGE = _DEFAULT_CONSTANTS["PUPIL_SCALE_RANGE"]
+EYELID_THICK = _DEFAULT_CONSTANTS["EYELID_THICK"]
+BROW_THICK = _DEFAULT_CONSTANTS["BROW_THICK"]
+PUPIL_THICK = _DEFAULT_CONSTANTS["PUPIL_THICK"]
+BROW_INNER_OFF = tuple(_DEFAULT_CONSTANTS["BROW_INNER_OFF"])
+BROW_PEAK_OFF = tuple(_DEFAULT_CONSTANTS["BROW_PEAK_OFF"])
+BROW_OUTER_OFF = tuple(_DEFAULT_CONSTANTS["BROW_OUTER_OFF"])
 
 
 def _calc_scale() -> tuple[float, float]:
@@ -88,44 +89,59 @@ def _calc_scale() -> tuple[float, float]:
 
 
 class EyeMesh:
-    """单眼三角形控制网格"""
+    """单眼三角形控制网格（接受模板参数）"""
     
-    def __init__(self, cx: int, cy: int, side: int):
+    def __init__(
+        self,
+        cx: int, cy: int, side: int, *,
+        eye_w: int = EYE_W,
+        upper_peak: int = UPPER_PEAK,
+        lower_bot: int = LOWER_BOT,
+        iris_r: int = 22,
+        brow_inner_off: tuple = (-130, -90),
+        brow_peak_off: tuple = (0, -115),
+        brow_outer_off: tuple = (130, -90),
+    ):
         self.cx = cx
         self.cy = cy
         self.side = side
+        self.eye_w = eye_w
+        self.upper_peak = upper_peak
+        self.lower_bot = lower_bot
+        self.iris_r = iris_r
+        self.brow_inner_off = brow_inner_off
+        self.brow_peak_off = brow_peak_off
+        self.brow_outer_off = brow_outer_off
         self.src = self._build_source()
         self.triangles = self._build_triangles()
         
     def _build_source(self) -> dict[str, tuple[float, float]]:
-        ew = EYE_W  # 150
-        # 精确匹配 base_mesh_gen._eye_ring 抛物线几何
-        # 上眼睑 peak=45, 下眼睑 bot=38, 虹膜半径=22
+        ew = self.eye_w
+        up = self.upper_peak
+        lb = self.lower_bot
+        ir = self.iris_r
+        # 上眼睑抛物线：y = up * (1-(2t-1)^2), 取 5 点
         return {
             "corner_inner": (-ew, 0),
             "corner_outer": (ew, 0),
-            # 上眼睑沿 _eye_ring 抛物线取点: y = 45*(1-(2t-1)^2)
-            "upper_0": (-int(ew*0.85), -12),
-            "upper_1": (-int(ew*0.5), -34),
-            "upper_2": (0, -45),
-            "upper_3": (int(ew*0.5), -34),
-            "upper_4": (int(ew*0.85), -12),
-            # 下眼睑沿 _eye_ring 抛物线取点: y = 38*(1-(2t-1)^2)
-            "lower_0": (-int(ew*0.85), 10),
-            "lower_1": (-int(ew*0.5), 29),
-            "lower_2": (0, 38),
-            "lower_3": (int(ew*0.5), 29),
-            "lower_4": (int(ew*0.85), 10),
-            # 虹膜边界（匹配 base_mesh_gen.IRIS_R = 22）
-            "iris_top": (0, -22),
-            "iris_bottom": (0, 22),
-            "iris_left": (-22, 0),
-            "iris_right": (22, 0),
+            "upper_0": (-int(ew*0.85), -int(up*0.27)),
+            "upper_1": (-int(ew*0.5), -int(up*0.76)),
+            "upper_2": (0, -up),
+            "upper_3": (int(ew*0.5), -int(up*0.76)),
+            "upper_4": (int(ew*0.85), -int(up*0.27)),
+            "lower_0": (-int(ew*0.85), int(lb*0.26)),
+            "lower_1": (-int(ew*0.5), int(lb*0.76)),
+            "lower_2": (0, lb),
+            "lower_3": (int(ew*0.5), int(lb*0.76)),
+            "lower_4": (int(ew*0.85), int(lb*0.26)),
+            "iris_top": (0, -ir),
+            "iris_bottom": (0, ir),
+            "iris_left": (-ir, 0),
+            "iris_right": (ir, 0),
             "pupil": (0, 0),
-            # 眉毛近似位置（source 网格对称近似）
-            "brow_inner": (-130, -90),
-            "brow_peak": (0, -115),
-            "brow_outer": (130, -90),
+            "brow_inner": self.brow_inner_off,
+            "brow_peak": self.brow_peak_off,
+            "brow_outer": self.brow_outer_off,
         }
     
     def _build_triangles(self) -> list[list[str]]:
@@ -156,7 +172,22 @@ class EyeMesh:
             for name, (dx, dy) in self.src.items()
         }
     
-    def deform(self, channels: dict[str, float]) -> dict[str, tuple[int, int]]:
+    def deform(
+        self,
+        channels: dict[str, float],
+        *,
+        # 可覆盖的常量（从外部模板传入）
+        blink_drop: int = BLINK_DROP,
+        squint_lift: int = SQUINT_LIFT,
+        lid_upper_drop: int = LID_UPPER_DROP,
+        lid_lower_lift: int = LID_LOWER_LIFT,
+        brow_down: int = BROW_DOWN,
+        brow_raise: int = BROW_RAISE,
+        pupil_x_range: int = PUPIL_X_RANGE,
+        pupil_y_range: int = PUPIL_Y_RANGE,
+        iris_scale_range: float = IRIS_SCALE_RANGE,
+        pupil_scale_range: float = PUPIL_SCALE_RANGE,
+    ) -> dict[str, tuple[int, int]]:
         """
         12 通道驱动变形 — 基于底图抛物线公式直接计算。
         
@@ -174,7 +205,7 @@ class EyeMesh:
         cornea_bulge, squint, brow_raise, lid_upper, lid_lower, eye_gloss
         """
         dst = {}
-        cx, cy, ew = self.cx, self.cy, EYE_W
+        cx, cy, ew = self.cx, self.cy, self.eye_w
         
         blink = channels.get("blink", 0.0)
         squint = channels.get("squint", 0.0)
@@ -188,12 +219,12 @@ class EyeMesh:
         cornea_bulge = channels.get("cornea_bulge", 0.0)
         
         # ── 眼角固定 ──
-        x0, x1 = cx - ew, cx + ew  # corner_inner.x, corner_outer.x
+        x0, x1 = cx - ew, cx + ew
         dst["corner_inner"] = (x0, cy)
         dst["corner_outer"] = (x1, cy)
         
         # ── 上眼睑：抛物线公式 y = cy − peak × (1−(2t−1)²) ──
-        upper_peak = max(-2, UPPER_PEAK - blink * BLINK_DROP - lid_upper * LID_UPPER_DROP)
+        upper_peak = max(-2, self.upper_peak - blink * blink_drop - lid_upper * lid_upper_drop)
         for name, x in [("upper_0", x0 + 22), ("upper_1", x0 + 75),
                          ("upper_2", cx),    ("upper_3", x1 - 75),
                          ("upper_4", x1 - 22)]:
@@ -202,35 +233,35 @@ class EyeMesh:
             dst[name] = (x, int(cy - y_offset))
         
         # ── 下眼睑：抛物线公式 y = cy + bot × (1−(2t−1)²) ──
-        lower_bot = max(-2, LOWER_BOT - squint * SQUINT_LIFT - lid_lower * LID_LOWER_LIFT)
-        # 下眼睑从右到左，t 从 0 到 1
+        lower_bot = max(-2, self.lower_bot - squint * squint_lift - lid_lower * lid_lower_lift)
         for name, x in [("lower_4", x1 - 22), ("lower_3", x1 - 75),
                          ("lower_2", cx),      ("lower_1", x0 + 75),
                          ("lower_0", x0 + 22)]:
-            t = (x1 - x) / (2 * ew)  # 反向：右→左
+            t = (x1 - x) / (2 * ew)
             y_offset = lower_bot * (1 - (2*t - 1)**2)
             dst[name] = (x, int(cy + y_offset))
         
-        # ── 瞳孔中心（含 pupil_x/y 偏移，作为虹膜刚体基准）──
-        pupil_s = 1.0 + channels.get("pupil_scale", 0.0) * (PUPIL_SCALE_RANGE - 1.0)
-        pupil_cx = int(cx + px * PUPIL_X_RANGE * pupil_s)
-        pupil_cy = int(cy + py * PUPIL_Y_RANGE * pupil_s)
+        # ── 瞳孔中心 ──
+        pupil_s = 1.0 + channels.get("pupil_scale", 0.0) * (pupil_scale_range - 1.0)
+        pupil_cx = int(cx + px * pupil_x_range * pupil_s)
+        pupil_cy = int(cy + py * pupil_y_range * pupil_s)
         dst["pupil"] = (pupil_cx, pupil_cy)
         
-        # ── 虹膜（刚体跟随瞳孔平移 + 独立缩放）──
-        iris_s = 1.0 + i_scale * (IRIS_SCALE_RANGE - 1.0)
+        # ── 虹膜 ──
+        iris_s = 1.0 + i_scale * (iris_scale_range - 1.0)
         bulge_s = 1.0 + cornea_bulge * 0.15
         iris_scale_val = iris_s * bulge_s
-        for name, dx, dy in [("iris_top", 0, -22), ("iris_bottom", 0, 22),
-                              ("iris_left", -22, 0), ("iris_right", 22, 0)]:
+        ir = self.iris_r
+        for name, dx, dy in [("iris_top", 0, -ir), ("iris_bottom", 0, ir),
+                              ("iris_left", -ir, 0), ("iris_right", ir, 0)]:
             dst[name] = (int(pupil_cx + dx * iris_scale_val),
                          int(pupil_cy + dy * iris_scale_val))
         
         # ── 眉毛 ──
-        brow_offset = eyebrow * BROW_DOWN - b_raise * BROW_RAISE
-        for name, dx, dy in [("brow_inner", -130, -90),
-                              ("brow_peak", 0, -115),
-                              ("brow_outer", 130, -90)]:
+        brow_offset = eyebrow * brow_down - b_raise * brow_raise
+        for name, dx, dy in [("brow_inner", *self.brow_inner_off),
+                              ("brow_peak", *self.brow_peak_off),
+                              ("brow_outer", *self.brow_outer_off)]:
             dst[name] = (int(cx + dx), int(cy + dy + brow_offset))
         
         return dst
@@ -249,98 +280,124 @@ else:
         标准底图 eyelid_raw.png 经 12 通道驱动变形 → RGB 三色分离
         R=眼眶轮廓, G=眉轮廓, B=瞳孔轮廓
         输出尺寸 690×361，匹配参照图 5.png
+        
+        支持通过 template_constants 传入客户定制底膜参数。
         """
-        def __init__(self):
+        def __init__(self, template_constants: dict[str, Any] | None = None):
             if not HAS_CV2:
                 raise RuntimeError("OpenCV (cv2) 未安装")
-            self.meshes = [EyeMesh(LEFT_CX, LEFT_CY, -1), EyeMesh(RIGHT_CX, RIGHT_CY, 1)]
+            c = template_constants or _DEFAULT_CONSTANTS
+            self.c = c  # 保存供 _parametric_eyelid 和 render_frame 使用
+            self.meshes = [
+                EyeMesh(c["LEFT_CX"], c["LEFT_CY"], -1,
+                        eye_w=c["EYE_W"],
+                        upper_peak=c["UPPER_PEAK"],
+                        lower_bot=c["LOWER_BOT"],
+                        brow_inner_off=tuple(c["BROW_INNER_OFF"]),
+                        brow_peak_off=tuple(c["BROW_PEAK_OFF"]),
+                        brow_outer_off=tuple(c["BROW_OUTER_OFF"])),
+                EyeMesh(c["RIGHT_CX"], c["RIGHT_CY"], 1,
+                        eye_w=c["EYE_W"],
+                        upper_peak=c["UPPER_PEAK"],
+                        lower_bot=c["LOWER_BOT"],
+                        brow_inner_off=tuple(c["BROW_INNER_OFF"]),
+                        brow_peak_off=tuple(c["BROW_PEAK_OFF"]),
+                        brow_outer_off=tuple(c["BROW_OUTER_OFF"])),
+            ]
             self.sx, self.sy = _calc_scale()
     
         def _parametric_eyelid(self, mesh: EyeMesh, channels: dict[str, float],
                                steps: int = 40) -> np.ndarray:
-            """
-            标准参数法：直接使用抛物线公式生成眼睑环（82点），不走 deform() 控制点。
-            
-            原理（匹配工程底膜驱动规范 §4.4）：
-              眼睑曲线 = peak × (1 − (2t−1)²)
-              deform() 只负责瞳孔/虹膜/眉毛，眼睑几何直接由通道值驱动。
-              眼角天然闭合（t=0 → y=0, t=1 → y=0），无需最小二乘拟合。
-            """
-            cx, cy, ew = mesh.cx, mesh.cy, EYE_W
+            """标准参数法，使用 self.c 中的常量。"""
+            c = self.c
+            cx, cy, ew = mesh.cx, mesh.cy, c["EYE_W"]
             blink = channels.get("blink", 0.0)
             squint = channels.get("squint", 0.0)
             lid_upper = channels.get("lid_upper", 0.0)
             lid_lower = channels.get("lid_lower", 0.0)
             
-            upper_peak = max(-2, UPPER_PEAK - blink * BLINK_DROP - lid_upper * LID_UPPER_DROP)
-            lower_bot = max(-2, LOWER_BOT - squint * SQUINT_LIFT - lid_lower * LID_LOWER_LIFT)
+            upper_peak = max(-2, c["UPPER_PEAK"] - blink * c["BLINK_DROP"] - lid_upper * c["LID_UPPER_DROP"])
+            lower_bot = max(-2, c["LOWER_BOT"] - squint * c["SQUINT_LIFT"] - lid_lower * c["LID_LOWER_LIFT"])
             
             pts = []
-            # ── 上眼睑：从左到右 ──
             for i in range(steps + 1):
                 t = i / steps
                 x = int(cx - ew + 2 * ew * t)
                 y_offset = upper_peak * (1 - (2*t - 1)**2)
-                y = int(cy - y_offset)
-                pts.append((x, y))
-            # ── 下眼睑：从右到左（保证连续闭合）──
+                pts.append((x, int(cy - y_offset)))
             for i in range(steps + 1):
                 t = i / steps
                 x = int(cx + ew - 2 * ew * t)
                 y_offset = lower_bot * (1 - (2*t - 1)**2)
-                y = int(cy + y_offset)
-                pts.append((x, y))
+                pts.append((x, int(cy + y_offset)))
             
             return np.array(pts, np.int32)
     
         def render_frame(self, channels: dict[str, float]) -> np.ndarray:
             """
-            标准参数渲染引擎 (Parametric Standard Render)
-            
-            原理（匹配工程底膜驱动规范 §4.4）：
-              眼睑环使用标准抛物线公式直接计算，不走 deform() 控制点。
-              deform() 仅负责瞳孔/虹膜/眉毛。
-              输出为纯黑白二值轮廓（LINE_8），无抗锯齿。
-            
+            标准参数渲染引擎。
             输出: (361, 690, 3) uint8 — R=眼眶, G=眉, B=虹膜+瞳孔
             """
+            c = self.c
             canvas = np.zeros((1024, 1024, 3), dtype=np.uint8)
             
             for mesh in self.meshes:
-                dst_pts = mesh.deform(channels)
+                dst_pts = mesh.deform(channels,
+                    blink_drop=c["BLINK_DROP"],
+                    squint_lift=c["SQUINT_LIFT"],
+                    lid_upper_drop=c["LID_UPPER_DROP"],
+                    lid_lower_lift=c["LID_LOWER_LIFT"],
+                    brow_down=c["BROW_DOWN"],
+                    brow_raise=c["BROW_RAISE_AMP"],
+                    pupil_x_range=c["PUPIL_X_RANGE"],
+                    pupil_y_range=c["PUPIL_Y_RANGE"],
+                    iris_scale_range=c["IRIS_SCALE_RANGE"],
+                    pupil_scale_range=c["PUPIL_SCALE_RANGE"],
+                )
                 
-                # ── R 通道：直接参数法眼睑环（不走 deform）──
+                # ── R 通道：眼睑环 ──
                 ring = self._parametric_eyelid(mesh, channels)
                 cv2.polylines(canvas, [ring], True,
-                              (0, 0, 255), 8, cv2.LINE_8)
+                              (0, 0, 255), c["EYELID_THICK"], cv2.LINE_8)
                 
-                # ── G 通道：眉毛直接 3 点折线 ──
+                # ── G 通道：眉毛 ──
                 brow = np.array([
                     dst_pts["brow_inner"],
                     dst_pts["brow_peak"],
                     dst_pts["brow_outer"],
                 ], dtype=np.int32)
                 cv2.polylines(canvas, [brow], False,
-                              (0, 255, 0), 8, cv2.LINE_8)
+                              (0, 255, 0), c["BROW_THICK"], cv2.LINE_8)
             
-            # ── B 通道：虹膜完美实心圆 + 瞳孔环 ──
+            # ── B 通道：虹膜 + 瞳孔 ──
             for mesh in self.meshes:
-                dst_pts = mesh.deform(channels)
+                dst_pts = mesh.deform(channels,
+                    blink_drop=c["BLINK_DROP"],
+                    squint_lift=c["SQUINT_LIFT"],
+                    lid_upper_drop=c["LID_UPPER_DROP"],
+                    lid_lower_lift=c["LID_LOWER_LIFT"],
+                    brow_down=c["BROW_DOWN"],
+                    brow_raise=c["BROW_RAISE_AMP"],
+                    pupil_x_range=c["PUPIL_X_RANGE"],
+                    pupil_y_range=c["PUPIL_Y_RANGE"],
+                    iris_scale_range=c["IRIS_SCALE_RANGE"],
+                    pupil_scale_range=c["PUPIL_SCALE_RANGE"],
+                )
                 i_scale = channels.get("iris_scale", 0.0)
                 cornea_bulge = channels.get("cornea_bulge", 0.0)
                 p_scale = channels.get("pupil_scale", 0.0)
                 blink = channels.get("blink", 0.0)
                 
-                iris_r = max(2, int(22
-                    * (1.0 + i_scale * (IRIS_SCALE_RANGE - 1.0))
+                iris_r = max(2, int(c["IRIS_R_BASE"]
+                    * (1.0 + i_scale * (c["IRIS_SCALE_RANGE"] - 1.0))
                     * (1.0 + cornea_bulge * 0.15)))
                 cv2.circle(canvas, dst_pts["pupil"], iris_r,
                            (255, 0, 0), -1, cv2.LINE_8)
                 
                 if blink < 0.95:
-                    pupil_r = max(2, int(PUPIL_R_BASE * (1.0 + p_scale * 0.5)))
+                    pupil_r = max(2, int(c["PUPIL_R_BASE"] * (1.0 + p_scale * 0.5)))
                     cv2.circle(canvas, dst_pts["pupil"], pupil_r,
-                               (255, 0, 0), 2, cv2.LINE_8)
+                               (255, 0, 0), c["PUPIL_THICK"], cv2.LINE_8)
             
             final_output = cv2.resize(canvas, (OUTPUT_W, OUTPUT_H),
                                       interpolation=cv2.INTER_AREA)

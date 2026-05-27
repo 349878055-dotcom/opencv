@@ -1,0 +1,9 @@
+{
+  "species": "dog",
+  "membrane_type": "狗工程底膜",
+  "renderer": "DogAffineRenderer",
+  "frame_count": 150,
+  "channel_source": "baked.channel_tracks",
+  "baked_revision": "dog-pipeline:委屈·幼犬眼",
+  "baked_mood": "委屈·幼犬眼"
+}

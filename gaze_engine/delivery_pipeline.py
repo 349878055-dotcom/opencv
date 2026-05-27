@@ -25,32 +25,15 @@ from gaze_engine.human.human_prior import (  # noqa: E402
 from gaze_engine.human.pulse_quality import PulseQualityReport, fix_pulse_quality  # noqa: E402
 from gaze_engine._shared.slider_schema import SliderPacket  # noqa: E402
 
+from gaze_engine._shared.emotion_pad import EMOTION_PAD, resolve_pad  # noqa: E402
+
 _PIPELINE_DOC = "contracts/全量帧指令集规范.md · envelope-v1"
 
-# 情绪 → PAD 三维向量映射（LLM / 预设自动分配）
-# 值域 [-1.0, 1.0]，分别对应 P(愉悦度), A(激活度), D(控制度)
-EMOTION_PAD: dict[str, tuple[float, float, float]] = {
-    "魅惑·勾人": (0.6,  0.3, -0.4),
-    "施压·凝视": (-0.2, 0.7,  0.6),
-    "冷压·决心": (-0.3, 0.6,  0.8),
-    "威慑·一瞬": (0.0,  0.8,  0.5),
-    "怒视·压人": (-0.5, 0.8,  0.7),
-    "鄙夷·冷瞥": (-0.4, 0.3,  0.5),
-    "可怜·委屈": (-0.2, 0.2, -0.5),
-    "要哭未哭":  (-0.3, 0.3, -0.6),
-    "崩溃·泄劲": (-0.6, 0.5, -0.7),
-    "哀求·仰望": (0.1,  0.2, -0.6),
-    "惊惧·一怔": (-0.4, 0.7, -0.3),
-    "空竭·死心": (-0.7, 0.1, -0.2),
-    "纯甜·含情": (0.8,  0.2,  0.1),
-    "媚杀·一眼": (0.5,  0.4,  0.0),
-    "若即若离":   (0.3,  0.1, -0.1),
-    "打量·玩味": (0.2,  0.3,  0.2),
-}
 
-
-def _emotion_pad(emotion: str) -> tuple[float, float, float]:
-    """按情绪名查找 PAD 值；未找到时返回中性 (0,0,0)。"""
+def _emotion_pad(emotion: str, packet: SliderPacket | None = None) -> tuple[float, float, float]:
+    """按情绪名查找 PAD；packet 含 pad 块时优先读资产。"""
+    if packet is not None:
+        return resolve_pad(packet)
     return EMOTION_PAD.get(emotion, (0.0, 0.0, 0.0))
 
 def _packet_from_context(context: dict) -> SliderPacket | None:
@@ -67,6 +50,7 @@ def run_delivery(
     frame_count: int = FRAME_COUNT_DEFAULT,
     fps: int = FPS_DEFAULT,
     skip_human_prior: bool = False,
+    style_id: str = "",
 ) -> tuple[dict[str, Any], dict[str, list[float]], PriorReport, PulseQualityReport]:
     draft = copy.deepcopy(context)
     pkt = packet or _packet_from_context(draft) or SliderPacket()
@@ -82,10 +66,16 @@ def run_delivery(
     if channels_precomputed is not None:
         channels = {k: list(v[:frame_count]) for k, v in channels_precomputed.items()}
     else:
-        from gaze_engine._shared.envelope_compile import channels_from_packet
+        from gaze_engine.human.envelope_compile import channels_from_packet
 
-        P, A, D = _emotion_pad(pkt.emotion)
+        P, A, D = _emotion_pad(pkt.emotion, pkt)
         channels = channels_from_packet(pkt, frame_count, P=P, A=A, D=D)
+
+    sid = (style_id or pkt.style or "").strip()
+    if sid and sid not in ("default",):
+        from gaze_engine.human.persona_compiler import apply_persona_style
+
+        channels = apply_persona_style(channels, sid)
 
     if skip_human_prior:
         rep = PriorReport(enabled=False)
@@ -105,6 +95,11 @@ def run_delivery(
     baked["slider_packet"] = pkt.to_dict()
     baked["delivery_pipeline"] = _PIPELINE_DOC
     baked["_compile_mode"] = "envelope-v1"
+    if sid and sid not in ("default",):
+        baked["persona"] = sid
+        baked["style_layer"] = "styled"
+    else:
+        baked["style_layer"] = "pulse"
     if draft.get("energy_envelope"):
         baked["energy_envelope"] = draft["energy_envelope"]
     baked["pulse_quality_report"] = pq_rep.to_dict()
@@ -113,7 +108,8 @@ def run_delivery(
     if pq_rep.remaining:
         baked["_pulse_quality_remaining"] = pq_rep.remaining
 
-    remaining = validate_baked_delivery(baked, frame_count)
+    from gaze_engine.human.envelope_compile import HUMAN_CHANNELS
+    remaining = validate_baked_delivery(baked, HUMAN_CHANNELS, frame_count)
     if remaining:
         baked["_delivery_validation_remaining"] = remaining
 
@@ -126,11 +122,12 @@ def run_delivery_from_packet(
     P: float | None = None,
     A: float | None = None,
     D: float | None = None,
+    style_id: str = "",
 ) -> tuple[dict[str, Any], dict[str, list[float]], PriorReport, PulseQualityReport]:
-    from gaze_engine._shared.envelope_compile import channels_from_packet, make_delivery_stub
+    from gaze_engine.human.envelope_compile import channels_from_packet, make_delivery_stub
 
     if P is None or A is None or D is None:
-        _P, _A, _D = _emotion_pad(packet.emotion)
+        _P, _A, _D = resolve_pad(packet)
         if P is None: P = _P
         if A is None: A = _A
         if D is None: D = _D
@@ -138,7 +135,169 @@ def run_delivery_from_packet(
     stub = make_delivery_stub(
         packet, channels, frame_count=frame_count, label=packet.emotion
     )
-    return run_delivery(stub, packet, channels_precomputed=channels)
+    sid = (style_id or packet.style or "").strip()
+    return run_delivery(stub, packet, channels_precomputed=channels, style_id=sid)
+
+
+def _make_species_baked(
+    packet: SliderPacket,
+    channels: dict[str, list[float]],
+    *,
+    species: str,
+    channel_keys: list[str],
+    frame_count: int = FRAME_COUNT_DEFAULT,
+    schema_version: str,
+    report: dict | None = None,
+    breed_id: str = "",
+) -> dict[str, Any]:
+    """狗/猫共用：channels → 02_烘焙 JSON（含稠密 channel_tracks）。"""
+    from gaze_engine.dog.envelope_compile import make_delivery_stub as dog_stub
+    from gaze_engine.cat.envelope_compile import make_delivery_stub as cat_stub
+
+    if species == "cat":
+        stub = cat_stub(packet, channels, frame_count=frame_count, label=packet.emotion)
+    else:
+        stub = dog_stub(packet, channels, frame_count=frame_count, label=packet.emotion)
+
+    phases = ["蓄力", "启动", "保持", "缓和"]
+    phase_map: dict[int, str] = {}
+    for t in range(frame_count):
+        if t < 14:
+            phase_map[t] = "蓄力"
+        elif t < 28:
+            phase_map[t] = "启动"
+        elif t < 110:
+            phase_map[t] = "保持"
+        else:
+            phase_map[t] = "缓和"
+
+    tracks: dict[str, dict[str, Any]] = {}
+    for key in channel_keys:
+        series = channels.get(key, [0.0] * frame_count)
+        tracks[key] = {
+            "keyframes": [
+                {
+                    "t": t,
+                    "v": round(float(series[t]), 6),
+                    "phase": phase_map.get(t, "保持"),
+                    "easing": "linear",
+                }
+                for t in range(frame_count)
+            ]
+        }
+
+    baked = dict(stub)
+    baked.update({
+        "schema_version": schema_version,
+        "_baked_dense": True,
+        "revision": f"{species}-pipeline:{packet.emotion}",
+        "species": species,
+        "channel_tracks": tracks,
+        "energy_phases": phases,
+        "slider_packet": packet.to_dict(),
+    })
+    if report:
+        baked[f"{species}_pipeline_report"] = report
+    if species == "cat" and breed_id:
+        baked["breed"] = breed_id
+        baked["style_layer"] = "styled"
+
+    from gaze_engine._shared.channel_contract import validate_baked_delivery
+    remaining = validate_baked_delivery(baked, channel_keys, frame_count)
+    if remaining:
+        baked["_delivery_validation_remaining"] = remaining
+    return baked
+
+
+def run_cat_pipeline(
+    packet: SliderPacket,
+    *,
+    frame_count: int = FRAME_COUNT_DEFAULT,
+    breed_id: str = "",
+) -> tuple[dict[str, Any], dict[str, list[float]], dict[str, Any]]:
+    """猫完整管线（与 dog_pipeline 对称）。"""
+    from gaze_engine._shared.envelope_compile import build_energy_envelope
+    from gaze_engine.cat.envelope_compile import (
+        CAT_CHANNELS,
+        channels_from_envelope,
+        channels_from_packet,
+    )
+    from gaze_engine.cat.pad_weights import CAT_BASE_SCALE, CAT_PAD_WEIGHTS
+
+    pkt = packet.clamped()
+    if pkt.ear is not None:
+        channels = channels_from_packet(pkt, frame_count)
+        ear_injected = True
+    else:
+        P, A, D = _emotion_pad(pkt.emotion, pkt)
+        envelope = build_energy_envelope(pkt, frame_count)
+        channels = channels_from_envelope(
+            pkt, envelope, P=P, A=A, D=D,
+            frame_count=frame_count,
+            canonical_keys=CAT_CHANNELS,
+            pad_weights=CAT_PAD_WEIGHTS,
+            base_scale=CAT_BASE_SCALE,
+        )
+        ear_injected = False
+
+    bid = (breed_id or "").strip()
+    if bid and bid not in ("default",):
+        from gaze_engine.cat.breeds import apply_breed_style
+
+        channels = apply_breed_style(channels, bid)
+
+    report = {
+        "enabled": True,
+        "emotion": pkt.emotion,
+        "frame_count": frame_count,
+        "ear_injected": ear_injected,
+        "breed": bid or None,
+        "style_layer": "styled" if bid else "pulse",
+    }
+    baked = _make_species_baked(
+        pkt, channels,
+        species="cat",
+        channel_keys=CAT_CHANNELS,
+        frame_count=frame_count,
+        schema_version="0.3-baked-cat",
+        report=report,
+        breed_id=bid,
+    )
+    return baked, channels, report
+
+
+def run_species_delivery(
+    packet: SliderPacket,
+    species: str = "human",
+    *,
+    frame_count: int = FRAME_COUNT_DEFAULT,
+    narrative_action: str = "",
+    breed_id: str = "",
+    style_id: str = "",
+) -> tuple[dict[str, Any], dict[str, list[float]], Any, Any]:
+    """按物种路由：human → 真人律；dog/cat → 各自管线。"""
+    sp = (species or "human").strip().lower()
+    sid = (style_id or breed_id or "").strip()
+    if sp == "dog":
+        from gaze_engine.dog.dog_pipeline import run_dog_pipeline
+        baked, dense, rep = run_dog_pipeline(
+            packet,
+            frame_count=frame_count,
+            narrative_action=narrative_action,
+            breed_id=sid or None,
+        )
+        return baked, dense, rep, rep
+    if sp == "cat":
+        baked, dense, rep = run_cat_pipeline(
+            packet, frame_count=frame_count, breed_id=sid
+        )
+        return baked, dense, rep, rep
+    baked, dense, rep, pq = run_delivery_from_packet(
+        packet, frame_count=frame_count, style_id=sid
+    )
+    baked.setdefault("species", "human")
+    return baked, dense, rep, pq
+
 
 def write_delivery_json(baked: dict[str, Any], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)

@@ -1,11 +1,13 @@
 {
-  "schema": "customer_v1",
+  "schema": "customer_v2",
   "customer_id": "C001",
-  "display_name": "测试客户",
+  "display_name": "金涛",
   "contact": "",
-  "created_at": "2026-05-25T19:33:07.962767+00:00",
-  "updated_at": "2026-05-25T19:33:07.962791+00:00",
+  "created_at": "2026-05-27T04:50:02.976815+00:00",
+  "updated_at": "2026-05-27T10:33:34.376861+00:00",
   "default_persona": "",
   "default_emotion": "",
-  "preferred_species": "dog"
+  "preferred_species": "dog",
+  "breed": "poodle_giant",
+  "password_hash": "c2341947a64b2b0a84a76492442a2e29$71366bc4e74d9d21579fe368b41cb1612991adfb69559f01a0ff1ab1094388d5"
 }

@@ -1,0 +1,41 @@
+{
+  "_schema_version": "1.0",
+  "_description": "狗品种风格矩阵 — base_offset + scale_factor，叠加在基础情绪预设之上",
+  "_frame_count": 150,
+  "breed_personas": {
+    "poodle_giant": {
+      "species": "dog",
+      "label": "巨型贵宾犬",
+      "_reference": "AKC/FCI Standard Poodle 品种标准几何（巨型贵宾=poodle_giant；系统内仅此犬种底膜）",
+      "base_offset": {
+        "pupil_x": 0.50, "pupil_y": 0.48, "blink": 0.55,
+        "eyebrow": 0.25,
+        "pupil_scale": 0.50, "iris_scale": 0.45, "cornea_bulge": 0.45,
+        "squint": 0.50, "brow_raise": 0.40,
+        "lid_upper": 0.48, "lid_lower": 0.52, "eye_gloss": 0.55
+      },
+      "scale_factor": {
+        "pupil_x": 0.04, "pupil_y": 0.04, "blink": 0.25,
+        "eyebrow": 0.08,
+        "pupil_scale": 0.12, "iris_scale": 0.10, "cornea_bulge": 0.12,
+        "squint": 0.15, "brow_raise": 0.08,
+        "lid_upper": 0.12, "lid_lower": 0.12, "eye_gloss": 0.05
+      },
+      "template_scales": {
+        "_note": "相对狗物种默认(1.0)的乘数，进入 SpeciesTemplate，可被客户标定继续叠加",
+        "eye_size": 0.92,
+        "eye_aspect": 0.895,
+        "iris_size": 0.929,
+        "pupil_size": 0.889
+      },
+      "template_structure": {
+        "_note": "仅耳/眉控制点，不覆盖 EYE_W 等客户可标定项",
+        "BROW_INNER_OFF": [-95, -72],
+        "BROW_PEAK_OFF": [0, -88],
+        "BROW_OUTER_OFF": [95, -72],
+        "EAR_LEFT_BASE": [[-168, 25], [-205, 145], [-158, 265]],
+        "EAR_RIGHT_BASE": [[168, 25], [205, 145], [158, 265]]
+      }
+    }
+  }
+}

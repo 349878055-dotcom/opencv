@@ -54,6 +54,47 @@ class HoldSegment:
         )
 
 @dataclass
+class PadParams:
+    """PAD 三维向量：通道性格定位（不进 E(t)，只进 pulse scale）。"""
+    P: float = 0.0
+    A: float = 0.0
+    D: float = 0.0
+    position: str = ""
+    channel_hint: str = ""
+
+    def clamped(self) -> PadParams:
+        return PadParams(
+            P=_clamp_f(self.P, -1.0, 1.0),
+            A=_clamp_f(self.A, -1.0, 1.0),
+            D=_clamp_f(self.D, -1.0, 1.0),
+            position=self.position,
+            channel_hint=self.channel_hint,
+        )
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> PadParams:
+        return cls(
+            P=float(d.get("P", 0.0)),
+            A=float(d.get("A", 0.0)),
+            D=float(d.get("D", 0.0)),
+            position=str(d.get("position") or ""),
+            channel_hint=str(d.get("channel_hint") or ""),
+        ).clamped()
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "P": round(self.P, 2),
+            "A": round(self.A, 2),
+            "D": round(self.D, 2),
+        }
+        if self.position:
+            out["position"] = self.position
+        if self.channel_hint:
+            out["channel_hint"] = self.channel_hint
+        return out
+
+
+@dataclass
 class EarParams:
     """猫/狗耳位参数：角度和偏移（-1~1 范围）"""
     left_angle: float = 0.0
@@ -87,6 +128,7 @@ class SliderPacket:
     macro: MacroSliders = field(default_factory=MacroSliders)
     hold_seg: HoldSegment = field(default_factory=HoldSegment)
     ear: EarParams | None = None
+    pad: PadParams | None = None
     schema: str = SCHEMA_ID
 
     def clamped(self) -> SliderPacket:
@@ -96,6 +138,7 @@ class SliderPacket:
             macro=self.macro.clamped(),
             hold_seg=self.hold_seg.clamped(),
             ear=self.ear,
+            pad=self.pad.clamped() if self.pad is not None else None,
             schema=SCHEMA_ID,
         )
 
@@ -112,6 +155,8 @@ class SliderPacket:
         }
         if self.ear is not None:
             d["ear"] = self.ear.to_dict()
+        if self.pad is not None:
+            d["pad"] = self.pad.to_dict()
         return d
 
     @classmethod
@@ -119,7 +164,9 @@ class SliderPacket:
         macro_d = d.get("macro") or {}
         hold_d = d.get("hold_seg") or {}
         ear_d = d.get("ear")
+        pad_d = d.get("pad")
         ear = EarParams.from_preset_dict(ear_d) if ear_d else None
+        pad = PadParams.from_dict(pad_d) if isinstance(pad_d, dict) else None
         return cls(
             emotion=str(d.get("emotion") or "s01_pressure"),
             style=str(d.get("style") or "default"),
@@ -133,6 +180,7 @@ class SliderPacket:
                 swell=int(hold_d.get("swell", 0)),
             ),
             ear=ear,
+            pad=pad,
         ).clamped()
 
 # 情绪默认点位（风格用 delta 叠在上面）
@@ -178,6 +226,10 @@ EMOTION_DEFAULTS: dict[str, dict[str, Any]] = {
 
 def _clamp_i(v: int | float, lo: int = 0, hi: int = 100) -> int:
     return int(max(lo, min(hi, round(float(v)))))
+
+
+def _clamp_f(v: int | float, lo: float = -1.0, hi: float = 1.0) -> float:
+    return float(max(lo, min(hi, round(float(v), 4))))
 
 def _tri(v: int) -> Level3:
     if v < 34:

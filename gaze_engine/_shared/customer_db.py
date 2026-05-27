@@ -1,4 +1,4 @@
-"""客户资产库核心模块：客户/项目 CRUD + 滑杆调整版本管理。
+"""客户资产库核心模块：客户/项目 CRUD + 滑杆调整版本管理 + 密码认证。
 
 依赖 asset_lib.py 中的路径工具，使用独立的 客户资产库/ 目录存放客户私有数据，
 与 预设资产/ 中的预设人格包完全分离。
@@ -8,11 +8,16 @@
         create_customer, get_customer,
         create_project, get_project,
         save_adjustment, get_adjustment_history,
+        verify_customer_password, update_customer_password,
     )
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
+import os
+import secrets
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +27,7 @@ from asset_lib import (
     customer_dir,
     customer_info_path,
     customer_ref_photos_dir,
+    customer_template_params_path,
     generate_customer_id,
     generate_project_id,
     list_customer_ids,
@@ -33,14 +39,22 @@ from asset_lib import (
     project_output_dir,
 )
 
+from gaze_engine._shared.species_template import (
+    SpeciesTemplate,
+    species_default_template,
+    adjust_template_for_breed,
+    apply_customer_adjustments,
+)
+
 
 # ═══════════════════════════════════════════════════════════
 # 客户信息 Schema
 # ═══════════════════════════════════════════════════════════
 
-CUSTOMER_SCHEMA = "customer_v1"
-PROJECT_SCHEMA = "customer_project_v1"
+CUSTOMER_SCHEMA = "customer_v2"
+PROJECT_SCHEMA = "customer_project_v2"
 ADJUSTMENT_SCHEMA = "slider_adjustment_v1"
+TEMPLATE_PARAMS_SCHEMA = "species_template_v1"
 
 
 def _now_iso() -> str:
@@ -65,10 +79,83 @@ def _write_json(path: Path, data: dict) -> None:
         encoding="utf-8",
     )
 
+# ═══════════════════════════════════════════════════════════
+# 密码认证
+# ═══════════════════════════════════════════════════════════
+
+
+def _hash_password(password: str) -> str:
+    """用 PBKDF2-SHA256 哈希密码，返回 salt$hash 格式。"""
+    salt = secrets.token_hex(16)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000)
+    return f"{salt}${dk.hex()}"
+
+
+def _verify_password(password: str, stored: str) -> bool:
+    """验证密码是否匹配 stored 的 salt$hash 值。"""
+    try:
+        salt, stored_hash = stored.split("$", 1)
+        dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000)
+        return hmac.compare_digest(dk.hex(), stored_hash)
+    except (ValueError, AttributeError):
+        return False
+
+
+def verify_customer_password(customer_id: str, password: str) -> bool:
+    """验证客户密码是否正确。"""
+    info = get_customer(customer_id)
+    if info is None:
+        return False
+    stored = info.get("password_hash", "")
+    if not stored:
+        return False
+    return _verify_password(password, stored)
+
+
+def update_customer_password(customer_id: str, new_password: str) -> bool:
+    """更新客户密码。"""
+    info = get_customer(customer_id)
+    if info is None:
+        return False
+    info["password_hash"] = _hash_password(new_password)
+    info["updated_at"] = _now_iso()
+    _write_json(customer_info_path(customer_id), info)
+    return True
+
+
+def create_auth_token(customer_id: str) -> str:
+    """生成登录令牌（token = customer_id + timestamp + HMAC）。"""
+    secret = os.environ.get("AUTH_SECRET", "jintao_node_eye_dev_secret")
+    ts = str(int(datetime.now(timezone.utc).timestamp()))
+    raw = f"{customer_id}:{ts}"
+    sig = hmac.new(secret.encode(), raw.encode(), "sha256").hexdigest()[:16]
+    return f"{customer_id}:{ts}:{sig}"
+
+
+def verify_auth_token(token: str) -> str | None:
+    """验证登录令牌，返回 customer_id 或 None。"""
+    try:
+        parts = token.split(":")
+        if len(parts) != 3:
+            return None
+        cid, ts, sig = parts
+        secret = os.environ.get("AUTH_SECRET", "jintao_node_eye_dev_secret")
+        raw = f"{cid}:{ts}"
+        expected = hmac.new(secret.encode(), raw.encode(), "sha256").hexdigest()[:16]
+        if not hmac.compare_digest(sig, expected):
+            return None
+        # 令牌有效期 7 天
+        if int(datetime.now(timezone.utc).timestamp()) - int(ts) > 7 * 86400:
+            return None
+        return cid
+    except (ValueError, IndexError):
+        return None
+
 
 # ═══════════════════════════════════════════════════════════
 # 客户 CRUD
 # ═══════════════════════════════════════════════════════════
+
 
 def create_customer(
     display_name: str,
@@ -78,6 +165,9 @@ def create_customer(
     default_persona: str = "",
     default_emotion: str = "",
     preferred_species: str = "human",
+    breed: str = "",
+    template_adjustments: dict[str, float] | None = None,
+    password: str = "",
 ) -> str:
     """创建新客户，返回 customer_id。
 
@@ -88,6 +178,9 @@ def create_customer(
         default_persona: 默认人格包 ID
         default_emotion: 默认情绪 ID
         preferred_species: 偏好的物种（human/cat/dog）
+        breed: 品种 ID（如 "poodle_giant", "ragdoll_cat"）
+        template_adjustments: 客户照片检测得到的底膜调整参数
+        password: 登录密码（不传则无密码认证）
 
     Returns:
         customer_id（如 "C001"）
@@ -103,11 +196,125 @@ def create_customer(
         "default_persona": default_persona,
         "default_emotion": default_emotion,
         "preferred_species": preferred_species,
+        "breed": breed,
+        "password_hash": _hash_password(password) if password else "",
     }
     _ensure_dir(customer_dir(cid))
     _ensure_dir(customer_ref_photos_dir(cid))
     _write_json(customer_info_path(cid), info)
+
+    # 保存默认物种底膜模板（含客户调整）
+    _save_template_params(cid, preferred_species, breed, template_adjustments)
+
     return cid
+
+
+# ═══════════════════════════════════════════════════════════
+# 物种底膜模板 CRUD
+# ═══════════════════════════════════════════════════════════
+
+def _save_template_params(
+    customer_id: str,
+    species: str,
+    breed: str = "",
+    adjustments: dict[str, float] | None = None,
+) -> dict[str, Any]:
+    """保存客户的完整底膜模板参数（物种默认 + 品种偏移 + 客户调整）。"""
+    # 1. 物种默认
+    t = species_default_template(species)
+    # 2. 品种偏移
+    t = adjust_template_for_breed(t, species, breed or None)
+    # 3. 客户调整
+    t = apply_customer_adjustments(t, adjustments)
+
+    data = {
+        "schema": TEMPLATE_PARAMS_SCHEMA,
+        "customer_id": customer_id,
+        "species": species,
+        "breed": breed,
+        "params": t.to_dict(),
+        "updated_at": _now_iso(),
+    }
+    _write_json(customer_template_params_path(customer_id), data)
+    return data
+
+
+def get_template_params(customer_id: str) -> SpeciesTemplate | None:
+    """读取客户保存的底膜模板参数，不存在则返回 None。"""
+    data = _read_json(customer_template_params_path(customer_id))
+    if not data or not data.get("params"):
+        return None
+    return SpeciesTemplate.from_dict(data["params"])
+
+
+def get_customer_species_and_breed(customer_id: str) -> tuple[str, str]:
+    """获取客户偏好的物种和品种。"""
+    info = get_customer(customer_id)
+    species = (info or {}).get("preferred_species", "human")
+    breed = (info or {}).get("breed", "")
+    return species, breed
+
+
+def get_effective_template(customer_id: str) -> SpeciesTemplate:
+    """获取客户的有效底膜模板。
+
+    优先级：客户已保存模板 > 物种默认 + 品种偏移 > 物种默认
+    """
+    cached = get_template_params(customer_id)
+    if cached is not None:
+        return cached
+
+    # 无缓存则从客户信息重建
+    species, breed = get_customer_species_and_breed(customer_id)
+    t = species_default_template(species)
+    t = adjust_template_for_breed(t, species, breed or None)
+    return t
+
+
+def update_template_params(
+    customer_id: str,
+    adjustments: dict[str, float] | None,
+) -> dict[str, Any] | None:
+    """更新客户的底膜模板调整参数。
+
+    Args:
+        customer_id: 客户 ID
+        adjustments: 要更新的参数 dict（只更新传入的字段，不传的保留）
+
+    Returns:
+        保存后的完整数据，客户不存在返回 None
+    """
+    info = get_customer(customer_id)
+    if info is None:
+        return None
+
+    species = info.get("preferred_species", "human")
+    breed = info.get("breed", "")
+
+    # 读取已有参数，叠加上去
+    existing = get_template_params(customer_id)
+    if existing is not None:
+        t = apply_customer_adjustments(existing, adjustments)
+    else:
+        t = species_default_template(species)
+        t = adjust_template_for_breed(t, species, breed or None)
+        t = apply_customer_adjustments(t, adjustments)
+
+    data = {
+        "schema": TEMPLATE_PARAMS_SCHEMA,
+        "customer_id": customer_id,
+        "species": species,
+        "breed": breed,
+        "params": t.to_dict(),
+        "updated_at": _now_iso(),
+    }
+    _write_json(customer_template_params_path(customer_id), data)
+    return data
+
+
+# ═══════════════════════════════════════════════════════════
+# 客户更新（扩展允许 breed 和 template_adjustments）
+# ═══════════════════════════════════════════════════════════
 
 
 def get_customer(customer_id: str) -> dict | None:
@@ -124,15 +331,41 @@ def list_customers() -> list[dict]:
             for cid in list_customer_ids()]
 
 
+def resolve_customer_login(login: str) -> tuple[str | None, str | None]:
+    """按客户 ID（如 C006）或显示名称（如 金涛）解析登录目标。
+
+    Returns:
+        (customer_id, error_message) — 成功时 error 为 None
+    """
+    key = (login or "").strip()
+    if not key:
+        return None, "缺少客户ID或密码"
+
+    if get_customer(key):
+        return key, None
+
+    matches = [
+        c for c in list_customers()
+        if (c.get("display_name") or "").strip() == key
+    ]
+    if len(matches) == 1:
+        return matches[0]["customer_id"], None
+    if len(matches) > 1:
+        ids = "、".join(c["customer_id"] for c in matches)
+        return None, f"名称「{key}」有 {len(matches)} 个账号（{ids}），请用客户 ID 登录"
+    return None, "客户不存在（请填 C00x 编号，不是显示名称）"
+
+
 def update_customer(customer_id: str, **kwargs) -> bool:
     """更新客户信息字段。可更新字段：
-    display_name, contact, default_persona, default_emotion, preferred_species
+    display_name, contact, default_persona, default_emotion,
+    preferred_species, breed, template_adjustments
     """
     info = get_customer(customer_id)
     if info is None:
         return False
     allowed = {"display_name", "contact", "default_persona",
-               "default_emotion", "preferred_species"}
+               "default_emotion", "preferred_species", "breed"}
     changed = False
     for k, v in kwargs.items():
         if k in allowed and v is not None:
@@ -141,7 +374,14 @@ def update_customer(customer_id: str, **kwargs) -> bool:
     if changed:
         info["updated_at"] = _now_iso()
         _write_json(customer_info_path(customer_id), info)
-    return True
+
+    # 如果传了 template_adjustments，独立保存到底膜模板文件
+    adjustments = kwargs.get("template_adjustments")
+    if adjustments is not None:
+        update_template_params(customer_id, adjustments)
+        changed = True
+
+    return changed
 
 
 def delete_customer(customer_id: str) -> bool:

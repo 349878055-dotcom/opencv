@@ -1,43 +1,41 @@
 #!/usr/bin/env python3
 """
-滑杆 → 能量包络 E(t) → PAD 动态投影 → 12×150 全量通道（主出厂路径）。
+滑杆 → 能量包络 E(t) — 纯数学层，物种无关。
 
-PAD 投影公式（每一帧）：
+保留函数均为纯数学计算，不包含任何人类/猫/狗的生理假设。
+物种专属的通道映射（eyebrow 滞后处理、pulse 耦合等）放在各物种的 envelope_compile.py。
+
+PAD 投影公式（每一帧，由 species 专用层调用 compute_pad_scale）：
   final_scale[ch] = base_scale[ch] + P×Wp[ch] + A×Wa[ch] + D×Wd[ch]
   channel[t] = clamp01(final_scale[ch] × envelope[t])
 """
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-from typing import Any, Dict, List, Optional, Tuple
-
-from gaze_engine._shared.channel_contract import CANONICAL_KEYS as _HUMAN_KEYS
 from gaze_engine._shared.slider_schema import HoldSegment, SliderPacket
-from gaze_engine._shared.persona_compiler import clamp_to_safe_range
-from gaze_engine.human.pad_weights import HUMAN_PAD_WEIGHTS, HUMAN_BASE_SCALE
-
-# ── 默认人类配置（向后兼容）──
-DEFAULT_CANONICAL_KEYS = _HUMAN_KEYS
-DEFAULT_PAD_WEIGHTS = HUMAN_PAD_WEIGHTS
-DEFAULT_BASE_SCALE = HUMAN_BASE_SCALE
 
 FRAME_COUNT_DEFAULT = 150
 FPS_DEFAULT = 30
 
 
-# ──────────────────────────────────────────────
-# PAD 骨骼权重 — 默认人类（来自 human/pad_weights.py）
-# 物种专用权重通过 channels_from_envelope() 的 pad_weights 参数注入
-# ──────────────────────────────────────────────
-# final_scale = Wp*P + Wa*A + Wd*D
-_PAD_WEIGHTS = DEFAULT_PAD_WEIGHTS
-_BASE_SCALE = DEFAULT_BASE_SCALE
-
-
 def _clamp01(u: float) -> float:
     return 0.0 if u <= 0.0 else 1.0 if u >= 1.0 else u
+
+
+def clamp_to_safe_range(value: float) -> float:
+    """将单个数值强制钳位到 [0.0, 1.0]。
+
+    所有物种共用 — 最后一层保险：
+      - 防止通道编译后数值越界
+      - 防止扩散引擎读取到非法浮点数
+    """
+    if value <= 0.0:
+        return 0.0
+    if value >= 1.0:
+        return 1.0
+    return value
 
 
 def _lerp(a: float, b: float, t: float) -> float:
@@ -58,22 +56,23 @@ def compute_pad_scale(
     pad_weights: dict[str, tuple[float, float, float]] | None = None,
     base_scale: dict[str, float] | None = None,
 ) -> float:
-    """PAD 动态投影：返回通道放大权重（≥0，不钳位上限让包络自然限制）。
+    """PAD 动态投影：返回通道放大权重（≥0）。
 
     Args:
         key: 通道名
         P, A, D: PAD 情绪维度
-        pad_weights: 物种专用 PAD 权重表（默认人类）
-        base_scale: 物种专用基础 scale（默认人类）
+        pad_weights: 物种专用 PAD 权重表
+        base_scale: 物种专用基础 scale
     """
-    if pad_weights is None:
-        pad_weights = _PAD_WEIGHTS
-    if base_scale is None:
-        base_scale = _BASE_SCALE
-    Wp, Wa, Wd = pad_weights.get(key, (0.0, 0.3, 0.2))
-    base = base_scale.get(key, 0.30)
+    _PAD_DEFAULT: dict[str, tuple[float, float, float]] = {}
+    _BASE_DEFAULT: dict[str, float] = {}
+    pw = pad_weights if pad_weights is not None else _PAD_DEFAULT
+    bs = base_scale if base_scale is not None else _BASE_DEFAULT
+    Wp, Wa, Wd = pw.get(key, (0.0, 0.3, 0.2))
+    base = bs.get(key, 0.30)
     s = base + P * Wp + A * Wa + D * Wd
     return max(0.0, s)
+
 
 # 别名：旧名向后兼容
 _compute_pad_scale = compute_pad_scale
@@ -181,200 +180,6 @@ def _direction(packet: SliderPacket) -> tuple[float, float]:
     return sign, y_bias
 
 
-# ──────────────────────────────────────────────
-# 核心：PAD 动态投影编译
-# ──────────────────────────────────────────────
-
-
-def channels_from_envelope(
-    packet: SliderPacket,
-    envelope: list[float],
-    P: float = 0.0,
-    A: float = 0.0,
-    D: float = 0.0,
-    frame_count: int = FRAME_COUNT_DEFAULT,
-    canonical_keys: list[str] | None = None,
-    pad_weights: dict[str, tuple[float, float, float]] | None = None,
-    base_scale: dict[str, float] | None = None,
-) -> dict[str, list[float]]:
-    """E(t) × PAD → N 轨全量（动态投影 + 微颤 + 安全钳位）。
-
-    Args:
-        packet:   滑杆包
-        envelope: 能量包络序列 (150 帧)
-        P:        愉悦度 [-1.0, 1.0]
-        A:        激活度 [-1.0, 1.0]
-        D:        控制度 [-1.0, 1.0]
-        frame_count: 帧数 (默认 150)
-        canonical_keys: 物种通道列表（默认人类 12 通道）
-        pad_weights:    物种 PAD 权重表（默认人类）
-        base_scale:     物种基础 scale（默认人类）
-    """
-    if canonical_keys is None:
-        canonical_keys = DEFAULT_CANONICAL_KEYS
-    # 钳位 PAD 到合法范围
-    P = max(-1.0, min(1.0, P))
-    A = max(-1.0, min(1.0, A))
-    D = max(-1.0, min(1.0, D))
-
-    pkt = packet.clamped()
-    m = pkt.macro
-    sign, y_bias = _direction(pkt)
-    tm = _timing(pkt, frame_count)
-
-    # ── D 轴驱动的眉滞后 ──
-    # D < 0 (防御/羞涩) → 滞后变长；D ≥ 0 → 沿用 speed 驱动
-    if D < 0.0:
-        lag = max(2, int(round(-D * 12.0)))
-    else:
-        lag = int(round(_lerp(12, 6, m.speed / 100.0)))
-
-    # ── 逐通道动态投影 scale ──
-    pad_scale: Dict[str, float] = {}
-    for key in canonical_keys:
-        pad_scale[key] = compute_pad_scale(key, P, A, D, pad_weights, base_scale)
-
-    # ── 瞳孔方向（受 PAD 动态投影影响） ──
-    # 高 A/D → 眼神聚焦幅度放大；高 P + 低 D → 收敛柔和
-    px_scale = pad_scale["pupil_x"]
-    py_scale = pad_scale["pupil_y"]
-    px = [sign * e * px_scale for e in envelope]
-    py = [(y_bias * e + sign * 0.08 * e) * py_scale for e in envelope]
-
-    # ── 逐通道生成 ──
-    result: Dict[str, list[float]] = {}
-
-    for key in canonical_keys:
-        s = pad_scale[key]
-        if key == "pupil_x":
-            series = [clamp_to_safe_range(px[t]) for t in range(frame_count)]
-        elif key == "pupil_y":
-            series = [clamp_to_safe_range(py[t]) for t in range(frame_count)]
-        elif key == "eyebrow":
-            # 眉：D 驱动的滞后跟随
-            series = [0.0] * frame_count
-            for t in range(frame_count):
-                src = max(0, t - lag)
-                val = abs(px[src]) * s
-                series[t] = clamp_to_safe_range(val)
-        elif key == "blink":
-            # 眨眼保留原逻辑
-            series = [0.0] * frame_count
-            t_blink = min(frame_count - 3, 86 + int(round(_lerp(2, -4, m.speed / 100.0))))
-            for dt, v in ((0, 0.0), (1, 0.11 * s), (2, 0.14 * s), (3, 0.08 * s), (4, 0.0)):
-                t = t_blink + dt
-                if 0 <= t < frame_count:
-                    series[t] = clamp_to_safe_range(v)
-        else:
-            # 通用：scale × envelope，直接钳位
-            series = [clamp_to_safe_range(e * s) for e in envelope]
-        result[key] = series
-
-    # ── 注入生物微颤（micro_jitter） ──
-    from gaze_engine._shared.micro_jitter import (
-        default_micro_jitter_block,
-        resolve_jitter_config,
-    )
-
-    # 构建伪 sparse 字典让 jitter 可工作
-    profile = "cool_restrained"
-    if pkt.hold_seg.shape == "tremble":
-        profile = "agitated"
-    elif m.power < 35:
-        profile = "tender"
-
-    sparse_stub = {
-        "micro_jitter": default_micro_jitter_block(profile),
-        "gaze_emotion_id": pkt.emotion,
-        "channel_tracks": {},
-    }
-    # 补齐 pupil_x 关键帧 phase 标签
-    tm2 = tm
-    sparse_stub["channel_tracks"]["pupil_x"] = {
-        "keyframes": [
-            {"t": 0, "phase": "蓄力"},
-            {"t": tm2["t_peak"], "phase": "启动"},
-            {"t": tm2["t_hold0"], "phase": "保持"},
-            {"t": tm2["t_hold1"], "phase": "缓和"},
-        ]
-    }
-
-    jitter_cfg = resolve_jitter_config(sparse_stub, frame_count, FPS_DEFAULT)
-    if jitter_cfg.get("enabled"):
-        from gaze_engine._shared.micro_jitter import apply_jitter_to_series
-
-        for ch in jitter_cfg.get("channels", []):
-            if ch in result:
-                result[ch] = apply_jitter_to_series(result[ch], jitter_cfg, ch)
-
-    # ── 最终安全钳位（二次保险） ──
-    for key in canonical_keys:
-        result[key] = [clamp_to_safe_range(v) for v in result[key]]
-
-    # ── 防御校验 ──
-    assert set(result.keys()) == set(canonical_keys), (
-        f"输出缺少通道: {set(canonical_keys) - set(result.keys())}"
-    )
-    return result
-
-
-def _apply_pulse_hold_coupling(
-    packet: SliderPacket,
-    channels: dict[str, list[float]],
-    envelope: list[float],
-    frame_count: int,
-) -> None:
-    """pulse 盯住段：眉/眯/瞳附加强耦合，增强表演力读出「放电」。"""
-    if packet.hold_seg.shape != "pulse":
-        return
-    pkt = packet.clamped()
-    sign, _ = _direction(pkt)
-    tm = _timing(pkt, frame_count)
-    t0, t1 = tm["t_hold0"], tm["t_hold1"]
-    hold_len = max(1, t1 - t0)
-    for t in range(max(0, t0), min(frame_count, t1 + 1)):
-        u = (t - t0) / hold_len
-        rip = _hold_texture(u, pkt.hold_seg, tremble_amp=0) - 1.0
-        amp = envelope[t] if t < len(envelope) else 0.0
-        channels["pupil_x"][t] = clamp_to_safe_range(
-            channels["pupil_x"][t] + sign * rip * amp * 0.38
-        )
-        channels["pupil_y"][t] = clamp_to_safe_range(
-            channels["pupil_y"][t] + sign * rip * amp * 0.12
-        )
-        channels["eyebrow"][t] = clamp_to_safe_range(
-            channels["eyebrow"][t] + abs(rip) * amp * 0.32
-        )
-        channels["squint"][t] = clamp_to_safe_range(
-            channels["squint"][t] + abs(rip) * amp * 0.20
-        )
-        channels["pupil_scale"][t] = clamp_to_safe_range(
-            channels["pupil_scale"][t] + rip * amp * 0.14
-        )
-
-
-def channels_from_packet(
-    packet: SliderPacket,
-    frame_count: int = FRAME_COUNT_DEFAULT,
-    P: float = 0.0,
-    A: float = 0.0,
-    D: float = 0.0,
-    canonical_keys: list[str] | None = None,
-    pad_weights: dict[str, tuple[float, float, float]] | None = None,
-    base_scale: dict[str, float] | None = None,
-) -> dict[str, list[float]]:
-    """完整管线：包络 → PAD 投影 → 脉冲耦合。
-
-    PAD 默认 (0,0,0) = 中性情感，仅靠滑杆驱动。
-    canonical_keys / pad_weights / base_scale → 物种专用（默认人类）
-    """
-    env = build_energy_envelope(packet, frame_count)
-    ch = channels_from_envelope(packet, env, P, A, D, frame_count,
-                                canonical_keys, pad_weights, base_scale)
-    _apply_pulse_hold_coupling(packet, ch, env, frame_count)
-    return ch
-
-
 def export_envelope_series(
     packet: SliderPacket,
     frame_count: int = FRAME_COUNT_DEFAULT,
@@ -388,62 +193,4 @@ def export_envelope_series(
         "peak_level": round(_peak_level(packet.clamped()), 5),
         "timing": tm,
         "envelope": [round(v, 6) for v in env],
-    }
-
-
-def make_delivery_stub(
-    packet: SliderPacket,
-    channels: dict[str, list[float]],
-    *,
-    frame_count: int = FRAME_COUNT_DEFAULT,
-    label: str = "",
-) -> dict[str, Any]:
-    """供 human_prior / 烘焙 用的轻量 02 上下文（非稀疏关键帧真值）。"""
-    from gaze_engine._shared.micro_jitter import default_micro_jitter_block
-
-    pkt = packet.clamped()
-    tm = _timing(pkt, frame_count)
-    px = channels.get("pupil_x") or []
-    t_peak = tm["t_peak"]
-    t_settle = tm["t_settle"]
-
-    profile = "cool_restrained"
-    if pkt.hold_seg.shape == "tremble":
-        profile = "agitated"
-    elif pkt.macro.power < 35:
-        profile = "tender"
-
-    return {
-        "_comment": "滑杆能量包络出厂；非手搓稀疏真值",
-        "schema_version": "0.2-envelope-stub",
-        "revision": f"envelope:{label or pkt.emotion}",
-        "_compile_mode": "envelope-v1",
-        "gaze_emotion_id": label or pkt.emotion,
-        "mood": pkt.emotion,
-        "energy_phases": ["蓄力", "启动", "保持", "缓和"],
-        "controls_doc": "contracts/滑杆规范.md",
-        "keys": list(DEFAULT_CANONICAL_KEYS),
-        "keys_active": list(DEFAULT_CANONICAL_KEYS),
-        "slider_packet": pkt.to_dict(),
-        "energy_envelope": export_envelope_series(pkt, frame_count),
-        "channel_tracks": {
-            "pupil_x": {
-                "keyframes": [
-                    {"t": 0, "v": px[0] if px else 0.0, "phase": "蓄力"},
-                    {"t": t_peak, "v": px[t_peak] if len(px) > t_peak else 0.0, "phase": "启动"},
-                    {"t": t_settle, "v": px[t_settle] if len(px) > t_settle else 0.0, "phase": "启动"},
-                    {
-                        "t": tm["t_hold1"],
-                        "v": px[min(tm["t_hold1"], len(px) - 1)] if px else 0.0,
-                        "phase": "保持",
-                    },
-                    {
-                        "t": frame_count - 1,
-                        "v": px[-1] if px else 0.0,
-                        "phase": "缓和",
-                    },
-                ]
-            }
-        },
-        "micro_jitter": default_micro_jitter_block(profile),
     }

@@ -9,10 +9,10 @@
 | 优化措施 | 改动文件 | 省 Token 量（预估） | 原理 |
 |---------|---------|-------------------|------|
 | **AI_INDEX.md**（代码图谱） | [`AI_INDEX.md`](AI_INDEX.md) | 首次进入节省 3000-8000 | Agent 不再遍历目录，一次读完即理解全项目 |
-| **内置 Prompt 压缩** | [`gaze_engine/llm_openai.py`](gaze_engine/llm_openai.py) | 回退路径节省 **55%** (380→170 tokens) | `_router_system_prompt()` 精简 |
-| **模型分档** | [`gaze_engine/llm_openai.py`](gaze_engine/llm_openai.py) | consult 场景节省 **60-90%** | consult 走 CHEAP_MODEL |
-| **知识库按需截短** | [`gaze_engine/llm_openai.py`](gaze_engine/llm_openai.py) | 轻量模型场景节省 50% | 知识库从 8000→4000/2000 chars |
-| **廉价 apply prompt** | [`gaze_engine/llm_openai.py`](gaze_engine/llm_openai.py) | 简单场景节省 **70%** | `_cheap_apply_system_prompt()` ~50 tokens |
+| **内置 Prompt 压缩** | [`gaze_engine/_shared/llm_openai.py`](gaze_engine/_shared/llm_openai.py) | 回退路径节省 **55%** (380→170 tokens) | `_router_system_prompt()` 精简 |
+| **模型分档** | [`gaze_engine/_shared/llm_openai.py`](gaze_engine/_shared/llm_openai.py) | consult 场景节省 **60-90%** | consult 走 CHEAP_MODEL |
+| **知识库按需截短** | [`gaze_engine/_shared/llm_openai.py`](gaze_engine/_shared/llm_openai.py) | 轻量模型场景节省 50% | 知识库从 8000→4000/2000 chars |
+| **廉价 apply prompt** | [`gaze_engine/_shared/llm_openai.py`](gaze_engine/_shared/llm_openai.py) | 简单场景节省 **70%** | `_cheap_apply_system_prompt()` ~50 tokens |
 | **Agent 行为约束** | [`.cursorrules`](.cursorrules) | 单次任务节省 2000-5000 | 禁止 ls/grep/find 等浪费动作 |
 
 **总计预估：单次任务 Token 消耗降低 60-80%**。
@@ -67,9 +67,9 @@
 
 | 场景 | 推荐指令 | 不建议 |
 |------|---------|--------|
-| 改代码 | "改 [`envelope_compile.py`](gaze_engine/envelope_compile.py) 的 `compile_envelope()`，把...改成..." | "帮我优化一下这个项目" |
-| 查问题 | "在 [`human_prior.py`](gaze_engine/human_prior.py:42) 的 `apply_human_prior()` 里，过冲系数为什么是 0.3？" | "为什么生成的动画看起来不自然？" |
-| 加功能 | "在 [`control_surface.py`](gaze_engine/control_surface.py:18) 的 PRESETS 里加一个预设...；同步更新 [`slider_bounds.py`](gaze_engine/slider_bounds.py)" | "帮我加一个新情绪" |
+| 改代码 | "改 [`gaze_engine/_shared/envelope_compile.py`](gaze_engine/_shared/envelope_compile.py) 的 `build_energy_envelope()`，把...改成..." | "帮我优化一下这个项目" |
+| 查问题 | "在 [`human/human_prior.py`](gaze_engine/human/human_prior.py:275) 的 `apply_human_prior()` 里，过冲系数为什么是 0.3？" | "为什么生成的动画看起来不自然？" |
+| 加功能 | "在 [`human/control_surface.py`](gaze_engine/human/control_surface.py:18) 的 PRESETS 里加一个预设...；同步更新 [`_shared/slider_bounds.py`](gaze_engine/_shared/slider_bounds.py)" | "帮我加一个新情绪" |
 
 ---
 

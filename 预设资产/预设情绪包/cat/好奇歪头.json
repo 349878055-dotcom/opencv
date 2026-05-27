@@ -28,5 +28,12 @@
       -0.2
     ]
   },
-  "label": "好奇歪头"
+  "label": "好奇歪头",
+  "pad": {
+    "P": 0.28,
+    "A": 0.42,
+    "D": -0.08,
+    "position": "愉悦中性 · 高激活 · 控制中性",
+    "channel_hint": "eye_gloss↑ · squint↑ · pupil_x↑ · pupil_y↑ · lid_upper↑"
+  }
 }

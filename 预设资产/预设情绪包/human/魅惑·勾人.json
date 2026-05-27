@@ -17,5 +17,12 @@
     "pulse_rate": 46,
     "pulse_depth": 58,
     "swell": 32
+  },
+  "pad": {
+    "P": 0.6,
+    "A": 0.3,
+    "D": -0.4,
+    "position": "偏愉悦 · 激活中性 · 偏顺从/退缩",
+    "channel_hint": "eye_gloss↑ · squint↑ · squint↑ · lid_upper↓"
   }
 }

@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """
-rhythm_compiler.py · 节奏说明书编译器
+rhythm_compiler.py · 节奏说明书编译器（公共层·算法骨架）
 
 从 02_烘焙_真人律.json（12 通道 × 150 帧）自动编译为
 05_扩散节拍表.txt（扩散引擎 Wan 可消费的自然语言节奏说明书）。
 
 合同规范：contracts/01_总纲/节奏说明书编译器.md
-双向兼容：与旧版 export_diffusion_metronome.py 的 build_metronome_text() 签名一致
+数据来源：各物种的 rhythm_data.py 提供提示词文案
 """
 from __future__ import annotations
 
+import importlib
 import json
 import sys
 from pathlib import Path
@@ -37,15 +38,37 @@ def _extract_keyframes(track: dict) -> List[Tuple[int, float]]:
     return [(int(k["t"]), float(k["v"])) for k in kfs]
 
 
+# 物种数据缓存
+_SPECIES_CACHE: dict[str, tuple[dict[str, str], dict[str, str], list[str]]] = {}
+
+def _load_species_data(species: str) -> tuple[dict[str, str], dict[str, str], list[str]]:
+    """动态加载物种专有数据：hints, labels, constraints_extra（缓存）"""
+    if species in _SPECIES_CACHE:
+        return _SPECIES_CACHE[species]
+
+    module_path = f"gaze_engine.{species}.rhythm_data"
+    try:
+        mod = importlib.import_module(module_path)
+        hints = getattr(mod, "DIFFUSION_HINTS", {})
+        labels = getattr(mod, "CHANNEL_LABELS", {})
+        extras: list[str] = []
+        for attr in ("CAT_CONSTRAINT", "DOG_CONSTRAINT", "CONSTRAINTS_HUMAN"):
+            v = getattr(mod, attr, None)
+            if v:
+                extras.append(v)
+        result = (hints, labels, extras)
+        _SPECIES_CACHE[species] = result
+        return result
+    except (ImportError, ModuleNotFoundError):
+        result: tuple[dict[str, str], dict[str, str], list[str]] = ({}, {}, [])
+        _SPECIES_CACHE[species] = result
+        return result
+
+
 def _get_diffusion_hint(key: str, species: str = "human") -> str:
     """获取物种自适应的节拍说明"""
-    from gaze_engine._shared.channel_contract import DIFFUSION_HINTS
-    hint = DIFFUSION_HINTS.get(key, "")
-    if not hint:
-        return ""
-    # 物种自适应：DIFFUSION_HINTS 中已包含 " / 猫:xxx / 狗:xxx"
-    # 直接返回完整说明
-    return hint
+    hints, _, _ = _load_species_data(species)
+    return hints.get(key, "")
 
 
 def _collect_all_frames(tracks: dict, sparse: dict) -> List[int]:
@@ -94,16 +117,11 @@ def _build_constraints(sparse: dict, species: str = "human") -> List[str]:
     except Exception:
         pass
 
+    _, _, extras = _load_species_data(species)
     base = [
-        "眉眼节奏严格跟随上表；眉压↑时口型克制、颧部微绷、额颈随节拍收紧；",
         f"扫视过冲帧(约{saccade_peak})为全脸张力高峰；轻眨帧(约{blink_frame})为全局微释放。",
     ]
-    if species in ("cat", "dog"):
-        base.append("宠物版本：eyebrow 控制耳位，耳位随情绪下垂/竖立，与全身姿态联动。")
-    if species == "dog":
-        base.append("狗版本：brow_raise 保留眉脊语义，狗有眉毛肌，眉脊微动辅助表达。")
-    if species == "cat":
-        base.append("猫版本：brow_raise 映射耳尖微颤，受惊/好奇时高频小幅度。")
+    base.extend(extras)
     base.append("远景镜头也需保持脉冲语义：pupil_x/y 仍控制注视方向，head 跟随。")
     return base
 
@@ -129,11 +147,7 @@ def build_metronome_text(
     Returns:
         严格 6 段模板的节奏说明书文本
 
-    向后兼容：
-        不传 species 时默认 "human"，行为与旧版 export_diffusion_metronome.py 一致
     """
-    from gaze_engine._shared.channel_contract import CANONICAL_KEYS, CHANNEL_LABELS_ZH
-
     baked = _is_baked_sparse(sparse)
     emotion = sparse.get("mood") or sparse.get("emotion", "")
     lines: List[str] = []
@@ -160,10 +174,13 @@ def build_metronome_text(
     # ── 段 3：各通道脉冲 ──
     lines.append("## 各通道脉冲")
     tracks = sparse.get("channel_tracks") or {}
+    # 从数据中读取实际通道名（不硬编码人类 CANONICAL_KEYS）
+    channel_keys = list(tracks.keys()) or []
 
-    for key in CANONICAL_KEYS:
+    for key in channel_keys:
         tr = tracks.get(key)
-        zh = CHANNEL_LABELS_ZH.get(key, key)
+        _, labels, _ = _load_species_data(species)
+        zh = labels.get(key, key)
         hint = _get_diffusion_hint(key, species)
 
         if not tr:
@@ -175,10 +192,15 @@ def build_metronome_text(
             lines.append(f"- **{key}**（{zh}）: （无关键帧）")
             continue
 
-        # 烘焙定稿且帧数过多时做降采样显示
+        # 烘焙定稿且帧数过多时做降采样显示（blink 强制保留非零峰）
         if baked and len(kfs) > 24:
             step = max(1, len(kfs) // 20)
-            sampled = kfs[::step]
+            sampled_set = {kfs[i] for i in range(0, len(kfs), step)}
+            if key == "blink":
+                for pt in kfs:
+                    if pt[1] > 0.01:
+                        sampled_set.add(pt)
+            sampled = sorted(sampled_set, key=lambda x: x[0])
             pts = ", ".join(f"t{t}={v:.4f}" for t, v in sampled)
             pts += f" …（共 {len(kfs)} 帧，已抽样显示）"
         else:

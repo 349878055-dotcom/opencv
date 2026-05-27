@@ -26,10 +26,17 @@ _EMOTION_WORDS = [
 
 # ── 物种关键词 ──
 _SPECIES_KEYWORDS: dict[str, list[str]] = {
-    "dog": ["狗", "犬", "贵宾", "金毛", "柯基", "哈士奇", "萨摩", "柴犬", "泰迪", "拉布拉多", "边牧"],
-    "cat": ["猫", "猫咪", "布偶", "英短", "美短", "暹罗", "橘猫", "波斯", "缅因", "狸花"],
+    "dog": ["狗子", "狗狗", "狗", "犬", "贵宾", "金毛", "柯基", "哈士奇", "萨摩", "柴犬", "泰迪", "拉布拉多", "边牧"],
+    "cat": ["猫咪", "猫", "布偶", "英短", "美短", "暹罗", "橘猫", "波斯", "缅因", "狸花"],
     "human": ["人", "女孩", "男孩", "女人", "男人", "女生", "男生", "姐姐", "妹妹", "林青霞", "东方不败"],
 }
+
+# 剥离物种词时按长度降序，避免「狗子」先删「狗」留下「子」
+_SPECIES_STRIP_WORDS: list[str] = sorted(
+    {w for words in _SPECIES_KEYWORDS.values() for w in words},
+    key=len,
+    reverse=True,
+)
 
 # ── 修饰词（第二轮微调） ──
 _MODIFY_PATTERNS = re.compile(r"(更|再|调|改|稍[微]?|太|有点|一些|一点|一下)")
@@ -95,30 +102,29 @@ class NLSplitter:
 
     def _extract_action(self, text: str, emotion: str) -> str:
         """提取叙事动作——去掉情绪词和物种词后的剩余动词短语"""
-        # 去掉情绪词
         remaining = text
         if emotion:
             remaining = remaining.replace(emotion, "")
 
-        # 去掉物种词
-        for words in _SPECIES_KEYWORDS.values():
-            for w in words:
-                if w in remaining:
-                    remaining = remaining.replace(w, "")
+        for w in _SPECIES_STRIP_WORDS:
+            if w in remaining:
+                remaining = remaining.replace(w, "")
 
-        # 去掉通用修饰
         remaining = re.sub(r"(更|再|调|改|稍[微]?|太|有点|一些|一点|一下|的|了|，|。)", "", remaining)
-        remaining = remaining.strip()
+        remaining = remaining.strip().lstrip("子").strip()
 
-        # 如果剩余为空，尝试从原文提取含动词的短语
         if not remaining or len(remaining) < 2:
             for verb in _ACTION_VERBS:
                 if verb in text:
-                    # 提取动词所在句
                     idx = text.find(verb)
-                    start = max(0, idx - 6)
-                    end = min(len(text), idx + 12)
-                    return text[start:end].strip()
+                    start = max(0, idx - 2)
+                    end = min(len(text), idx + len(verb) + 6)
+                    phrase = text[start:end].strip()
+                    for w in _SPECIES_STRIP_WORDS:
+                        phrase = phrase.replace(w, "")
+                    phrase = re.sub(r"(更|再|的|了|，|。)", "", phrase).strip().lstrip("子").strip()
+                    if phrase:
+                        return phrase
 
         return remaining
 

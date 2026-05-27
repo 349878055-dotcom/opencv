@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="portal-build" content="__PORTAL_BUILD__"/>
+<title>客户创作工作室</title>
+<link rel="stylesheet" href="/01_%E5%B7%A5%E4%BD%9C%E5%8F%B0%E6%9C%8D%E5%8A%A1/static/style.css"/>
+<style>
+:root {
+  --portal-bg: #f0f2f5;
+  --card-bg: #ffffff;
+  --primary: #4f46e5;
+  --primary-light: #eef2ff;
+  --accent-green: #10b981;
+  --text: #1e293b;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --radius: 12px;
+}
+body { background:var(--portal-bg); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; margin:0; color:var(--text); }
+
+.portal-header { background:linear-gradient(135deg,#4f46e5,#7c3aed); color:white; padding:14px 28px; display:flex; align-items:center; gap:16px; }
+.portal-header h1 { margin:0; font-size:1.2rem; font-weight:600; }
+.portal-header .header-right { margin-left:auto; display:flex; align-items:center; gap:12px; font-size:0.85rem; }
+.portal-header .back-link { color:white; opacity:0.85; text-decoration:none; }
+.portal-header .logout-btn { background:rgba(255,255,255,0.15); color:white; border:1px solid rgba(255,255,255,0.3); padding:4px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; }
+.portal-body { max-width:1100px; margin:0 auto; padding:24px 16px 48px; }
+
+/* ── 欢迎页 ── */
+.welcome-screen { text-align:center; padding:80px 20px; }
+.welcome-screen .logo { font-size:4rem; margin-bottom:12px; }
+.welcome-screen h2 { font-size:1.5rem; margin-bottom:8px; }
+.welcome-screen p { color:var(--text-muted); margin-bottom:32px; font-size:0.9rem; }
+.btn-start { background:var(--primary); color:white; border:none; padding:14px 48px; border-radius:10px; font-size:1.05rem; font-weight:600; cursor:pointer; box-shadow:0 4px 14px rgba(79,70,229,0.35); }
+.btn-start:hover { opacity:0.92; }
+.welcome-screen .link-login { display:block; margin-top:20px; color:var(--primary); cursor:pointer; font-size:0.85rem; }
+
+/* ── 表单卡片 ── */
+.form-card { background:var(--card-bg); border-radius:var(--radius); padding:28px; box-shadow:0 4px 20px rgba(0,0,0,0.08); max-width:440px; margin:40px auto; }
+.form-card h3 { margin:0 0 20px; font-size:1.05rem; }
+.form-group { margin-bottom:14px; }
+.form-group label { display:block; font-size:0.82rem; font-weight:600; margin-bottom:4px; }
+.form-group input,.form-group select { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:0.9rem; box-sizing:border-box; }
+.form-group input:focus,.form-group select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(79,70,229,0.1); }
+.btn-primary { width:100%; background:var(--primary); color:white; border:none; padding:11px; border-radius:8px; font-size:0.95rem; cursor:pointer; margin-top:4px; }
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+.error-msg { color:#dc3545; font-size:0.82rem; margin-bottom:10px; display:none; }
+.error-msg.active { display:block; }
+.success-msg { color:var(--accent-green); font-size:0.82rem; margin-bottom:10px; display:none; }
+.success-msg.active { display:block; }
+.form-switch { text-align:center; margin-top:14px; font-size:0.85rem; color:var(--text-muted); }
+.form-switch a { color:var(--primary); cursor:pointer; font-weight:500; }
+
+/* ── 仪表盘 ── */
+.dashboard { display:none; }
+.dashboard.active { display:block; }
+.project-section { background:var(--card-bg); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-top:16px; }
+.section-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+.section-header h2 { margin:0; font-size:1rem; flex:1; }
+.project-item { display:flex; align-items:center; gap:14px; padding:14px 20px; border-bottom:1px solid #f1f3f5; cursor:pointer; }
+.project-item:hover { background:#f8fafc; }
+.project-item .icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; background:var(--primary-light); }
+
+/* ── 步骤向导 ── */
+.wizard { display:none; }
+.wizard.active { display:block; }
+.step-bar { display:flex; gap:4px; margin-bottom:20px; flex-wrap:wrap; }
+.step-item { flex:1; min-width:80px; text-align:center; padding:8px 4px; font-size:0.75rem; color:var(--text-muted); border-bottom:3px solid var(--border); }
+.step-item.active { color:var(--primary); border-color:var(--primary); font-weight:600; }
+.step-item.done { color:var(--accent-green); border-color:var(--accent-green); }
+.wizard-card { background:var(--card-bg); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; margin-bottom:16px; }
+.wizard-card h3 { margin:0 0 12px; font-size:0.95rem; }
+.wizard-nav { display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }
+.btn { padding:8px 16px; border:1px solid var(--border); border-radius:8px; background:white; cursor:pointer; font-size:0.85rem; }
+.btn.primary { background:var(--primary); color:white; border-color:var(--primary); }
+.btn.green { background:var(--accent-green); color:white; border-color:var(--accent-green); }
+.btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+/* ── 照片上传 ── */
+.upload-zone { border:2px dashed var(--border); border-radius:10px; padding:32px; text-align:center; cursor:pointer; transition:border-color 0.15s; }
+.upload-zone:hover,.upload-zone.dragover { border-color:var(--primary); background:var(--primary-light); }
+.upload-zone input { display:none; }
+.photo-preview { max-width:280px; max-height:200px; border-radius:8px; margin-top:12px; }
+.detection-box { background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:12px; margin-top:12px; font-size:0.8rem; font-family:monospace; white-space:pre-wrap; max-height:160px; overflow:auto; }
+
+/* ── 预设（与 预设资产/ 目录对应）── */
+.preset-section { margin-bottom:18px; padding:14px; background:#f8fafc; border:1px solid var(--border); border-radius:10px; }
+.preset-section-title { font-size:0.88rem; font-weight:700; margin:0 0 4px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.preset-section-hint { font-size:0.72rem; color:var(--text-muted); margin:0 0 10px; line-height:1.45; font-family:ui-monospace,monospace; }
+.preset-count-badge { font-size:0.68rem; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--primary-light); color:var(--primary); }
+.preset-scroll { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px; }
+.preset-scroll.tall { max-height:none; }
+.preset-group-label { width:100%; font-size:0.72rem; color:var(--text-muted); margin:10px 0 4px; font-weight:600; }
+.preset-group-label:first-child { margin-top:0; }
+.preset-btn { padding:5px 10px; border:1px solid var(--border); border-radius:6px; background:white; cursor:pointer; font-size:0.78rem; }
+.preset-btn.active { background:var(--primary); color:white; border-color:var(--primary); }
+.preset-btn.style-btn.active { background:#c2410c; border-color:#c2410c; color:white; }
+.preset-empty { font-size:0.78rem; color:var(--text-muted); }
+textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px solid var(--border); border-radius:8px; font-size:0.9rem; font-family:inherit; resize:vertical; min-height:72px; }
+
+/* ── 结果面板 ── */
+.result-tabs { display:flex; gap:4px; margin-bottom:8px; flex-wrap:wrap; }
+.result-tab { padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:white; cursor:pointer; font-size:0.75rem; }
+.result-tab.active { background:var(--primary); color:white; border-color:var(--primary); }
+.result-content { background:#1e293b; color:#e2e8f0; padding:12px; border-radius:8px; font-size:0.7rem; max-height:320px; overflow:auto; white-space:pre-wrap; word-break:break-all; font-family:monospace; display:none; }
+.result-content.active { display:block; }
+.video-wrap { background:#000; border-radius:8px; overflow:hidden; margin-top:12px; }
+.video-wrap video { width:100%; max-height:280px; display:block; }
+.status-msg { font-size:0.8rem; color:var(--text-muted); margin-top:8px; min-height:1.2em; }
+.step-saves { margin-top:12px; font-size:0.78rem; color:var(--text-muted); }
+.step-saves li { margin:2px 0; }
+
+.calibrate-wrap { margin-top:16px; }
+.calibrate-hint { font-size:0.88rem; font-weight:600; margin-bottom:8px; color:var(--primary); }
+.calibrate-stage { position:relative; display:inline-block; max-width:100%; cursor:crosshair; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.calibrate-stage img { max-width:100%; display:block; user-select:none; }
+.calibrate-canvas { position:absolute; left:0; top:0; pointer-events:none; }
+
+.studio-back { background:none; border:none; font-size:0.9rem; cursor:pointer; color:var(--text-muted); margin-bottom:12px; }
+.studio-back:hover { color:var(--text); }
+
+.hidden { display:none !important; }
+
+.calibrate-stage img { min-height:200px; min-width:200px; background:#111; }
+.calibrate-load-err { color:#dc3545; font-size:0.82rem; margin-top:8px; }
+
+/* ── 物种 / 底膜标识 ── */
+.species-banner { padding:12px 16px; border-radius:10px; margin-bottom:16px; font-size:0.88rem; font-weight:600; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.species-banner.ok { background:#ecfdf5; border:2px solid #22c55e; color:#166534; }
+.species-banner.warn { background:#fef2f2; border:2px solid #ef4444; color:#991b1b; }
+.species-banner.info { background:#eff6ff; border:2px solid #3b82f6; color:#1e40af; }
+.species-tag { display:inline-block; padding:3px 10px; border-radius:999px; font-size:0.75rem; font-weight:700; }
+.species-tag.dog { background:#ffedd5; color:#c2410c; border:1px solid #fdba74; }
+.species-tag.cat { background:#f3e8ff; color:#7e22ce; border:1px solid #d8b4fe; }
+.species-tag.human { background:#dbeafe; color:#1d4ed8; border:1px solid #93c5fd; }
+.membrane-tag { display:inline-block; padding:3px 10px; border-radius:999px; font-size:0.75rem; font-weight:700; }
+.membrane-tag.ok { background:#dcfce7; color:#15803d; }
+.membrane-tag.bad { background:#fee2e2; color:#b91c1c; }
+.membrane-tag.unk { background:#f1f5f9; color:#64748b; }
+.membrane-alert { padding:12px 14px; border-radius:8px; margin:12px 0; font-size:0.85rem; line-height:1.5; }
+.membrane-alert.danger { background:#fef2f2; border-left:4px solid #ef4444; color:#991b1b; }
+.membrane-alert.success { background:#f0fdf4; border-left:4px solid #22c55e; color:#166534; }
+.project-tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+
+/* ── 底膜线条预览 ── */
+.membrane-preview-wrap { margin-top:16px; padding:14px; background:#0f172a; border-radius:10px; border:1px solid #334155; }
+.membrane-preview-wrap h4 { margin:0 0 8px; color:#e2e8f0; font-size:0.9rem; }
+.membrane-preview-note { font-size:0.78rem; color:#94a3b8; margin:0 0 10px; line-height:1.5; }
+.membrane-compare { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+@media (max-width:720px){ .membrane-compare { grid-template-columns:1fr; } }
+.membrane-compare-item { text-align:center; }
+.membrane-compare-item h5 { margin:0 0 6px; color:#cbd5e1; font-size:0.78rem; font-weight:600; }
+.membrane-preview-img { display:block; max-width:100%; width:100%; margin:0 auto; background:#000; border-radius:6px; border:1px solid #334155; }
+.membrane-diff-table { width:100%; border-collapse:collapse; font-size:0.76rem; color:#cbd5e1; margin-top:8px; }
+.membrane-diff-table th, .membrane-diff-table td { padding:6px 8px; border-bottom:1px solid #334155; text-align:left; }
+.membrane-diff-table th { color:#94a3b8; font-weight:600; }
+.membrane-diff-empty { font-size:0.76rem; color:#64748b; margin:8px 0 0; }
+.breed-badge { display:inline-block; padding:2px 8px; background:#ffedd5; color:#c2410c; border-radius:6px; font-size:0.75rem; font-weight:600; margin-left:6px; }
+.server-stale-banner { background:#fef2f2; border:2px solid #ef4444; color:#991b1b; padding:12px 16px; border-radius:10px; margin-bottom:16px; font-size:0.88rem; line-height:1.5; }
+.pomot-summary { margin:10px 0 0; padding:10px 12px; background:#eff6ff; border:1px solid #93c5fd; border-radius:8px; font-size:0.78rem; line-height:1.55; }
+.pomot-summary .ok-tag { color:#15803d; font-weight:600; }
+.pomot-summary .warn-tag { color:#b45309; font-weight:600; }
+.wan-clip-wrap { margin-top:12px; }
+.wan-clip-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media (max-width:720px){ .wan-clip-grid { grid-template-columns:1fr; } }
+.wan-clip-box { border:1px solid var(--border); border-radius:8px; overflow:hidden; background:#f8fafc; }
+.wan-clip-head { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; font-size:0.75rem; font-weight:600; background:#eef2ff; border-bottom:1px solid var(--border); }
+.wan-clip-pre { margin:0; padding:10px; font-size:0.68rem; max-height:140px; overflow:auto; white-space:pre-wrap; word-break:break-all; font-family:monospace; }
+.test-cmd-pre { margin:0; padding:10px 12px; background:#1e293b; color:#e2e8f0; border-radius:8px; font-size:0.72rem; overflow:auto; }
+.btn-sm { padding:3px 8px; font-size:0.72rem; }
+</style>
+</head>
+<body>
+
+<header class="portal-header">
+  <h1>客户创作工作室 <span id="portal-build-label" style="font-size:0.65rem;opacity:0.85;font-weight:400">build __PORTAL_BUILD__</span></h1>
+  <div class="header-right">
+    <span id="logged-user" class="hidden"></span>
+    <button id="btn-logout" class="logout-btn hidden">退出</button>
+    <a href="/" class="back-link">← 工作台</a>
+  </div>
+</header>
+
+<div class="portal-body">
+
+  <div id="server-stale-banner" class="server-stale-banner hidden"></div>
+
+  <!-- 欢迎：单按钮入口 -->
+  <div id="welcome-screen" class="welcome-screen">
+    <div class="logo">👤</div>
+    <h2>开始你的眼眉创作</h2>
+    <p>上传照片 → 选情绪/品种 → Pomot 生成 → OpenCV 底膜 → 04 Prompt + Wan 正负向 → 送扩散引擎</p>
+    <button class="btn-start" id="btn-enter">开始创作</button>
+    <a class="link-login" id="link-login">已有账号？点此登录</a>
+  </div>
+
+  <!-- 注册 -->
+  <div id="register-screen" class="hidden">
+    <div class="form-card">
+      <h3>📝 注册新账号</h3>
+      <div class="error-msg" id="register-error"></div>
+      <div class="form-group"><label>客户名称 *</label><input id="reg-name" placeholder="例如：张三工作室"/></div>
+      <div class="form-group"><label>密码 *</label><input type="password" id="reg-pwd" placeholder="至少4位"/></div>
+      <div class="form-group"><label>确认密码 *</label><input type="password" id="reg-pwd2"/></div>
+      <div class="form-group"><label>默认物种</label>
+        <select id="reg-species">
+          <option value="human">🙂 人类</option>
+          <option value="cat">🐱 猫</option>
+          <option value="dog">🐶 狗</option>
+        </select>
+      </div>
+      <button class="btn-primary" id="btn-register">注册并开始</button>
+      <div class="form-switch"><a id="switch-to-login">已有账号？去登录</a></div>
+    </div>
+  </div>
+
+  <!-- 登录 -->
+  <div id="login-screen" class="hidden">
+    <div class="form-card">
+      <h3>🔑 登录</h3>
+      <div class="error-msg" id="login-error"></div>
+      <div class="form-group"><label>客户 ID 或名称</label><input id="login-cid" placeholder="如 C008 或 金涛"/></div>
+      <p id="login-hint" style="font-size:0.78rem;color:var(--text-muted);margin:-6px 0 12px"></p>
+      <div class="form-group"><label>密码</label><input type="password" id="login-pwd"/></div>
+      <button class="btn-primary" id="btn-login">登录</button>
+      <div class="form-switch"><a id="switch-to-register">没有账号？去注册</a></div>
+    </div>
+  </div>
+
+  <!-- 项目列表 -->
+  <div id="dashboard" class="dashboard">
+    <p style="color:var(--text-muted);font-size:0.9rem">欢迎回来，选择项目继续，或新建一个创作。</p>
+    <div class="project-section">
+      <div class="section-header">
+        <h2>📁 我的项目</h2>
+        <span id="project-count" style="font-size:0.8rem;color:var(--text-muted)">0 个</span>
+        <button class="btn primary" id="btn-new-project">➕ 新建项目</button>
+      </div>
+      <div id="project-list"><p style="text-align:center;padding:32px;color:var(--text-muted)">加载中…</p></div>
+    </div>
+  </div>
+
+  <!-- 项目向导 -->
+  <div id="wizard" class="wizard">
+    <button class="studio-back" id="wizard-back">← 返回项目列表</button>
+    <div id="species-banner" class="species-banner info hidden">
+      <span id="species-banner-tags"></span>
+      <span id="species-banner-msg" style="font-weight:500"></span>
+    </div>
+    <h2 id="wizard-title" style="margin:0 0 16px;font-size:1.1rem">新项目</h2>
+
+    <div class="step-bar" id="step-bar">
+      <div class="step-item" data-step="1">① 上传+标定</div>
+      <div class="step-item" data-step="2">② 描述表情</div>
+      <div class="step-item" data-step="3">③ 生成管线</div>
+      <div class="step-item" data-step="4">④ OpenCV预览</div>
+      <div class="step-item" data-step="5">⑤ 导出扩散</div>
+    </div>
+
+    <!-- Step 1: 照片 + 手动标定 -->
+    <div class="wizard-panel" id="panel-1">
+      <div class="wizard-card">
+        <h3>📷 上传参考照片</h3>
+        <div id="membrane-alert-step1" class="membrane-alert hidden"></div>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">先选物种，上传后在图上标定<strong>左眼、右眼、鼻尖</strong>。狗/猫<strong>品种</strong>在第②步从 <code style="font-size:0.76rem">预设资产/风格包/</code> 加载；标定后垂耳线条来自所选品种模板。</p>
+        <div style="margin-bottom:12px">
+          <label style="font-size:0.8rem;font-weight:600">物种：</label>
+          <select id="species-select">
+            <option value="human">🙂 人类</option>
+            <option value="cat">🐱 猫</option>
+            <option value="dog">🐶 狗</option>
+          </select>
+        </div>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" id="photo-input" accept="image/*"/>
+          <div>点击或拖拽上传正面照</div>
+        </div>
+        <div class="wizard-nav" style="margin-top:12px">
+          <button class="btn primary" id="btn-upload" disabled>上传照片</button>
+        </div>
+
+        <div id="calibrate-wrap" class="calibrate-wrap hidden">
+          <p class="calibrate-hint" id="calibrate-hint">请点击：① 左眼中心</p>
+          <div class="calibrate-stage" id="calibrate-stage">
+            <img id="calibrate-img" alt="标定"/>
+            <canvas id="calibrate-canvas" class="calibrate-canvas"></canvas>
+          </div>
+          <p id="calibrate-load-err" class="calibrate-load-err hidden"></p>
+          <div id="ear-adjust-panel" class="hidden" style="margin-top:12px;padding:12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px">
+            <p style="font-size:0.82rem;margin:0 0 10px;color:var(--text-muted)">眼/鼻已标完。卷毛遮耳？<strong>直接点「确认标定」</strong>——垂耳线条将按<span class="breed-badge breed-badge-dynamic">品种模板</span>绘制（第②步可选品种）。</p>
+            <button class="btn btn-sm" id="btn-mark-ears" type="button">看得清耳尖？点此标耳朵（可选）</button>
+          </div>
+          <div class="wizard-nav">
+            <button class="btn" id="btn-calibrate-undo">↩ 撤销</button>
+            <button class="btn" id="btn-calibrate-reset">重标</button>
+            <button class="btn primary" id="btn-calibrate-submit" disabled>✓ 确认标定</button>
+          </div>
+        </div>
+
+        <div id="membrane-preview-wrap" class="membrane-preview-wrap hidden">
+          <h4>🐶 狗底膜线条对比 <span class="breed-badge breed-badge-dynamic">品种模板</span></h4>
+          <p id="membrane-preview-note" class="membrane-preview-note">左=品种默认 · 右=标定后（690×361，与 MP4 同比例）。标定是<strong>中性脸</strong>；MP4 是<strong>情绪动画</strong>，眼会眨会动。</p>
+          <p id="membrane-breed-ref" class="membrane-preview-note" style="margin-top:4px;color:#64748b"></p>
+          <div class="membrane-compare">
+            <div class="membrane-compare-item">
+              <h5>① 品种基准（poodle_giant，未用你的照片）</h5>
+              <img id="membrane-preview-breed" class="membrane-preview-img" alt="品种默认底膜"/>
+            </div>
+            <div class="membrane-compare-item">
+              <h5>② 标定后（眼距/眼位/眼大小等叠加）</h5>
+              <img id="membrane-preview-custom" class="membrane-preview-img" alt="标定后底膜"/>
+            </div>
+          </div>
+          <div id="membrane-diff-wrap">
+            <p style="font-size:0.78rem;color:#94a3b8;margin:0 0 6px">标定引起的微调：</p>
+            <table class="membrane-diff-table" id="membrane-diff-table">
+              <thead><tr><th>项目</th><th>品种默认</th><th>标定后</th><th>变化</th></tr></thead>
+              <tbody id="membrane-diff-body"></tbody>
+            </table>
+            <p id="membrane-diff-empty" class="membrane-diff-empty hidden">与品种默认相同（请检查是否标完眼/鼻）</p>
+          </div>
+          <div class="wizard-nav" style="margin-top:12px">
+            <button class="btn primary" id="btn-render-membrane">🎬 渲染 MP4</button>
+          </div>
+          <div class="status-msg" id="status-membrane" style="margin-top:8px"></div>
+        </div>
+
+        <div id="detection-box" class="detection-box hidden"></div>
+        <div class="wizard-nav">
+          <button class="btn" id="btn-auto-detect">自动检测（不推荐）</button>
+          <button class="btn" id="btn-step1-next" disabled>下一步 →</button>
+        </div>
+        <div class="status-msg" id="status-1"></div>
+      </div>
+    </div>
+
+    <!-- Step 2: 描述 -->
+    <div class="wizard-panel hidden" id="panel-2">
+      <div class="wizard-card">
+        <h3>📝 描述你想要的表情</h3>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">物种：已在第①步选定（<span id="species-label">human</span>）· 下方选项与 <strong>预设资产库</strong> 同步加载</p>
+
+        <div class="preset-section" id="preset-emotion-section">
+          <div class="preset-section-title">
+            <span id="preset-emotion-title">情绪预设</span>
+            <span class="preset-count-badge" id="preset-emotion-count">0</span>
+          </div>
+          <p class="preset-section-hint" id="preset-emotion-hint">预设资产/预设情绪包/</p>
+          <div class="preset-scroll tall" id="preset-container"></div>
+        </div>
+
+        <div class="preset-section" id="preset-style-section">
+          <div class="preset-section-title">
+            <span id="preset-style-title">品种 / 风格</span>
+            <span class="preset-count-badge" id="preset-style-count">0</span>
+          </div>
+          <p class="preset-section-hint" id="preset-style-hint">预设资产/风格包/</p>
+          <div class="preset-scroll tall" id="style-container"></div>
+        </div>
+
+        <textarea class="nl-input" id="nl-input" placeholder="例如：狗狗委屈地回头看了一眼"></textarea>
+        <div class="wizard-nav">
+          <button class="btn" id="btn-step2-prev">← 上一步</button>
+          <button class="btn primary" id="btn-step2-next">下一步 →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: 生成 -->
+    <div class="wizard-panel hidden" id="panel-3">
+      <div class="wizard-card">
+        <h3>⚡ 执行 Pomot 管线</h3>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">NL → 拆解 → 路由 → 滑杆包 → 烘焙(12×150) → 05节拍表 → 04 Prompt（含 L3 跟随控制序列）</p>
+        <div id="pomot-summary" class="pomot-summary hidden"></div>
+        <div class="wizard-nav">
+          <button class="btn" id="btn-step3-prev">← 上一步</button>
+          <button class="btn primary" id="btn-pomot-run">🎨 生成表情</button>
+          <button class="btn" id="btn-pomot-round2">🔄 微调</button>
+          <button class="btn" id="btn-step3-next" disabled>下一步 →</button>
+        </div>
+        <div class="status-msg" id="status-3"></div>
+        <ul class="step-saves" id="step-saves-3"></ul>
+      </div>
+    </div>
+
+    <!-- Step 4: OpenCV 预览 -->
+    <div class="wizard-panel hidden" id="panel-4">
+      <div class="wizard-card">
+        <h3>🎬 OpenCV 工程底膜预览</h3>
+        <div id="membrane-alert-step4" class="membrane-alert hidden"></div>
+        <div class="wizard-nav" style="margin-top:0;margin-bottom:12px">
+          <button class="btn" id="btn-step4-prev">← 上一步</button>
+          <button class="btn primary" id="btn-render-video">渲染 OpenCV 视频</button>
+          <button class="btn" id="btn-step4-next" disabled>下一步 →</button>
+        </div>
+        <div class="video-wrap hidden" id="video-wrap">
+          <p id="membrane-badge" class="hidden" style="font-size:0.82rem;margin:0 0 8px;padding:6px 10px;background:#eff6ff;border:1px solid #93c5fd;border-radius:6px"></p>
+          <video id="preview-video" controls loop muted playsinline></video>
+        </div>
+        <div class="status-msg" id="status-4"></div>
+      </div>
+
+      <div class="wizard-card">
+        <h3>📦 中间产物（调试用，不送扩散引擎）</h3>
+        <div class="result-tabs" id="result-tabs">
+          <button class="result-tab active" data-tab="packet">滑杆包</button>
+          <button class="result-tab" data-tab="split">NL拆解</button>
+          <button class="result-tab" data-tab="baked">烘焙JSON</button>
+          <button class="result-tab" data-tab="beat">节拍表</button>
+          <button class="result-tab" data-tab="prompt">04_Prompt</button>
+          <button class="result-tab" data-tab="wan-pos">Wan正向</button>
+          <button class="result-tab" data-tab="wan-neg">Wan负向</button>
+          <button class="result-tab" data-tab="template">底膜参数</button>
+        </div>
+        <div class="result-content active" id="result-packet"></div>
+        <div class="result-content" id="result-split"></div>
+        <div class="result-content" id="result-baked"></div>
+        <div class="result-content" id="result-beat"></div>
+        <div class="result-content" id="result-prompt"></div>
+        <div class="result-content" id="result-wan-pos"></div>
+        <div class="result-content" id="result-wan-neg"></div>
+        <div class="result-content" id="result-template"></div>
+      </div>
+    </div>
+
+    <!-- Step 5: 导出 -->
+    <div class="wizard-panel hidden" id="panel-5">
+      <div class="wizard-card" style="border:2px solid #22c55e;background:#fafffe">
+        <h3>📤 送扩散引擎（仅此两件，不含 JSON）</h3>
+        <table class="deliverables-table" style="width:100%;border-collapse:collapse;font-size:0.85rem;margin:12px 0">
+          <thead>
+            <tr style="background:#f0fdf4;text-align:left">
+              <th style="padding:8px;border-bottom:1px solid #bbf7d0">#</th>
+              <th style="padding:8px;border-bottom:1px solid #bbf7d0">文件名</th>
+              <th style="padding:8px;border-bottom:1px solid #bbf7d0">底膜类型</th>
+              <th style="padding:8px;border-bottom:1px solid #bbf7d0">状态</th>
+              <th style="padding:8px;border-bottom:1px solid #bbf7d0">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:8px;border-bottom:1px solid #e5e7eb">① 底膜视频</td>
+              <td style="padding:8px;border-bottom:1px solid #e5e7eb"><code>03_工程底模.mp4</code></td>
+              <td style="padding:8px;border-bottom:1px solid #e5e7eb" id="deliv-video-membrane">—</td>
+              <td style="padding:8px;border-bottom:1px solid #e5e7eb" id="deliv-video-status">—</td>
+              <td style="padding:8px;border-bottom:1px solid #e5e7eb"><a id="deliv-video-link" href="#" target="_blank" class="hidden">预览/下载</a></td>
+            </tr>
+            <tr>
+              <td style="padding:8px">② Prompt</td>
+              <td style="padding:8px"><code>04_Prompt.txt</code></td>
+              <td style="padding:8px;color:var(--text-muted)">文本（非底膜）</td>
+              <td style="padding:8px" id="deliv-prompt-status">—</td>
+              <td style="padding:8px"><a id="deliv-prompt-link" href="#" target="_blank" class="hidden">查看</a></td>
+            </tr>
+          </tbody>
+        </table>
+        <p id="membrane-verify-line" style="font-size:0.82rem;color:var(--text-muted);margin:0"></p>
+        <div id="wan-clip-wrap" class="wan-clip-wrap hidden">
+          <h4 style="margin:14px 0 8px;font-size:0.88rem">Wan CLIP 拆分（由 04 自动切分）</h4>
+          <div class="wan-clip-grid">
+            <div class="wan-clip-box">
+              <div class="wan-clip-head">正向 CLIP <button type="button" class="btn btn-sm" id="btn-copy-wan-pos">复制</button></div>
+              <pre id="wan-positive-preview" class="wan-clip-pre"></pre>
+            </div>
+            <div class="wan-clip-box">
+              <div class="wan-clip-head">负向 CLIP <button type="button" class="btn btn-sm" id="btn-copy-wan-neg">复制</button></div>
+              <pre id="wan-negative-preview" class="wan-clip-pre"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="wizard-card">
+        <h3>🧪 本地验收（可选）</h3>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 10px">导出后在项目根目录运行，确认 Prompt 链路与狗 150 帧编译合同：</p>
+        <pre class="test-cmd-pre">python3 scripts/verify_diffusion_prompt_contract.py
+python3 scripts/verify_dog_150_compile_contract.py
+python3 scripts/export_prompt_samples.py</pre>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin:8px 0 0">样例输出：<code>_runtime/prompt_samples/</code> · 合同导读：<code>contracts/06_架构/扩散Prompt全链路方案_导读.md</code></p>
+      </div>
+      <div class="wizard-card">
+        <h3>💾 客户资料 & 扩散引擎包</h3>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 8px">保存后写入 <code>客户资产库/…/客户资料.json</code>，并自动生成 <code>输出/扩散引擎包/</code>（Agent / AutoDL 可直接取用）。</p>
+        <p id="profile-path-line" style="font-size:0.78rem;color:var(--text-muted);margin:0 0 10px">完成保存后显示路径</p>
+        <p id="bundle-status" class="status-msg" style="margin-top:0"></p>
+        <div class="wizard-nav">
+          <button class="btn" id="btn-step5-prev">← 上一步</button>
+          <button class="btn green" id="btn-save-all">💾 保存客户资料</button>
+          <button class="btn primary" id="btn-export">🚀 更新导出（Prompt+包）</button>
+          <a class="btn hidden" id="bundle-zip-link" href="#" target="_blank" rel="noopener">📦 下载 zip 包</a>
+        </div>
+        <div class="status-msg" id="status-5"></div>
+        <ul class="step-saves" id="step-saves-5"></ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="/01_%E5%B7%A5%E4%BD%9C%E5%8F%B0%E6%9C%8D%E5%8A%A1/static/portal.js?v=__PORTAL_BUILD__"></script>
+</body>
+</html>

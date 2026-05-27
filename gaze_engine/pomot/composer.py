@@ -80,6 +80,8 @@ class PomotComposer:
         route: EmotionRoute,
     ) -> SliderPacket:
         """从预设模板构造基础 SliderPacket"""
+        from gaze_engine._shared.slider_schema import SliderPacket
+
         # 尝试从预设代码构造
         try:
             if route.species == "human":
@@ -87,12 +89,11 @@ class PomotComposer:
 
                 return packet_from_acting_preset(route.preset_name)
             elif route.species == "dog":
-                from gaze_engine.dog.dog_pipeline import packet_from_dog_preset
+                from gaze_engine.dog.presets import dog_packet_from_file
 
-                return packet_from_dog_preset(route.preset_name)
+                return dog_packet_from_file(route.preset_name)
             elif route.species == "cat":
                 from gaze_engine.cat.presets import CAT_PRESETS
-                from gaze_engine._shared.slider_schema import SliderPacket
 
                 raw = CAT_PRESETS.get(route.preset_name)
                 if isinstance(raw, dict):

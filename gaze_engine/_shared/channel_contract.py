@@ -1,50 +1,10 @@
-"""12 通道合同：渲染 + 扩散节拍共用，缺一不可。"""
+"""
+通道校验工具 — 纯函数，无全局数据。
+
+所有函数通过 channel_keys 参数接收通道名列表，不硬编码任何物种假设。
+"""
 from __future__ import annotations
 
-CANONICAL_KEYS: list[str] = [
-    "pupil_x",
-    "pupil_y",
-    "blink",
-    "eyebrow",
-    "pupil_scale",
-    "iris_scale",
-    "cornea_bulge",
-    "squint",
-    "brow_raise",
-    "lid_upper",
-    "lid_lower",
-    "eye_gloss",
-]
-
-CHANNEL_LABELS_ZH: dict[str, str] = {
-    "pupil_x": "视线左右",
-    "pupil_y": "视线上下",
-    "blink": "眼睑开合",
-    "eyebrow": "眉压 / 猫:耳位(耷拉0→竖耳1)",
-    "pupil_scale": "瞳孔缩放",
-    "iris_scale": "虹膜圈",
-    "cornea_bulge": "角膜鼓起",
-    "squint": "眯眼眶压",
-    "brow_raise": "挑眉 / 猫:耳尖微动",
-    "lid_upper": "上眼睑",
-    "lid_lower": "下眼睑",
-    "eye_gloss": "眼湿润高光",
-}
-
-DIFFUSION_HINTS: dict[str, str] = {
-    "pupil_x": "节拍：扫视方向；牵动注视与头部微转暗示",
-    "pupil_y": "节拍：视线沉降；下颌与颈后线条随之处置",
-    "blink": "节拍：眼睑脉冲；唇颊放松/微收节奏",
-    "eyebrow": "节拍：眉压 / 猫:耳位耷拉程度(竖耳=脉冲高值,飞机耳=低值)；颧骨额肌紧张度",
-    "pupil_scale": "节拍：瞳孔收缩；情绪浓度与面部收紧",
-    "iris_scale": "节拍：虹膜显露；眼神锐度",
-    "cornea_bulge": "节拍：目光「有神」；额部提亮节奏",
-    "squint": "节拍：眶挤压；鼻翼法令与面颊走向",
-    "brow_raise": "节拍：挑眉 / 猫:耳尖微颤(受惊/好奇时高频小幅度)",
-    "lid_upper": "节拍：上睑压；额头纹与上脸紧张",
-    "lid_lower": "节拍：下睑；口周与颊部微绷",
-    "eye_gloss": "节拍：湿润高光；皮肤质感与喉颈光泽联动",
-}
 
 def validate_micro_jitter(sparse: dict) -> list[str]:
     issues: list[str] = []
@@ -63,16 +23,29 @@ def validate_micro_jitter(sparse: dict) -> list[str]:
             issues.append(f"micro_jitter.by_phase 缺少: {ph}")
     return issues
 
-def validate_channel_tracks(sparse: dict) -> list[str]:
+
+def validate_channel_tracks(
+    sparse: dict,
+    channel_keys: list[str],
+    channel_labels: dict[str, str] | None = None,
+) -> list[str]:
+    """校验每个通道是否都包含关键帧。
+
+    Args:
+        sparse: 烘焙数据
+        channel_keys: 该物种的通道名列表
+        channel_labels: 可选的中文标签（用于报错信息）
+    """
     issues: list[str] = []
     issues.extend(validate_micro_jitter(sparse))
     tracks = sparse.get("channel_tracks") or {}
     if not tracks:
         return ["缺少 channel_tracks"]
-    for key in CANONICAL_KEYS:
+    for key in channel_keys:
         tr = tracks.get(key)
         if not tr:
-            issues.append(f"缺少通道: {key} ({CHANNEL_LABELS_ZH.get(key, key)})")
+            label = (channel_labels or {}).get(key, key)
+            issues.append(f"缺少通道: {key} ({label})")
             continue
         kfs = tr.get("keyframes") or []
         if len(kfs) < 2:
@@ -81,11 +54,16 @@ def validate_channel_tracks(sparse: dict) -> list[str]:
             issues.append(f"通道 {key} 建议从第 2 个点起带 easing")
     return issues
 
-def series_from_baked(sparse: dict, frame_count: int = 150) -> dict[str, list[float]]:
+
+def series_from_baked(
+    sparse: dict,
+    channel_keys: list[str],
+    frame_count: int = 150,
+) -> dict[str, list[float]]:
     """烘焙 02 逐帧关键帧 → 每通道序列。"""
     tracks = sparse.get("channel_tracks") or {}
     out: dict[str, list[float]] = {}
-    for key in CANONICAL_KEYS:
+    for key in channel_keys:
         kfs = sorted(
             (tracks.get(key) or {}).get("keyframes") or [],
             key=lambda x: int(x["t"]),
@@ -95,7 +73,12 @@ def series_from_baked(sparse: dict, frame_count: int = 150) -> dict[str, list[fl
         out[key] = [float(k.get("v", k.get("value", 0))) for k in kfs[:frame_count]]
     return out
 
-def validate_baked_delivery(sparse: dict, frame_count: int = 150) -> list[str]:
+
+def validate_baked_delivery(
+    sparse: dict,
+    channel_keys: list[str],
+    frame_count: int = 150,
+) -> list[str]:
     """烘焙定稿 02 出厂校验（全量帧）。"""
     issues: list[str] = []
     if not sparse.get("_baked_dense") and "baked" not in str(
@@ -105,7 +88,7 @@ def validate_baked_delivery(sparse: dict, frame_count: int = 150) -> list[str]:
     tracks = sparse.get("channel_tracks") or {}
     if not tracks:
         return issues + ["缺少 channel_tracks"]
-    for key in CANONICAL_KEYS:
+    for key in channel_keys:
         tr = tracks.get(key)
         if not tr:
             issues.append(f"缺少通道: {key}")

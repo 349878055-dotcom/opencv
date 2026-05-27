@@ -8,7 +8,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Any
 
-from gaze_engine._shared.channel_contract import CANONICAL_KEYS
+from gaze_engine.human.envelope_compile import HUMAN_CHANNELS
 from gaze_engine._shared.micro_jitter import (
     _phase_at_each_frame,
     apply_jitter_to_channels,
@@ -337,7 +337,7 @@ def dense_to_baked_sparse(
     draft = copy.deepcopy(sparse_draft)
     phases = _phase_at_each_frame(draft, frame_count)
     old_tracks = draft.get("channel_tracks") or {}
-    keys = list(draft.get("keys") or CANONICAL_KEYS)
+    keys = list(draft.get("keys") or HUMAN_CHANNELS)
     tracks: dict[str, Any] = {}
 
     for ch in keys:

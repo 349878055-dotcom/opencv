@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Dict, Tuple
 
-from gaze_engine._shared.channel_contract import CANONICAL_KEYS
+from gaze_engine.human.envelope_compile import HUMAN_CHANNELS
 
 # final_scale = Wp*P + Wa*A + Wd*D
 # 每个通道三元组 (Wp, Wa, Wd)
@@ -25,4 +25,4 @@ HUMAN_PAD_WEIGHTS: Dict[str, Tuple[float, float, float]] = {
 }
 
 # 基础 scale（无 PAD 影响时的中性值）
-HUMAN_BASE_SCALE: Dict[str, float] = {k: 0.30 for k in CANONICAL_KEYS}
+HUMAN_BASE_SCALE: Dict[str, float] = {k: 0.30 for k in HUMAN_CHANNELS}

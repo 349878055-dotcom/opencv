@@ -27,5 +27,12 @@
       -0.9,
       -0.7
     ]
+  },
+  "pad": {
+    "P": -0.45,
+    "A": 0.55,
+    "D": -0.65,
+    "position": "偏不悦/压抑 · 高激活 · 偏顺从/退缩",
+    "channel_hint": "eye_gloss↓ · pupil_x↑ · pupil_y↑ · lid_upper↑ · squint↑"
   }
 }

@@ -17,5 +17,12 @@
     "pulse_rate": 0,
     "pulse_depth": 0,
     "swell": 0
+  },
+  "pad": {
+    "P": -0.6,
+    "A": 0.5,
+    "D": -0.7,
+    "position": "偏不悦/压抑 · 高激活 · 偏顺从/退缩",
+    "channel_hint": "eye_gloss↓ · pupil_x↑ · pupil_y↑ · lid_upper↑ · squint↑"
   }
 }

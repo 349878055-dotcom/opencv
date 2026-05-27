@@ -1,0 +1,24 @@
+{
+  "version": 3,
+  "timestamp": "2026-05-27T06:26:27.717072+00:00",
+  "note": "Pomot生成",
+  "packet": {
+    "schema": "slider-packet-v1",
+    "emotion": "s01_pressure",
+    "style": "default",
+    "macro": {
+      "push": 50,
+      "power": 50,
+      "speed": 50,
+      "steady": 50,
+      "grip": 50,
+      "outro": 50
+    },
+    "hold_seg": {
+      "shape": "flat",
+      "pulse_rate": 0,
+      "pulse_depth": 0,
+      "swell": 0
+    }
+  }
+}

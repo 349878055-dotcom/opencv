@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from gaze_engine._shared.slider_schema import SliderPacket
-from gaze_engine.delivery_pipeline import run_delivery_from_packet, write_delivery_json
+from gaze_engine.delivery_pipeline import run_species_delivery, write_delivery_json
 from gaze_engine.pomot.nl_splitter import NLSplitter
 from gaze_engine.pomot.emotion_router import EmotionRouter
 from gaze_engine.pomot.registry import PomotRegistry
@@ -100,7 +100,13 @@ class PomotPipeline:
 
         # 4. 管线执行
         if run_pipeline:
-            baked_json = self._run_delivery(packet, output_dir)
+            baked_json = self._run_delivery(
+                packet, output_dir,
+                species=route.species,
+                breed=route.breed or "",
+                style_id=route.breed or packet.style or "",
+                narrative_action=split.action or "",
+            )
             result["baked_json"] = baked_json
 
             # 5. 最终拼装
@@ -159,10 +165,6 @@ class PomotPipeline:
 
         # 3. 管线执行
         if run_pipeline:
-            baked_json = self._run_delivery(packet, output_dir)
-            result["baked_json"] = baked_json
-
-            # 4. 从上一轮继承物种/品种等信息
             species = "human"
             breed = ""
             emotion = packet.emotion
@@ -170,7 +172,16 @@ class PomotPipeline:
                 species = previous_baked.get("species", "human")
                 breed = previous_baked.get("breed", "")
 
-            # 5. 最终拼装
+            baked_json = self._run_delivery(
+                packet, output_dir,
+                species=species,
+                breed=breed,
+                style_id=breed or packet.style or "",
+                narrative_action=split.action or (previous_baked or {}).get("narrative_action", ""),
+            )
+            result["baked_json"] = baked_json
+
+            # 4. 最终拼装
             assembly = self.assembler.assemble(
                 baked_json,
                 customer_action=split.action or "",
@@ -183,13 +194,35 @@ class PomotPipeline:
 
         return result
 
-    def _run_delivery(self, packet: SliderPacket, output_dir: str = "") -> dict:
+    def _run_delivery(
+        self,
+        packet: SliderPacket,
+        output_dir: str = "",
+        species: str = "human",
+        breed: str = "",
+        style_id: str = "",
+        narrative_action: str = "",
+    ) -> dict:
         """执行管线，返回 02_烘焙.json 内容"""
-        baked, _, _, _ = run_delivery_from_packet(packet)
+        sid = style_id or breed or ""
+        baked, _, _, _ = run_species_delivery(
+            packet,
+            species,
+            narrative_action=narrative_action,
+            breed_id=breed or "",
+            style_id=sid,
+        )
+
+        baked["species"] = species
+        baked["gaze_emotion_id"] = packet.emotion
+        baked["mood"] = packet.emotion
+        if breed:
+            baked["breed"] = breed
+        if narrative_action:
+            baked["narrative_action"] = narrative_action
 
         # 写入文件（如果指定了输出目录）
         if output_dir:
-            import os
             from pathlib import Path
 
             out = Path(output_dir)

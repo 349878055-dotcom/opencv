@@ -1,11 +1,11 @@
 """
-狗完整管线：SliderPacket → 12 通道全量帧 → 工程底膜 → Wan 输出
+狗完整管线：SliderPacket → 12 通道全量帧 → 02 烘焙 →（可选）工程底膜 MP4
 
-与人类 delivery_pipeline.py 对称，但：
-  - 使用 DOG_PAD_WEIGHTS 做 PAD 动态投影
-  - 在 envelope 编译后注入 EarParams → eyebrow/brow_raise
-  - 跳过未实现的 apply_dog_prior / fix_dog_pulse_quality（TODO）
-  - 输出狗版 02_烘焙_真人律.json + 工程底膜 PNG 序列
+合同：contracts/06_架构/狗150帧全量编译合同_上篇.md（S0～S7）
+
+  S1 resolve_pad → S2 build_energy_envelope → S4 channels_from_envelope
+  → ear 注入 → S5 apply_breed_style → S6 apply_dog_prior → S7 fix_dog_pulse_quality
+  → _make_dog_baked（1800 keyframes）
 """
 from __future__ import annotations
 
@@ -23,10 +23,13 @@ from gaze_engine._shared.envelope_compile import (
     FRAME_COUNT_DEFAULT,
     FPS_DEFAULT,
     build_energy_envelope,
+)
+from gaze_engine.dog.envelope_compile import (
     channels_from_envelope,
     make_delivery_stub,
 )
-from gaze_engine._shared.channel_contract import CANONICAL_KEYS, validate_baked_delivery
+from gaze_engine._shared.channel_contract import validate_baked_delivery
+from gaze_engine.dog.envelope_compile import DOG_CHANNELS
 from gaze_engine._shared.slider_schema import SliderPacket
 from gaze_engine.dog.pad_weights import DOG_PAD_WEIGHTS, DOG_BASE_SCALE
 from gaze_engine.dog.channel_adapter import inject_ear_into_channels
@@ -63,6 +66,8 @@ def run_dog_pipeline(
     P: float | None = None,
     A: float | None = None,
     D: float | None = None,
+    narrative_action: str = "",
+    breed_id: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, list[float]], DogPipelineReport]:
     """
     狗完整管线入口。
@@ -76,13 +81,13 @@ def run_dog_pipeline(
     Returns:
         (baked_dict, channels_dict, report)
     """
-    from gaze_engine.delivery_pipeline import EMOTION_PAD
+    from gaze_engine._shared.emotion_pad import resolve_pad
 
     pkt = packet.clamped()
 
     # ── 1. PAD 推导 ──
     if P is None or A is None or D is None:
-        _P, _A, _D = EMOTION_PAD.get(pkt.emotion, (0.0, 0.0, 0.0))
+        _P, _A, _D = resolve_pad(pkt)
         if P is None: P = _P
         if A is None: A = _A
         if D is None: D = _D
@@ -92,7 +97,7 @@ def run_dog_pipeline(
     channels = channels_from_envelope(
         pkt, envelope, P=P, A=A, D=D,
         frame_count=frame_count,
-        canonical_keys=CANONICAL_KEYS,
+        canonical_keys=DOG_CHANNELS,
         pad_weights=DOG_PAD_WEIGHTS,
         base_scale=DOG_BASE_SCALE,
     )
@@ -103,21 +108,41 @@ def run_dog_pipeline(
         channels = inject_ear_into_channels(channels, pkt.ear)
         ear_injected = True
 
-    # ── 4. TODO: apply_dog_prior() ──
-    # 等 dog/prior.py 实现后在这里调用
+    # ── 3b. 品种 styled（不改 E(t)） ──
+    style_applied = ""
+    bid = (breed_id or "").strip()
+    if bid and bid not in ("default",):
+        from gaze_engine.dog.breeds import apply_breed_style
 
-    # ── 5. TODO: fix_dog_pulse_quality() ──
-    # 等 dog/pulse_quality.py 实现后在这里调用
+        channels = apply_breed_style(channels, bid)
+        style_applied = bid
 
-    # ── 6. 组装烘焙输出 ──
+    # ── 4. 狗先验（叙事回头 → 扫视补偿） ──
+    from gaze_engine.dog.prior import apply_dog_prior
+
+    channels = apply_dog_prior(
+        channels, pkt, narrative_action=narrative_action, frame_count=frame_count
+    )
+
+    # ── 5. 平庸质检（blink 下限等） ──
+    from gaze_engine.dog.pulse_quality import fix_dog_pulse_quality
+
+    pq = fix_dog_pulse_quality(channels, frame_count=frame_count)
+
     report = DogPipelineReport(
         emotion=pkt.emotion,
         frame_count=frame_count,
         ear_injected=ear_injected,
+        dog_prior_skipped=False,
+        dog_quality_skipped=False,
     )
+    if pq.fixes:
+        report.issues.extend(pq.fixes)
 
     baked = _make_dog_baked(
-        pkt, channels, frame_count=frame_count, report=report
+        pkt, channels, frame_count=frame_count, report=report,
+        narrative_action=narrative_action,
+        breed_id=style_applied,
     )
 
     return baked, channels, report
@@ -129,6 +154,8 @@ def _make_dog_baked(
     *,
     frame_count: int = FRAME_COUNT_DEFAULT,
     report: DogPipelineReport | None = None,
+    narrative_action: str = "",
+    breed_id: str = "",
 ) -> dict[str, Any]:
     """组装狗版 02_烘焙_真人律.json 格式"""
     stub = make_delivery_stub(
@@ -150,7 +177,7 @@ def _make_dog_baked(
         else:
             phase_map[t] = "缓和"
 
-    for key in CANONICAL_KEYS:
+    for key in DOG_CHANNELS:
         series = channels.get(key, [0.0] * frame_count)
         kfs = []
         for t in range(frame_count):
@@ -173,9 +200,16 @@ def _make_dog_baked(
         "dog_pipeline_report": report.to_dict() if report else {},
         "slider_packet": packet.to_dict(),
     })
+    if narrative_action:
+        baked["narrative_action"] = narrative_action
+    if breed_id:
+        baked["breed"] = breed_id
+        baked["style_layer"] = "styled"
+    else:
+        baked["style_layer"] = "pulse"
 
     # 校验
-    remaining = validate_baked_delivery(baked, frame_count)
+    remaining = validate_baked_delivery(baked, DOG_CHANNELS, frame_count)
     if remaining:
         baked["_delivery_validation_remaining"] = remaining
 
@@ -209,7 +243,7 @@ def render_dog_batch(
     data = json.loads(Path(baked_json_path).read_text(encoding="utf-8"))
     ch_data = {}
     tracks = data.get("channel_tracks", {})
-    for key in CANONICAL_KEYS:
+    for key in DOG_CHANNELS:
         kfs = tracks.get(key, {}).get("keyframes", [])
         ch_data[key] = [float(k["v"]) for k in kfs]
 

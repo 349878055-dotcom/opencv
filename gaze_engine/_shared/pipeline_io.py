@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-from gaze_engine._shared.channel_contract import CANONICAL_KEYS
 from gaze_engine._shared.slider_schema import SliderPacket
 
 F_NL = "01_自然语言.txt"
@@ -61,7 +60,7 @@ def write_dense(
         "schema": "dense-12x150",
         "frame_count": 150,
         "fps": 30,
-        "channels": {k: [round(float(x), 6) for x in channels[k]] for k in CANONICAL_KEYS if k in channels},
+        "channels": {k: [round(float(x), 6) for x in v] for k, v in channels.items()},
         "slider_packet": packet.to_dict(),
     }
     if stub is not None:
@@ -72,7 +71,7 @@ def read_dense(path: str) -> tuple[dict[str, list[float]], SliderPacket, dict[st
     p = Path(path.strip().strip('"')).resolve()
     d = json.loads(p.read_text(encoding="utf-8"))
     ch = d.get("channels") or {}
-    channels = {k: list(ch[k]) for k in CANONICAL_KEYS if k in ch}
+    channels = {k: list(v) for k, v in ch.items()}
     pkt = SliderPacket.from_dict(d.get("slider_packet") or {})
     ctx = d.get("delivery_context") or {}
     return channels, pkt, ctx

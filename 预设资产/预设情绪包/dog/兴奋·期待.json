@@ -27,5 +27,12 @@
       0.9,
       0.5
     ]
+  },
+  "pad": {
+    "P": 0.55,
+    "A": 0.65,
+    "D": 0.1,
+    "position": "偏愉悦 · 高激活 · 控制中性",
+    "channel_hint": "eye_gloss↑ · squint↑ · pupil_x↑ · pupil_y↑ · lid_upper↑"
   }
 }

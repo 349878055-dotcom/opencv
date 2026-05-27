@@ -28,5 +28,12 @@
       0.0
     ]
   },
-  "label": "满足幸福"
+  "label": "满足幸福",
+  "pad": {
+    "P": 0.78,
+    "A": 0.12,
+    "D": 0.08,
+    "position": "偏愉悦 · 激活中性 · 控制中性",
+    "channel_hint": "eye_gloss↑ · squint↑ · blink/幅低 · pupil_scale↑"
+  }
 }

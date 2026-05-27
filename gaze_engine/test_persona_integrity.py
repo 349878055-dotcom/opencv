@@ -17,13 +17,13 @@ import math
 import random
 from typing import Dict, List, Tuple
 
-from gaze_engine._shared.persona_compiler import (
+from gaze_engine.human.persona_compiler import (
     FRAME_COUNT,
     compile_to_channels,
     get_persona,
     list_persona_ids,
 )
-from gaze_engine._shared.channel_contract import CANONICAL_KEYS
+from gaze_engine.human.envelope_compile import HUMAN_CHANNELS
 
 # ──────────────────────────────────────────────
 # 1. 标准「魅惑」情绪波形生成器
@@ -122,7 +122,7 @@ def _run_integrity_test() -> int:
         header = "  ".join(f"{t:>4}" for t in SAMPLE_FRAMES)
         print(f"  {'通道':12s} │ 帧: {header}")
         print(f"  {'─'*12}─┼─{'─'*20}")
-        for key in CANONICAL_KEYS:
+        for key in HUMAN_CHANNELS:
             series = out[key]
             vals = "  ".join(f"{series[f-1]:.4f}" for f in SAMPLE_FRAMES)
             print(f"  {key:12s} │ {vals}")

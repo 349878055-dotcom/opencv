@@ -17,5 +17,12 @@
     "pulse_rate": 18,
     "pulse_depth": 15,
     "swell": 42
+  },
+  "pad": {
+    "P": 0.2,
+    "A": 0.3,
+    "D": 0.2,
+    "position": "愉悦中性 · 激活中性 · 控制中性",
+    "channel_hint": "接近物种中性"
   }
 }

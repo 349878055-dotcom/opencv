@@ -28,5 +28,12 @@
       -0.6
     ]
   },
-  "label": "烦闷甩尾"
+  "label": "烦闷甩尾",
+  "pad": {
+    "P": -0.38,
+    "A": 0.48,
+    "D": 0.22,
+    "position": "偏不悦/压抑 · 高激活 · 控制中性",
+    "channel_hint": "eye_gloss↓ · pupil_x↑ · pupil_y↑ · lid_upper↑"
+  }
 }
