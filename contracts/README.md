@@ -87,6 +87,7 @@ contracts/
 | [`pomot合成规范.md`](06_架构/pomot合成规范.md) | 预设 Prompt 模板合成规范 |
 | [`公共层边界合同.md`](06_架构/公共层边界合同.md) | E(t) 公共层 vs 物种通道边界 |
 | [`狗150帧全量编译合同_上篇.md`](06_架构/狗150帧全量编译合同_上篇.md) | S0～S7 导读 + 表演力/防出戏 + 代码映射 + P0 验收 |
+| [`5秒气质精品成片合同.md`](06_架构/5秒气质精品成片合同.md) | **C 端第一步**：5s 气质 + Wan 定稿精品线 + P1 否决项 + MVP 连续 3 次精品 |
 | [`扩散Prompt全链路方案_导读.md`](06_架构/扩散Prompt全链路方案_导读.md) | 04/05 拼装 + Wan 正负向 + 样例导出 + 验收命令 |
 | [`人格品种与Et正交审计.md`](06_架构/人格品种与Et正交审计.md) | 全库审计：人格/品种不改 E(t) |
 
@@ -118,6 +119,7 @@ contracts/
 python3 scripts/verify_diffusion_prompt_contract.py
 python3 scripts/verify_dog_150_compile_contract.py
 python3 scripts/export_prompt_samples.py   # → _runtime/prompt_samples/
+# 定稿 Wan 前：人眼过 5秒气质精品成片合同 §5.2 P1
 ```
 
 **门户测试入口：** `http://127.0.0.1:8765/portal`（双击 `一键打开能量工作台.sh`）

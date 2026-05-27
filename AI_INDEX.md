@@ -158,6 +158,7 @@
 │       ├── pomot合成规范.md
 │       ├── 公共层边界合同.md
 │       ├── 狗150帧全量编译合同_上篇.md
+│       ├── 5秒气质精品成片合同.md   ← C端第一步：5s气质+Wan定稿精品P1
 │       ├── 扩散Prompt全链路方案_导读.md
 │       └── 人格品种与Et正交审计.md
 │
@@ -490,6 +491,7 @@ API: POST /api/run-pipeline
 | "改 PAD 真源" | [`_shared/emotion_pad.py`](gaze_engine/_shared/emotion_pad.py) | `EMOTION_PAD` / `resolve_pad` | 全文 |
 | "跑 Prompt 验收" | [`scripts/verify_diffusion_prompt_contract.py`](scripts/verify_diffusion_prompt_contract.py) | `main()` | 全文 |
 | "跑狗150帧验收" | [`scripts/verify_dog_150_compile_contract.py`](scripts/verify_dog_150_compile_contract.py) | `main()` | 全文 |
+| "气质精品成片验收" | [`contracts/06_架构/5秒气质精品成片合同.md`](contracts/06_架构/5秒气质精品成片合同.md) | §5.2 P1 | 全文 |
 | "导出 Prompt 样例" | [`scripts/export_prompt_samples.py`](scripts/export_prompt_samples.py) | `export_species()` | 全文 |
 | "改 Prompt 模板合成" | [`pomot/`](gaze_engine/pomot/) | `PomotPipeline` / `composer` | 各文件 ~50 行 |
 | "改客户密码认证" | [`_shared/customer_db.py`](gaze_engine/_shared/customer_db.py) | `verify_customer_password` / `create_auth_token` | 各函数 ~15 行 |
@@ -537,6 +539,7 @@ API: POST /api/run-pipeline
 - 双模驱动架构: [`contracts/06_架构/流程设计.md`](contracts/06_架构/流程设计.md)
 - 公共层边界合同: [`contracts/06_架构/公共层边界合同.md`](contracts/06_架构/公共层边界合同.md)
 - 狗 150 帧编译合同: [`contracts/06_架构/狗150帧全量编译合同_上篇.md`](contracts/06_架构/狗150帧全量编译合同_上篇.md)
+- 5 秒气质精品成片: [`contracts/06_架构/5秒气质精品成片合同.md`](contracts/06_架构/5秒气质精品成片合同.md) — Wan 定稿 P1 + 连续 3 次精品
 - 扩散 Prompt 全链路导读: [`contracts/06_架构/扩散Prompt全链路方案_导读.md`](contracts/06_架构/扩散Prompt全链路方案_导读.md)
 - 04 拼装规范: [`contracts/04_接口/扩散引擎提示词拼装规范.md`](contracts/04_接口/扩散引擎提示词拼装规范.md)
 - PAD 真源: [`gaze_engine/_shared/emotion_pad.py`](gaze_engine/_shared/emotion_pad.py)
