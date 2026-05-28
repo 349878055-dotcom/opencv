@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""眼眉真人默认律 · 全量 12×150 后处理（合同/眼眉真人默认律.md）。"""
+"""人类眼眉先验 · 全量 12×150 后处理（合同/06_先验与质检/人_眼眉先验与平庸三检.md）。"""
 from __future__ import annotations
 
 import copy

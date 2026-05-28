@@ -1431,7 +1431,7 @@ def portal_save_step(self: Handler, body: bytes):
 @Route.post("/api/portal/render-membrane")
 def portal_render_membrane(self: Handler, body: bytes):
     """标定后一键渲染狗工程底膜 MP4（默认委屈幼犬 preset + 客户巨型贵宾模板）。"""
-    from asset_lib import project_output_dir
+    from asset_lib import project_output_dir, write_baked_json
     from gaze_engine._shared.customer_db import get_project
     from gaze_engine.delivery_pipeline import run_species_delivery
     from gaze_engine.dog.presets import dog_packet_from_file
@@ -1473,8 +1473,7 @@ def portal_render_membrane(self: Handler, body: bytes):
     out.mkdir(parents=True, exist_ok=True)
     (out / "01_滑杆包.json").write_text(
         json.dumps(pkt_dict, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (out / "02_烘焙_真人律.json").write_text(
-        json.dumps(baked, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    baked_path = write_baked_json(out, baked, species="dog")
 
     try:
         video_path, frames, render_info = _render_opencv_video(
@@ -1497,6 +1496,7 @@ def portal_render_membrane(self: Handler, body: bytes):
         "frames": frames,
         "path": str(dest),
         "preset": preset_name,
+        "baked_file": baked_path.name,
         "baked_schema": baked.get("schema_version"),
         "baked_species": baked.get("species"),
         **render_info,

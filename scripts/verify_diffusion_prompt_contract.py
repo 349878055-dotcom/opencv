@@ -53,7 +53,10 @@ def verify_dog_emotion(name: str, breed_id: str = "poodle_giant") -> None:
         emotion=name,
     )
     display = DiffusionPromptAssembler.resolve_breed_display("dog", breed_id)
-    assert display == "巨型贵宾犬", display
+    from gaze_engine.dog.breeds import get_dog_breed
+
+    expected_label = str(get_dog_breed(breed_id).get("label") or breed_id)
+    assert display == expected_label, f"{display!r} != {expected_label!r}"
     assert "眼耳与控制线的运动严格跟随控制序列" in r["prompt_04"]
     assert display in r["prompt_04"]
     _assert_04_structure(r["prompt_04"], species="dog", action=SAMPLE_ACTION)

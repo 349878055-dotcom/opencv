@@ -1,0 +1,42 @@
+{
+  "schema": "autodl_instance_profile_v1",
+  "updated_at": "2026-05-28",
+  "phase": "ready",
+  "phase_note": "阶段一完成：模型在数据盘，未导入 Fun Control 工作流、未跑测试包",
+  "console_url": "https://www.autodl.com/console/instance/list",
+  "instance": {
+    "id": "f4ac42b1b8-2eeaea38",
+    "region": "北京B区",
+    "host_machine": "425机",
+    "gpu": "vGPU-48GB-425W",
+    "image": "comfyanonymous/ComfyUI/tzwm_ComfyUI:v22",
+    "billing": "按量计费",
+    "ssh_template": "ssh -p <端口> root@connect.bjb1.seetacloud.com",
+    "ssh_note": "端口每次开机可能变，以 AutoDL 控制台复制的整行为准；勿把密码写入本文件"
+  },
+  "paths": {
+    "data_disk": "/root/autodl-tmp",
+    "models": "/root/autodl-tmp/comfy_models",
+    "comfy_root": "/root/ComfyUI",
+    "setup_status": "/root/autodl-tmp/SETUP_STATUS.txt",
+    "bundle_upload_dir": "/root/ComfyUI/input/diffusion_bundle",
+    "workflows_dir": "/root/ComfyUI/user/default/workflows"
+  },
+  "daily_sop": {
+    "start_gpu": "AutoDL 控制台 → 开机",
+    "start_comfy": "bash /root/autodl-tmp/scripts/start_comfy.sh",
+    "comfy_port": 8188,
+    "comfy_port_note": "控制台 → 自定义服务 → 添加 8188 → 浏览器打开",
+    "stop_gpu": "AutoDL 控制台 → 关机（容器内 poweroff 无效，必须网页点关机）",
+    "do_not": "释放实例（会清空数据盘）"
+  },
+  "models_on_data_disk": [
+    "diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+    "diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+    "loras/wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+    "loras/wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+    "vae/wan_2.1_vae.safetensors",
+    "text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+  ],
+  "next_phase": "测试包 export 后 scp 到 bundle_upload_dir，导入 Wan22FunControl 150 帧工作流"
+}

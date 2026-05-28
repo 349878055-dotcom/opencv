@@ -439,7 +439,7 @@ def render_pad_md(
 
 ### 本文件用途
 
-定义 **{display_name}** 这一种{sp_label}情绪的 **PAD 三轴定稿、通道 scale 投影、气质读感、PAD 验收**。  
+定义 **{display_name}** 这一种{sp_label}情绪的 **情绪坐标 (PAD) 三轴定稿、通道 scale 投影、读感、验收**。  
 改 PAD 只改 **本文件 + JSON `pad` 块 + `emotion_pad.py` 表项**，勿改其他情绪 PAD md。
 
 ### 一句话定义
@@ -460,7 +460,7 @@ def render_pad_md(
 |------------|--------------|
 | 本情绪的 **P / A / D** 定稿 | macro / hold_seg / E(t) 节拍（见 [`02_情绪与能量/{sp_cn}/{display_name}.md`]({emotion_contract})） |
 | 12 通道 **pad_scale** 投影表 | 品种/人格 `style.json`（见 `05_风格化/`） |
-| PAD 气质读感与同组混淆 | 04 扩散 Prompt 文案 |
+| 情绪坐标 (PAD) 读感与同组混淆 | 04 扩散 Prompt 文案 |
 | JSON `pad` 块与代码真源一致 | 工程底膜几何 |
 
 ### 资产与分组
@@ -480,7 +480,7 @@ def render_pad_md(
 
 ```text
 macro + hold_seg ──→ E(t)              ← 时间轴：多用力、何时峰
-emotion.pad / EMOTION_PAD ──→ (P,A,D)  ← 气质轴：各通道静态性格
+emotion.pad / EMOTION_PAD ──→ (P,A,D)  ← 情绪坐标 (PAD)：各通道静态性格
          ↓
 compute_pad_scale(ch) → pad_scale[12]
          ↓
@@ -552,7 +552,7 @@ pulse[ch,t]   = E[t] × pad_scale[ch]
 
 > 上表由 [`compute_pad_scale()`](../../../gaze_engine/_shared/envelope_compile.py) + [`{species}/pad_weights.py`](../../../gaze_engine/{species}/pad_weights.py) 自动算出；改 P/A/D 后须重跑生成器。
 
-### 4.4 气质读感（🧠 待审）
+### 4.4 情绪坐标读感（🧠 待审）
 
 {pad_read_lines}
 
@@ -588,7 +588,7 @@ pulse[ch,t]   = E[t] × pad_scale[ch]
 | `emotion_pad.py` 表项 | grep emotion id | 与 JSON 一致 | P0 |
 | pad_scale 重算 | 跑生成器 diff §4.3 | 12 通道 scale 一致 | P0 |
 | 与同组它情绪 | 对比 §4.5 表 | 最大轴差 ≥ **0.15** | P1 |
-| 气质读感 | 门户预览 5s | §4.4 人工打勾 | P1 |
+| 情绪坐标读感 | 门户预览 5s | §4.4 人工打勾 | P1 |
 | 与情绪合同正交 | 改 PAD 不改 macro | E(t) peak 不变 | P0 |
 
 ```bash
@@ -673,7 +673,7 @@ def render_emotion_md(
 > **独立合同**：[`03_情绪坐标/{SPECIES_DIR[species]}/{display_name}.md`](../../03_情绪坐标/{SPECIES_DIR[species]}/{display_name}.md)  
 > **摘要**：P={P}，A={A}，D={D} — {position}
 >
-> PAD 定稿、12 通道投影、气质读感与验收见 **03_情绪坐标**；本文件只管 macro / hold / E(t)。
+> 情绪坐标 (PAD) 定稿、12 通道投影、读感与验收见 **03_情绪坐标**；本文件只管 macro / hold / E(t)。
 """
 
     conf_rows = "\n".join(f"| {a} | {b} |" for a, b in _confusions(species, display_name, group))
@@ -691,7 +691,7 @@ def render_emotion_md(
 
 > **状态：🧠 脑补初稿（可逐份审定）** — 本文 **只管辖「{display_name}」** 一种情绪；不与其他情绪合并修订。
 > **数值真源**：`{asset}`（含 `pad` 块）· E(t) 由 `build_energy_envelope()` 自动计算。
-> **兄弟规范**：[`滑杆规范.md`](../../01_输入与收口/滑杆规范.md) · [`全量帧指令集规范.md`](../../04_通道与先验/全量帧指令集规范.md)
+> **兄弟规范**：[`滑杆规范.md`](../../01_输入与收口/滑杆规范.md) · [`01_十二通道与全量帧格式.md`](../../04_通道编译/01_十二通道与全量帧格式.md)
 
 ---
 
@@ -1087,7 +1087,7 @@ def write_species_emotion_overview(species: str, items: list[tuple]) -> None:
 ## 相关规范
 
 - [`滑杆规范.md`](../../01_输入与收口/滑杆规范.md)
-- [`全量帧指令集规范.md`](../../04_通道与先验/全量帧指令集规范.md)
+- [`01_十二通道与全量帧格式.md`](../../04_通道编译/01_十二通道与全量帧格式.md)
 - [`合同规范.md`](../../合同规范.md)
 """
     (out_dir / fname).write_text(content, encoding="utf-8")
@@ -1136,7 +1136,7 @@ def write_species_pad_overview(species: str, items: list[tuple]) -> None:
 - [`{PARENT_EMOTION[species]}`](../../02_情绪与能量/{sp_cn}/{PARENT_EMOTION[species]})（情绪 macro/E(t) 索引）
 - [`03_情绪坐标/02_三轴与情绪坐标.md`](../../03_情绪坐标/02_三轴与情绪坐标.md)
 - [`03_情绪坐标/03_12通道映射与编译链.md`](../../03_情绪坐标/03_12通道映射与编译链.md)
-- [`狗150帧全量编译合同_上篇.md`](../../08_架构与验收/狗150帧全量编译合同_上篇.md) §S1（PAD 查表逻辑）
+- [`狗动态层编译与代码映射.md`](../../04_通道编译/狗动态层编译与代码映射.md)（PAD 查表见 `03_情绪坐标`）
 """
     (out_dir / "情绪坐标定位索引.md").write_text(content, encoding="utf-8")
 
@@ -1220,7 +1220,7 @@ def write_species_style_overview(species: str, items: list[tuple[str, str]]) -> 
 
     extra_links = ""
     if species == "dog":
-        extra_links = "- [`情绪与品种合成约定.md`](情绪与品种合成约定.md)\n"
+        extra_links = "- [`狗品种风格偏向.md`](狗品种风格偏向.md)（情绪×品种合成 + 品种索引）\n"
 
     content = f"""# {SPECIES_LABEL[species]}{kind}风格 — 索引（非正文）
 

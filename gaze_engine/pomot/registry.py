@@ -86,11 +86,18 @@ class PomotRegistry:
                 except KeyError:
                     pass
             elif species == "cat":
-                from gaze_engine.cat.presets import CAT_PRESETS
+                from gaze_engine.cat.presets import (
+                    CAT_PRESETS,
+                    cat_packet_from_file,
+                    cat_packet_from_preset,
+                )
 
+                try:
+                    return cat_packet_from_file(preset_name).to_dict()
+                except KeyError:
+                    pass
                 if preset_name in CAT_PRESETS:
-                    raw = CAT_PRESETS[preset_name]
-                    return raw if isinstance(raw, dict) else raw.to_dict()  # type: ignore[union-attr]
+                    return cat_packet_from_preset(preset_name).to_dict()
         except Exception:
             pass
         return None

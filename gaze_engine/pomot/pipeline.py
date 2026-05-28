@@ -81,9 +81,13 @@ class PomotPipeline:
         if breed_override:
             split.breed_hint = breed_override
 
-        # 2. 情绪路由
-        emotion_text = emotion_override or split.emotion
-        route = self.router.route(emotion_text, split.species_hint, split.breed_hint)
+        # 2. 情绪路由（门户按钮 → preset_override 直连情绪包，不走 NL 词表）
+        route = self.router.route(
+            split.emotion,
+            split.species_hint,
+            split.breed_hint,
+            preset_override=emotion_override,
+        )
 
         # 3. 第一轮合成
         packet = self.composer.compose(split, route)

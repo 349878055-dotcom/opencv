@@ -1,7 +1,7 @@
 """
 狗完整管线：SliderPacket → 12 通道全量帧 → 02 烘焙 →（可选）工程底膜 MP4
 
-合同：合同/08_架构与验收/狗150帧全量编译合同_上篇.md（S0～S7）
+合同：合同/09_架构与验收/狗150帧全量编译合同_上篇.md（S0～S7）
 
   S1 resolve_pad → S2 build_energy_envelope → S4 channels_from_envelope
   → ear 注入 → S5 apply_breed_style → S6 apply_dog_prior → S7 fix_dog_pulse_quality

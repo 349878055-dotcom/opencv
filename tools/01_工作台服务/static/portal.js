@@ -1413,6 +1413,7 @@ async function renderMembraneMp4(){
     const d = await apiPost('/api/portal/render-membrane', {
       customer_id: S.customerId,
       project_id: S.currentProject.project_id,
+      preset: S.activeEmotion || '委屈·幼犬眼',
     });
     if(!d.ok) throw new Error(d.error||'渲染失败');
     S.videoUrl = d.video_url + '?t=' + Date.now();

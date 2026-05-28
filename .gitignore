@@ -21,5 +21,6 @@ tools/04_缓存数据/
 *.log
 .env
 .env.local
+tools/autodl/.env.local
 __pycache__/
 *.pyc

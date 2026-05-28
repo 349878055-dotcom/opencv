@@ -1,8 +1,10 @@
 # 美短/活泼型 — 猫品种风格合同（独立）
 
+> **类型：个性化 · 猫 · 单项** · id=`american_shorthair`
+
 > **状态：🧠 脑补初稿（可逐份审定）** — 本文 **只管辖「美短/活泼型」**（id=`american_shorthair`）；不与其它品种合并修订。
 > **数值真源**：`预设资产/风格包/cat/american_shorthair/style.json` · schema `ecursor_style_v1`
-> **兄弟规范**：[`公共层边界合同.md`](../../08_架构与验收/公共层边界合同.md)
+> **兄弟规范**：[`公共层边界合同.md`](../../09_架构与验收/公共层边界合同.md)
 > **猫品种真源**：`gaze_engine/cat/breed_style_catalog.json` → `sync_species_style_pack.py`
 
 ---
@@ -55,7 +57,7 @@ styled[ch, t] = clamp01( base_offset[ch] + scale_factor[ch] × pulse[ch, t] )
 ### 几何层（如有）
 
 - `template_scales` / `template_structure` → [`gaze_engine/cat/breed_matrix.json`](../../../gaze_engine/cat/breed_matrix.json)
-- 与客户 `SpeciesTemplate` 标定叠加，见 [`公共层边界合同.md`](../../08_架构与验收/公共层边界合同.md)
+- 与客户 `SpeciesTemplate` 标定叠加，见 [`公共层边界合同.md`](../../09_架构与验收/公共层边界合同.md)
 
 ---
 

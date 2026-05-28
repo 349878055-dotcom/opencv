@@ -82,26 +82,42 @@ _EMOTION_MAP: dict[str, dict[str, str]] = {
 class EmotionRouter:
     """情绪路由"""
 
-    # 默认回退预设（按物种）
+    # 默认回退预设（按物种；须能在 预设资产/情绪包/{species}/ 或 human PRESETS 中解析）
     _DEFAULT_PRESET: dict[str, str] = {
         "human": "施压·凝视",
         "dog": "委屈·幼犬眼",
-        "cat": "魅惑·勾人",
+        "cat": "警觉瞪视",
     }
 
-    def route(self, emotion: str, species_hint: str = "", breed_hint: str = "") -> EmotionRoute:
+    def route(
+        self,
+        emotion: str,
+        species_hint: str = "",
+        breed_hint: str = "",
+        *,
+        preset_override: str = "",
+    ) -> EmotionRoute:
         """
         路由：情绪词 → 预设名
 
         Args:
-            emotion: 客户情绪描述，如 '委屈'
+            emotion: 从 NL 拆出的情绪词（门户手选情绪时应传空）
             species_hint: 物种提示，如 'dog'
             breed_hint: 品种提示，如 '贵宾犬'
+            preset_override: 门户情绪按钮 id（= 情绪包 JSON 文件名或 emotion 字段）
 
         Returns:
             EmotionRoute
         """
         species = self._normalize_species(species_hint)
+        button = (preset_override or "").strip()
+        if button and self._preset_in_assets(species, button):
+            return EmotionRoute(
+                species=species,
+                preset_name=button,
+                breed=breed_hint,
+                confidence=1.0,
+            )
         preset_name = self._lookup_preset(emotion, species)
         return EmotionRoute(
             species=species,
@@ -109,6 +125,19 @@ class EmotionRouter:
             breed=breed_hint,
             confidence=1.0 if emotion else 0.5,
         )
+
+    @staticmethod
+    def _preset_in_assets(species: str, preset_id: str) -> bool:
+        """门户按钮 id 是否对应 预设资产/情绪包 中的 JSON。"""
+        from asset_lib import emotion_preset_path
+
+        if emotion_preset_path(species, preset_id) is not None:
+            return True
+        if species == "human":
+            from gaze_engine.human.control_surface import PRESETS
+
+            return preset_id in PRESETS
+        return False
 
     def _normalize_species(self, hint: str) -> str:
         """规范化物种名"""

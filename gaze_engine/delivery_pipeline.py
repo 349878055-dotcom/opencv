@@ -27,7 +27,7 @@ from gaze_engine._shared.slider_schema import SliderPacket  # noqa: E402
 
 from gaze_engine._shared.emotion_pad import EMOTION_PAD, resolve_pad  # noqa: E402
 
-_PIPELINE_DOC = "合同/全量帧指令集规范.md · envelope-v1"
+_PIPELINE_DOC = "合同/04_通道编译/01_十二通道与全量帧格式.md · envelope-v1"
 
 
 def _emotion_pad(emotion: str, packet: SliderPacket | None = None) -> tuple[float, float, float]:
