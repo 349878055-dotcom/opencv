@@ -1,0 +1,57 @@
+{
+  "breed_id": "poodle_giant",
+  "species": "dog",
+  "label": "巨型贵宾犬/优雅型",
+  "_reference": "AKC Standard Poodle — oval eyes, long drop ears (images.akc.org/pdf/breeds/standards/Poodle.pdf)",
+  "membrane_notes": "椭圆眼、长垂耳；工程基准品种",
+  "template_scales": {
+    "eye_size": 0.92,
+    "eye_aspect": 0.895,
+    "iris_size": 0.929,
+    "pupil_size": 0.889,
+    "ear_droop": 0.88
+  },
+  "template_structure": {
+    "BROW_INNER_OFF": [
+      -95,
+      -72
+    ],
+    "BROW_PEAK_OFF": [
+      0,
+      -88
+    ],
+    "BROW_OUTER_OFF": [
+      95,
+      -72
+    ],
+    "EAR_LEFT_BASE": [
+      [
+        -168,
+        25
+      ],
+      [
+        -205,
+        145
+      ],
+      [
+        -158,
+        265
+      ]
+    ],
+    "EAR_RIGHT_BASE": [
+      [
+        168,
+        25
+      ],
+      [
+        205,
+        145
+      ],
+      [
+        158,
+        265
+      ]
+    ]
+  },
+  "schema": "ecursor_membrane_breed_v1"
+}

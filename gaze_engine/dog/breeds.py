@@ -116,12 +116,16 @@ def apply_breed_style(
     if not breed_id or breed_id in ("default", ""):
         return channels
     from gaze_engine.dog.envelope_compile import DOG_CHANNELS
-    from gaze_engine._shared.style_compose import apply_style_offset
-
-    cfg = get_dog_breed(breed_id)
-    return apply_style_offset(
-        channels,
-        cfg["base_offset"],
-        cfg["scale_factor"],
-        channel_keys=DOG_CHANNELS,
+    from gaze_engine._shared.style_compose import (
+        apply_style_offset,
+        load_style_json,
+        style_offsets_from_dict,
     )
+
+    raw = load_style_json("dog", breed_id)
+    if raw is not None:
+        bo, sf = style_offsets_from_dict(raw)
+    else:
+        cfg = get_dog_breed(breed_id)
+        bo, sf = cfg["base_offset"], cfg["scale_factor"]
+    return apply_style_offset(channels, bo, sf, channel_keys=DOG_CHANNELS)

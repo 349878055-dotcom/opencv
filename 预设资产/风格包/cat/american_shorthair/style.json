@@ -1,0 +1,36 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "american_shorthair",
+  "label": "美短/活泼型",
+  "species": "cat",
+  "notes": "圆眼略比英短机警，狩猎型扫视，互动欲强 · [底膜] 圆眼略比英短机警",
+  "default_emotion": "",
+  "base_offset": {
+    "pupil_x": 0.48,
+    "pupil_y": 0.47,
+    "blink": 0.46,
+    "eyebrow": 0.48,
+    "brow_raise": 0.48,
+    "pupil_scale": 0.5,
+    "iris_scale": 0.5,
+    "cornea_bulge": 0.5,
+    "squint": 0.44,
+    "lid_upper": 0.46,
+    "lid_lower": 0.46,
+    "eye_gloss": 0.5
+  },
+  "scale_factor": {
+    "pupil_x": 0.05,
+    "pupil_y": 0.05,
+    "blink": 0.2,
+    "eyebrow": 0.08,
+    "brow_raise": 0.08,
+    "pupil_scale": 0.14,
+    "iris_scale": 0.1,
+    "cornea_bulge": 0.12,
+    "squint": 0.16,
+    "lid_upper": 0.12,
+    "lid_lower": 0.12,
+    "eye_gloss": 0.05
+  }
+}

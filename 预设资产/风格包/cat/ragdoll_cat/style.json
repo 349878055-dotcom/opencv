@@ -3,7 +3,7 @@
   "id": "ragdoll_cat",
   "label": "布偶猫/温顺型",
   "species": "cat",
-  "notes": "布偶猫/温顺型 品种风格偏移",
+  "notes": "蓝大眼、半阖温顺，慢眨，耳位低垂感，抱持时眼动少 · [底膜] 大椭圆蓝眼",
   "default_emotion": "",
   "base_offset": {
     "pupil_x": 0.48,

@@ -1,7 +1,7 @@
 """
 狗完整管线：SliderPacket → 12 通道全量帧 → 02 烘焙 →（可选）工程底膜 MP4
 
-合同：contracts/06_架构/狗150帧全量编译合同_上篇.md（S0～S7）
+合同：合同/08_架构与验收/狗150帧全量编译合同_上篇.md（S0～S7）
 
   S1 resolve_pad → S2 build_energy_envelope → S4 channels_from_envelope
   → ear 注入 → S5 apply_breed_style → S6 apply_dog_prior → S7 fix_dog_pulse_quality
@@ -42,8 +42,10 @@ class DogPipelineReport:
     emotion: str = ""
     frame_count: int = FRAME_COUNT_DEFAULT
     ear_injected: bool = False
-    dog_prior_skipped: bool = True   # TODO: 等 apply_dog_prior 实现
-    dog_quality_skipped: bool = True  # TODO: 等 fix_pulse_quality 实现
+    dog_prior_skipped: bool = False
+    dog_quality_skipped: bool = False
+    prior_report: dict[str, Any] = field(default_factory=dict)
+    pulse_quality_report: dict[str, Any] = field(default_factory=dict)
     issues: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -54,6 +56,8 @@ class DogPipelineReport:
             "ear_injected": self.ear_injected,
             "dog_prior_skipped": self.dog_prior_skipped,
             "dog_quality_skipped": self.dog_quality_skipped,
+            "prior_report": self.prior_report,
+            "pulse_quality_report": self.pulse_quality_report,
             "issues": self.issues,
         }
 
@@ -117,27 +121,33 @@ def run_dog_pipeline(
         channels = apply_breed_style(channels, bid)
         style_applied = bid
 
-    # ── 4. 狗先验（叙事回头 → 扫视补偿） ──
+    # ── 4. 狗先验（眼动动力学 + 叙事回头） ──
     from gaze_engine.dog.prior import apply_dog_prior
 
-    channels = apply_dog_prior(
+    channels, prior_rep = apply_dog_prior(
         channels, pkt, narrative_action=narrative_action, frame_count=frame_count
     )
 
-    # ── 5. 平庸质检（blink 下限等） ──
+    # ── 5. 平庸质检（Q01-Q03 + blink 下限） ──
     from gaze_engine.dog.pulse_quality import fix_dog_pulse_quality
 
-    pq = fix_dog_pulse_quality(channels, frame_count=frame_count)
+    pq = fix_dog_pulse_quality(channels, pkt, frame_count=frame_count)
 
     report = DogPipelineReport(
         emotion=pkt.emotion,
         frame_count=frame_count,
         ear_injected=ear_injected,
-        dog_prior_skipped=False,
-        dog_quality_skipped=False,
+        dog_prior_skipped=not prior_rep.enabled,
+        dog_quality_skipped=not pq.enabled,
+        prior_report=prior_rep.to_dict(),
+        pulse_quality_report=pq.to_dict(),
     )
+    if prior_rep.issues:
+        report.issues.extend(prior_rep.issues)
     if pq.fixes:
         report.issues.extend(pq.fixes)
+    if pq.remaining:
+        report.issues.extend(pq.remaining)
 
     baked = _make_dog_baked(
         pkt, channels, frame_count=frame_count, report=report,
@@ -157,7 +167,7 @@ def _make_dog_baked(
     narrative_action: str = "",
     breed_id: str = "",
 ) -> dict[str, Any]:
-    """组装狗版 02_烘焙_真人律.json 格式"""
+    """组装狗版 02_烘焙_狗律.json 格式"""
     stub = make_delivery_stub(
         packet, channels, frame_count=frame_count, label=packet.emotion
     )
@@ -198,6 +208,8 @@ def _make_dog_baked(
         "channel_tracks": tracks,
         "energy_phases": phases,
         "dog_pipeline_report": report.to_dict() if report else {},
+        "dog_prior_report": (report.prior_report if report else {}),
+        "pulse_quality_report": (report.pulse_quality_report if report else {}),
         "slider_packet": packet.to_dict(),
     })
     if narrative_action:
@@ -208,7 +220,11 @@ def _make_dog_baked(
     else:
         baked["style_layer"] = "pulse"
 
-    # 校验
+    if report and report.pulse_quality_report.get("fixes"):
+        baked["_pulse_quality_fix_log"] = report.pulse_quality_report["fixes"]
+    if report and report.pulse_quality_report.get("remaining"):
+        baked["_pulse_quality_remaining"] = report.pulse_quality_report["remaining"]
+
     remaining = validate_baked_delivery(baked, DOG_CHANNELS, frame_count)
     if remaining:
         baked["_delivery_validation_remaining"] = remaining
@@ -227,7 +243,7 @@ def render_dog_batch(
     狗工程底膜批量渲染。
 
     Args:
-        baked_json_path: 02_烘焙_真人律.json 路径
+        baked_json_path: 02_烘焙_狗律.json 路径
         out_dir: 输出目录
         fps: 帧率
         skip_render: 是否跳过渲染（只生成 JSON）
@@ -311,11 +327,9 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # 写 JSON
-    json_path = out_dir / "02_烘焙_真人律.json"
-    json_path.write_text(
-        json.dumps(baked, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    from asset_lib import write_baked_json
+
+    json_path = write_baked_json(out_dir, baked, species="dog")
     print(f"[狗管线] 烘焙 JSON → {json_path}")
 
     # 渲染工程底膜

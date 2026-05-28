@@ -239,7 +239,7 @@
 │  │                            📌 比如「委屈的跑回笼子再回头看了一眼」            │
 │  │                               → 动作"跑回笼子回头" + 情绪"委屈"               │
 │  ├── emotion_router.py      情绪路由：情绪词 → 预设名 + 物种/品种                │
-│  │                            📌 从控制面/预设情绪包查找匹配的预设                │
+│  │                            📌 从控制面/情绪包查找匹配的预设                │
 │  ├── registry.py            预设注册表：按(species, breed, preset)加载预设模板    │
 │  │                            📌 读取预设资产/目录下的 JSON 预设数据              │
 │  ├── templates.py           数据类：NLSplitResult, EmotionRoute, PresetPromptTemplate│

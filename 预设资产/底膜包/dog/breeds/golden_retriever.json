@@ -1,0 +1,57 @@
+{
+  "breed_id": "golden_retriever",
+  "species": "dog",
+  "label": "金毛/温厚型",
+  "_reference": "AKC Golden Retriever — medium-large almond eyes; short pendant ears (images.akc.org/pdf/breeds/standards/GoldenRetriever.pdf)",
+  "membrane_notes": "开放杏仁眼、短垂耳",
+  "template_scales": {
+    "eye_size": 1.04,
+    "eye_aspect": 1.06,
+    "iris_size": 1.02,
+    "pupil_size": 0.96,
+    "ear_droop": 0.72
+  },
+  "template_structure": {
+    "BROW_INNER_OFF": [
+      -105,
+      -75
+    ],
+    "BROW_PEAK_OFF": [
+      0,
+      -92
+    ],
+    "BROW_OUTER_OFF": [
+      105,
+      -75
+    ],
+    "EAR_LEFT_BASE": [
+      [
+        -130,
+        -10
+      ],
+      [
+        -155,
+        90
+      ],
+      [
+        -120,
+        200
+      ]
+    ],
+    "EAR_RIGHT_BASE": [
+      [
+        130,
+        -10
+      ],
+      [
+        155,
+        90
+      ],
+      [
+        120,
+        200
+      ]
+    ]
+  },
+  "schema": "ecursor_membrane_breed_v1"
+}

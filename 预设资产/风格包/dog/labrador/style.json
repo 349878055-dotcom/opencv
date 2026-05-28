@@ -1,0 +1,36 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "labrador",
+  "label": "拉布拉多/友善型",
+  "species": "dog",
+  "notes": "开放圆眼，湿润友善，眉内角易上提，眼动中等 · [底膜] 中等圆睁友好眼、垂耳",
+  "default_emotion": "",
+  "base_offset": {
+    "pupil_x": 0.5,
+    "pupil_y": 0.48,
+    "blink": 0.5,
+    "eyebrow": 0.3,
+    "pupil_scale": 0.52,
+    "iris_scale": 0.5,
+    "cornea_bulge": 0.5,
+    "squint": 0.44,
+    "brow_raise": 0.5,
+    "lid_upper": 0.46,
+    "lid_lower": 0.5,
+    "eye_gloss": 0.6
+  },
+  "scale_factor": {
+    "pupil_x": 0.05,
+    "pupil_y": 0.04,
+    "blink": 0.24,
+    "eyebrow": 0.12,
+    "pupil_scale": 0.14,
+    "iris_scale": 0.12,
+    "cornea_bulge": 0.14,
+    "squint": 0.14,
+    "brow_raise": 0.18,
+    "lid_upper": 0.12,
+    "lid_lower": 0.12,
+    "eye_gloss": 0.07
+  }
+}

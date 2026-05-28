@@ -5,31 +5,31 @@
   "species": "human",
   "notes": "疯癫狂乱，不可预测",
   "base_offset": {
-    "pupil_x": 0.5,
+    "pupil_x": 0.52,
     "pupil_y": 0.5,
-    "blink": 0.5,
+    "blink": 0.52,
     "eyebrow": 0.5,
-    "pupil_scale": 0.5,
+    "pupil_scale": 0.52,
     "iris_scale": 0.5,
     "cornea_bulge": 0.5,
-    "squint": 0.5,
-    "brow_raise": 0.5,
+    "squint": 0.48,
+    "brow_raise": 0.54,
     "lid_upper": 0.5,
     "lid_lower": 0.5,
-    "eye_gloss": 0.5
+    "eye_gloss": 0.6
   },
   "scale_factor": {
-    "pupil_x": 0.5,
-    "pupil_y": 0.5,
-    "blink": 0.5,
-    "eyebrow": 0.5,
-    "pupil_scale": 0.5,
-    "iris_scale": 0.5,
-    "cornea_bulge": 0.5,
+    "pupil_x": 0.78,
+    "pupil_y": 0.7,
+    "blink": 0.72,
+    "eyebrow": 0.6,
+    "pupil_scale": 0.58,
+    "iris_scale": 0.52,
+    "cornea_bulge": 0.55,
     "squint": 0.5,
-    "brow_raise": 0.5,
-    "lid_upper": 0.5,
-    "lid_lower": 0.5,
-    "eye_gloss": 0.5
+    "brow_raise": 0.65,
+    "lid_upper": 0.55,
+    "lid_lower": 0.52,
+    "eye_gloss": 0.42
   }
 }

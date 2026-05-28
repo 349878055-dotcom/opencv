@@ -9,7 +9,7 @@ const D = {
   welcome: $('welcome-screen'), registerScreen: $('register-screen'), loginScreen: $('login-screen'),
   dashboard: $('dashboard'), wizard: $('wizard'),
   btnEnter: $('btn-enter'), linkLogin: $('link-login'),
-  regName: $('reg-name'), regPwd: $('reg-pwd'), regPwd2: $('reg-pwd2'), regSpecies: $('reg-species'),
+  regName: $('reg-name'), regPwd: $('reg-pwd'), regPwd2: $('reg-pwd2'),
   registerError: $('register-error'), btnRegister: $('btn-register'),
   switchToLogin: $('switch-to-login'), switchToRegister: $('switch-to-register'),
   loginCid: $('login-cid'), loginPwd: $('login-pwd'), loginError: $('login-error'), btnLogin: $('btn-login'),
@@ -20,7 +20,7 @@ const D = {
   speciesBannerMsg: $('species-banner-msg'),
   membraneAlertStep1: $('membrane-alert-step1'), membraneAlertStep4: $('membrane-alert-step4'),
   uploadZone: $('upload-zone'), photoInput: $('photo-input'),
-  btnUpload: $('btn-upload'), btnAutoDetect: $('btn-auto-detect'),
+  btnUpload: $('btn-upload'),
   calibrateWrap: $('calibrate-wrap'), calibrateHint: $('calibrate-hint'),
   calibrateStage: $('calibrate-stage'), calibrateImg: $('calibrate-img'),
   calibrateLoadErr: $('calibrate-load-err'),
@@ -35,20 +35,20 @@ const D = {
   membraneDiffEmpty: $('membrane-diff-empty'), membraneDiffWrap: $('membrane-diff-wrap'),
   btnRenderMembrane: $('btn-render-membrane'),
   statusMembrane: $('status-membrane'),
-  detectionBox: $('detection-box'), btnStep1Next: $('btn-step1-next'), status1: $('status-1'),
-  speciesSelect: $('species-select'), presetContainer: $('preset-container'), styleContainer: $('style-container'),
+  btnStep1Next: $('btn-step1-next'), status1: $('status-1'),
+  speciesSelect: $('species-select'), calibBreedWrap: $('calib-breed-wrap'), calibBreedSelect: $('calib-breed-select'),
+  presetContainer: $('preset-container'), styleContainer: $('style-container'),
   presetEmotionTitle: $('preset-emotion-title'), presetEmotionCount: $('preset-emotion-count'),
   presetEmotionHint: $('preset-emotion-hint'), presetStyleTitle: $('preset-style-title'),
   presetStyleCount: $('preset-style-count'), presetStyleHint: $('preset-style-hint'),
+  energyPulseWrap: $('energy-pulse-wrap'), energyPulseCurve: $('energy-pulse-curve'),
+  energyPulseInfo: $('energy-pulse-info'), energyPulseMacro: $('energy-pulse-macro'),
+  energyPulseEmotion: $('energy-pulse-emotion'),
   nlInput: $('nl-input'), btnStep2Prev: $('btn-step2-prev'), btnStep2Next: $('btn-step2-next'),
   btnPomotRun: $('btn-pomot-run'), btnPomotRound2: $('btn-pomot-round2'), pomotSummary: $('pomot-summary'),
   btnStep3Prev: $('btn-step3-prev'), btnStep3Next: $('btn-step3-next'), status3: $('status-3'), stepSaves3: $('step-saves-3'),
   btnStep4Prev: $('btn-step4-prev'), btnRenderVideo: $('btn-render-video'), btnStep4Next: $('btn-step4-next'),
   videoWrap: $('video-wrap'), previewVideo: $('preview-video'), status4: $('status-4'),
-  resultTabs: $('result-tabs'),
-  resultPacket: $('result-packet'), resultSplit: $('result-split'), resultBaked: $('result-baked'),
-  resultBeat: $('result-beat'), resultPrompt: $('result-prompt'),
-  resultWanPos: $('result-wan-pos'), resultWanNeg: $('result-wan-neg'), resultTemplate: $('result-template'),
   btnStep5Prev: $('btn-step5-prev'), btnSaveAll: $('btn-save-all'), btnExport: $('btn-export'),
   btnDownloadBundle: $('btn-download-bundle'), bundleStatus: $('bundle-status'),
   bundleZipLink: $('bundle-zip-link'), profilePathLine: $('profile-path-line'),
@@ -68,9 +68,10 @@ let S = {
   projects: [], currentProject: null,
   currentStep: 1,
   photoFile: null, photoName: '', photoUrl: '', photoBlobUrl: '', imageWidth: 0, imageHeight: 0,
-  detection: null, templateParams: null, calibrated: false,
+  detection: null, templateParams: null, calibrated: false, calibratedBreed: '',
+  calibBreed: '',
   calibAnchors: {}, calibStepIdx: 0, calibMarkEars: false,
-  presets: {human:{emotions:[],styles:[]}, cat:{emotions:[],styles:[]}, dog:{emotions:[],styles:[]}},
+  presets: {human:{emotions:[],styles:[]}, cat:{emotions:[],styles:[]}, dog:{emotions:[],styles:[]}}, // 仅索引 id/label，数值在预设资产库
   activeEmotion: '', activeStyle: '', activeSpecies: 'human',
   lastSplit: null, lastRoute: null, lastPacket: null, lastBaked: null,
   lastMetronome: '', lastPrompt: '', lastWanPositive: '', lastWanNegative: '',
@@ -93,7 +94,7 @@ function archivePayload(extra={}){
     nl: D.nlInput?.value?.trim() || '',
     action: (S.lastSplit && S.lastSplit.action) || D.nlInput?.value?.trim() || '',
     photo_name: S.photoName,
-    packet: S.lastPacket,
+    // 不传 packet：01_滑杆包由服务端从 baked.slider_packet 或 预设资产/情绪包 解析
     baked: S.lastBaked,
     metronome: S.lastMetronome,
     beat_text: S.lastMetronome,
@@ -167,7 +168,7 @@ async function ensurePortalFresh(){
 
     if(!Array.isArray(v.features) || !v.features.includes('calibrate_preview')){
       if(banner){
-        banner.textContent = '⚠ 后台服务过旧（缺少标定线条预览）。请双击「一键打开能量工作台.sh」重启，再打开 http://127.0.0.1:8765/portal';
+        banner.textContent = '⚠ 后台服务过旧（缺少标定线条预览）。请双击「一键打开创作门户.sh」重启，再打开 http://127.0.0.1:8765/portal';
         show(banner);
       }
       return false;
@@ -195,7 +196,7 @@ async function ensurePortalFresh(){
     return true;
   } catch(e){
     if(banner){
-      banner.textContent = '⚠ 后台未启动或无法连接。请双击「一键打开能量工作台.sh」，再访问 http://127.0.0.1:8765/portal';
+      banner.textContent = '⚠ 后台未启动或无法连接。请双击「一键打开创作门户.sh」，再访问 http://127.0.0.1:8765/portal';
       show(banner);
     }
     return false;
@@ -206,7 +207,7 @@ async function apiPost(path, body){
   const t = await r.text();
   if(!r.ok){
     if(t.trim().startsWith('<!DOCTYPE')||t.trim().startsWith('<html')){
-      throw new Error('后台 API 不存在(404) — 请双击「一键打开能量工作台.sh」重启服务后再试');
+      throw new Error('后台 API 不存在(404) — 请双击「一键打开创作门户.sh」重启服务后再试');
     }
     throw new Error(t.slice(0,300));
   }
@@ -248,6 +249,51 @@ function styleLabelForSpecies(species, styleId){
   const data=S.presets[species]||{};
   const item=(data.styles||[]).find(s=>s.id===styleId);
   return item?.label || styleId || '品种模板';
+}
+
+function getCalibBreed(){
+  if(S.activeSpecies === 'human') return '';
+  if(D.calibBreedSelect?.value) return D.calibBreedSelect.value;
+  return S.calibBreed || S.activeStyle || defaultStyleForSpecies(
+    S.activeSpecies, (S.presets[S.activeSpecies]||{}).styles
+  );
+}
+
+function syncCalibBreedUI(species){
+  if(!D.calibBreedWrap || !D.calibBreedSelect) return;
+  if(species === 'human'){
+    hide(D.calibBreedWrap);
+    S.calibBreed = '';
+    return;
+  }
+  show(D.calibBreedWrap);
+  const styles = (S.presets[species]||{}).styles || [];
+  const prefer = S.calibratedBreed || S.calibBreed || S.activeStyle
+    || defaultStyleForSpecies(species, styles);
+  D.calibBreedSelect.innerHTML = styles.map(s =>
+    `<option value="${esc(s.id)}">${esc(s.label)}</option>`
+  ).join('');
+  if(prefer && styles.some(s => s.id === prefer)) D.calibBreedSelect.value = prefer;
+  else if(styles.length) D.calibBreedSelect.value = styles[0].id;
+  S.calibBreed = D.calibBreedSelect.value;
+}
+
+function breedMismatchMessage(selected, calibrated){
+  if(S.activeSpecies === 'human' || !calibrated || !selected || selected === calibrated) return '';
+  return '品种「'+styleLabelForSpecies(S.activeSpecies, selected)+'」与标定品种「'
+    +styleLabelForSpecies(S.activeSpecies, calibrated)+'」不一致 — 请回第①步重新标定';
+}
+
+function assertBreedCalibrated(){
+  if(S.activeSpecies === 'human') return true;
+  if(!S.calibrated || !S.calibratedBreed){
+    alert('请先完成第①步照片配准（锚点标定，非美颜滑杆）');
+    return false;
+  }
+  const sel = S.activeStyle || getCalibBreed();
+  const msg = breedMismatchMessage(sel, S.calibratedBreed);
+  if(msg){ alert(msg); return false; }
+  return true;
 }
 function updateBreedBadges(){
   const label=styleLabelForSpecies(S.activeSpecies, S.activeStyle);
@@ -323,7 +369,7 @@ async function doRegister(){
   if(pwd!==pwd2){ D.registerError.textContent='两次密码不一致'; D.registerError.classList.add('active'); return; }
   D.btnRegister.disabled=true;
   try {
-    const d = await apiPost('/api/auth/register', {display_name:name, password:pwd, preferred_species:D.regSpecies.value});
+    const d = await apiPost('/api/auth/register', {display_name:name, password:pwd});
     if(!d.ok) throw new Error(d.error||'注册失败');
     const login = await apiPost('/api/auth/login', {customer_id:d.customer_id, password:pwd});
     if(!login.ok) throw new Error(login.error||'自动登录失败');
@@ -499,8 +545,8 @@ async function startNewProject(autoOpen){
   const name = autoOpen ? ('创作_'+new Date().toISOString().slice(0,10)) :
     prompt('项目名称：', '创作_'+new Date().toISOString().slice(0,10));
   if(!name) return;
-  const species = S.customer?.preferred_species || 'human';
-  const d = await apiPost('/api/customer/'+S.customerId+'/project/create', {project_name:name, species});
+  // 物种在第①步向导里选择；新建项目先用 human 占位，打开后可改
+  const d = await apiPost('/api/customer/'+S.customerId+'/project/create', {project_name:name, species:'human'});
   if(!d.ok) throw new Error(d.error||'创建失败');
   await loadProjects();
   const np = S.projects.find(x=>x.project_id===d.project_id);
@@ -512,11 +558,11 @@ function openProject(idx, isNew){
   const p = S.projects[idx];
   if(!p) return;
   S.currentProject = p;
-  S.activeSpecies = p.species || S.customer?.preferred_species || 'human';
-  if(S.customer?.breed) S.activeStyle = S.customer.breed;
+  S.activeSpecies = p.species || 'human';
   S.savedSteps = [];
   S.photoFile = null; S.photoName = p.reference_photo || '';
-  S.calibrated = false; S.calibAnchors = {}; S.calibStepIdx = 0; S.calibMarkEars = false;
+  S.calibrated = false; S.calibratedBreed = ''; S.calibBreed = '';
+  S.calibAnchors = {}; S.calibStepIdx = 0; S.calibMarkEars = false;
   S.lastSplit = null; S.lastRoute = null; S.lastPacket = null; S.lastBaked = null;
   S.lastMetronome = ''; S.lastPrompt = ''; S.lastWanPositive = ''; S.lastWanNegative = ''; S.videoUrl = ''; S.membraneInfo = null;
   S.templateParams = null;
@@ -525,6 +571,7 @@ function openProject(idx, isNew){
   const lb = $('species-label');
   if(lb) lb.textContent = S.activeSpecies;
   renderPresets(S.activeSpecies);
+  syncCalibBreedUI(S.activeSpecies);
   resetPhotoUI();
   if(S.photoName){
     S.photoUrl = '/api/customer/photo-preview/'+S.customerId+'/'+encodeURIComponent(S.photoName);
@@ -594,7 +641,6 @@ function showMembraneCompare(data){
   setImg(D.membranePreviewCustom, data.preview_calibrated_base64 || data.preview_base64, data.calibrated_preview_url || data.preview_url);
   renderMembraneDiff(data.adjustment_diff);
   show(D.membranePreviewWrap);
-  hide(D.detectionBox);
   D.membranePreviewWrap.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
@@ -647,6 +693,8 @@ function restoreCalibration(calib){
   }
   S.calibStepIdx = idx;
   S.calibrated = true;
+  S.calibratedBreed = calib.breed || '';
+  if(calib.breed) S.activeStyle = calib.breed;
   S.detection = {
     method: calib.method || 'manual',
     confidence: calib.confidence ?? 1,
@@ -664,9 +712,6 @@ function restoreCalibration(calib){
       adjustment_diff: calib.adjustment_diff,
       membrane_note: calib.membrane_note || '左=品种默认 · 右=标定后',
     });
-  } else {
-    D.detectionBox.textContent = JSON.stringify(calib, null, 2);
-    show(D.detectionBox);
   }
   const breedLabel = calib.breed_label || (calib.breed === 'poodle_giant' ? '巨型贵宾犬' : '');
   setStatus(D.status1, '✅ 已恢复上次标定' + (breedLabel ? '（'+breedLabel+'）' : '') + ' — 无需重标');
@@ -782,11 +827,18 @@ async function loadProjectState(projectId){
       S.lastBaked = null;
       S.lastPacket = null;
     } else if(d.pipeline){
-      if(d.pipeline.packet) S.lastPacket = d.pipeline.packet;
+      if(d.pipeline.packet){
+        S.lastPacket = d.pipeline.packet;
+        if(S.lastPacket.emotion) S.activeEmotion = S.lastPacket.emotion;
+      }
       if(d.pipeline.baked){
         S.lastBaked = d.pipeline.baked;
         if(S.lastBaked.mood || S.lastBaked.gaze_emotion_id) D.btnStep3Next.disabled = false;
       }
+    }
+    if(d.slider_current?.packet){
+      S.lastPacket = d.slider_current.packet;
+      if(S.lastPacket.emotion) S.activeEmotion = S.lastPacket.emotion;
     }
 
     if(d.deliverables){
@@ -824,7 +876,12 @@ async function loadProjectState(projectId){
       const wan=splitWanFrom04(S.lastPrompt);
       S.lastWanPositive=wan.positive; S.lastWanNegative=wan.negative;
     }
-    refreshResultPanels();
+    syncEnergyPulseFromState();
+    if(S.activeEmotion && D.presetContainer){
+      D.presetContainer.querySelectorAll('.preset-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.id === S.activeEmotion);
+      });
+    }
   } catch(e){
     console.warn('项目状态恢复失败', e);
   }
@@ -842,7 +899,7 @@ function goStep(n){
       stepEl.classList.toggle('done', i<n);
     }
   }
-  if(n>=4) refreshResultPanels();
+  if(n===2) syncEnergyPulseFromState();
   updateSpeciesBanner(S.membraneStatus);
   updateMembraneAlerts(S.membraneStatus);
   if(n===5 && S.currentProject) loadProjectState(S.currentProject.project_id);
@@ -902,7 +959,7 @@ function emotionButtonsHtml(emotions, groups, activeId){
     if(groups && groups.length) html += `<div class="preset-group-label">其他</div>`;
     html += rest.map(e => btn(e, '')).join('');
   }
-  return html || '<span class="preset-empty">无预设（请检查 预设资产/预设情绪包/）</span>';
+  return html || '<span class="preset-empty">无预设（请检查 预设资产/情绪包/）</span>';
 }
 
 function styleButtonsHtml(styles, activeId){
@@ -925,6 +982,97 @@ function bindPresetButtons(container, onPick){
   });
 }
 
+const NEUTRAL_MACRO = {push:50, power:50, speed:50, steady:50, grip:50, outro:50};
+const NEUTRAL_HOLD = {shape:'flat', pulse_rate:0, pulse_depth:0, swell:0};
+
+/** macro+hold_seg → E(t) SVG；数值每次从 /api/portal/preset/emotion-preview 调取 */
+function paintEnergyPulse(macro, hold, emotionLabel){
+  const svg = D.energyPulseCurve;
+  if(!svg) return;
+  const m = {...NEUTRAL_MACRO, ...(macro || {})};
+  const h = {...NEUTRAL_HOLD, ...(hold || {})};
+  const W = 300, H = 100;
+  let html = '<rect width="300" height="100" fill="#fafbfd"/>'
+    +'<rect x="0" y="0" width="60" height="100" fill="#dbeafe" opacity="0.4"/>'
+    +'<rect x="60" y="0" width="180" height="100" fill="#fef3c7" opacity="0.4"/>'
+    +'<rect x="240" y="0" width="60" height="100" fill="#e0e7ff" opacity="0.4"/>';
+  const push = m.push/100, power = m.power/100, speed = m.speed/100;
+  const steady = m.steady/100, grip = m.grip/100, outro = m.outro/100;
+  const tPeak = 14 + (1-speed)*10, peakY = H - (15+power*65);
+  const tHold = 30 + steady*60, holdY = peakY + (1-grip)*10;
+  let d = 'M0,'+H;
+  for(let t=0; t<=tPeak; t++){
+    const u = t/tPeak;
+    d += ' L'+(t/150*W)+','+Math.round(H-u*(H-peakY)*(push>0.5?1+(push-0.5)*0.4:1));
+  }
+  for(let t=tPeak+1; t<=tHold; t++){
+    const u = (t-tPeak)/(tHold-tPeak);
+    let y = peakY + (holdY-peakY)*u;
+    if(h.shape==='tremble') y += Math.sin(u*20)*4;
+    if(h.shape==='pulse') y += Math.sin(u*h.pulse_rate*0.3)*h.pulse_depth*0.3;
+    if(h.shape==='decay') y += u*20;
+    if(h.shape==='swell') y -= Math.sin(Math.PI*u)*h.swell*0.3;
+    d += ' L'+(t/150*W)+','+Math.round(Math.max(peakY-10, Math.min(H, y)));
+  }
+  for(let t=tHold+1; t<=150; t++){
+    const u = (t-tHold)/(150-tHold);
+    d += ' L'+(t/150*W)+','+Math.round(holdY+(H-holdY)*(u<0.5?2*u*u:-1+(4-2*u)*u));
+  }
+  const stroke = m.push>50 ? '#3b82f6' : '#d97706';
+  html += '<path d="'+d+'" fill="none" stroke="'+stroke+'" stroke-width="2.5" stroke-linejoin="round"/>';
+  html += '<line x1="'+(tPeak/150*W)+'" y1="0" x2="'+(tPeak/150*W)+'" y2="100" stroke="#3b82f6" stroke-width="0.5" stroke-dasharray="3,4" opacity="0.5"/>';
+  html += '<line x1="'+(tHold/150*W)+'" y1="0" x2="'+(tHold/150*W)+'" y2="100" stroke="#d97706" stroke-width="0.5" stroke-dasharray="3,4" opacity="0.5"/>';
+  svg.innerHTML = html;
+  if(D.energyPulseInfo){
+    D.energyPulseInfo.textContent = '起峰 '+Math.round(tPeak)+'f · 盯住 '+Math.round(tPeak)+'→'+Math.round(tHold)+'f · 收场 '+Math.round(tHold)+'→150f · 力度 '+m.power;
+  }
+  if(D.energyPulseMacro){
+    D.energyPulseMacro.textContent = 'macro push='+m.push+' power='+m.power+' speed='+m.speed
+      +' steady='+m.steady+' grip='+m.grip+' outro='+m.outro
+      +' · hold '+h.shape+' rate='+h.pulse_rate+' depth='+h.pulse_depth;
+  }
+  if(D.energyPulseEmotion) D.energyPulseEmotion.textContent = emotionLabel ? ('· '+emotionLabel) : '';
+  if(D.energyPulseWrap) show(D.energyPulseWrap);
+}
+
+function presetEmotionById(emotionId){
+  return (S.presets[S.activeSpecies]?.emotions || []).find(e => e.id === emotionId) || null;
+}
+
+async function fetchEmotionPreview(emotionId){
+  if(!emotionId || !S.activeSpecies) return null;
+  try {
+    const q = 'species='+encodeURIComponent(S.activeSpecies)+'&id='+encodeURIComponent(emotionId);
+    const d = await fetchJSON('/api/portal/preset/emotion-preview?'+q);
+    return d.ok ? d : null;
+  } catch(e){
+    console.warn('情绪预览调取失败', e);
+    return null;
+  }
+}
+
+async function paintEnergyPulseFromPreset(emotionId){
+  const idx = presetEmotionById(emotionId);
+  const label = idx?.label || emotionId;
+  const prev = await fetchEmotionPreview(emotionId);
+  if(prev?.macro){
+    paintEnergyPulse(prev.macro, prev.hold_seg, prev.label || label);
+  } else if(D.energyPulseWrap){
+    hide(D.energyPulseWrap);
+  }
+}
+
+function paintEnergyPulseFromPacket(pkt){
+  if(pkt?.macro) paintEnergyPulse(pkt.macro, pkt.hold_seg, pkt.emotion || S.activeEmotion || '');
+  else paintEnergyPulseFromPreset(S.activeEmotion);
+}
+
+function syncEnergyPulseFromState(){
+  if(S.lastPacket?.macro) paintEnergyPulseFromPacket(S.lastPacket);
+  else if(S.activeEmotion) paintEnergyPulseFromPreset(S.activeEmotion);
+  else if(D.energyPulseWrap) hide(D.energyPulseWrap);
+}
+
 function renderPresets(species){
   const data = S.presets[species] || {emotions:[], styles:[], emotion_groups:[], meta:{}};
   const meta = data.meta || {};
@@ -935,7 +1083,8 @@ function renderPresets(species){
   if(D.presetEmotionTitle) D.presetEmotionTitle.textContent = kind.emotion;
   if(D.presetEmotionCount) D.presetEmotionCount.textContent = String(nEmo);
   if(D.presetEmotionHint){
-    D.presetEmotionHint.textContent = (meta.emotions_dir || `预设资产/预设情绪包/${species}/`)
+    D.presetEmotionHint.textContent = (meta.emotions_dir || `预设资产/情绪包/${species}/`)
+      + ' · 门户只存选项，macro/pad 由服务端按需调取'
       + (data.emotion_groups?.length ? ' · 分组见 _groups.json' : '');
   }
   if(D.presetStyleTitle) D.presetStyleTitle.textContent = kind.style;
@@ -945,16 +1094,24 @@ function renderPresets(species){
   }
 
   S.activeStyle = defaultStyleForSpecies(species, data.styles);
+  if(S.calibratedBreed && (data.styles||[]).some(s => s.id === S.calibratedBreed)){
+    S.activeStyle = S.calibratedBreed;
+  }
+  syncCalibBreedUI(species);
   D.presetContainer.innerHTML = emotionButtonsHtml(data.emotions, data.emotion_groups, S.activeEmotion);
   D.styleContainer.innerHTML = styleButtonsHtml(data.styles, S.activeStyle);
 
   bindPresetButtons(D.presetContainer, (id, label) => {
     S.activeEmotion = id;
     if(!D.nlInput.value.trim()) D.nlInput.value = label;
+    paintEnergyPulseFromPreset(id);
   });
+  syncEnergyPulseFromState();
   bindPresetButtons(D.styleContainer, (id) => {
     S.activeStyle = id;
     updateBreedBadges();
+    const msg = breedMismatchMessage(id, S.calibratedBreed);
+    if(msg && D.status2) setStatus(D.status2, msg, true);
   });
   S.activeSpecies = species;
   updateBreedBadges();
@@ -1004,7 +1161,6 @@ function updateEarPanel(){
 }
 
 function resetPhotoUI(){
-  hide(D.detectionBox);
   hide(D.calibrateWrap);
   hideMembranePreview();
   D.btnUpload.disabled = !S.photoFile;
@@ -1217,6 +1373,7 @@ async function submitCalibration(){
     customer_id: S.customerId,
     project_id: S.currentProject.project_id,
     species: S.activeSpecies,
+    breed: getCalibBreed(),
     photo_name: S.photoName,
     image_width: S.imageWidth,
     image_height: S.imageHeight,
@@ -1228,14 +1385,10 @@ async function submitCalibration(){
     S.templateParams = d.saved_params;
     S.detection = {method:'manual', confidence:1.0, adjustments:d.adjustments, breed:d.breed};
     S.calibrated = true;
+    S.calibratedBreed = d.breed || getCalibBreed();
+    S.activeStyle = S.calibratedBreed;
+    S.calibBreed = S.calibratedBreed;
     const gotPreview = applyCalibratePreview(d);
-    if(!gotPreview){
-      D.detectionBox.textContent = JSON.stringify({
-        method:'manual', confidence:1.0,
-        anchors:S.calibAnchors, adjustments:d.adjustments, saved_params:d.saved_params,
-      }, null, 2);
-      show(D.detectionBox);
-    }
     D.btnStep1Next.disabled = false;
     D.btnCalibrateSubmit.disabled = false;
     const breedHint = d.breed_label ? ' · '+d.breed_label : '';
@@ -1250,29 +1403,9 @@ async function submitCalibration(){
   }
 }
 
-async function runAutoDetect(){
-  if(!S.photoName){ alert('请先上传照片'); return; }
-  setStatus(D.status1, '⏳ 自动检测中…');
-  try {
-    const d = await apiPost('/api/customer/template-estimate', {
-      customer_id: S.customerId, species: S.activeSpecies,
-    });
-    if(!d.ok) throw new Error(d.error||'检测失败');
-    S.detection = d.detection;
-    S.templateParams = d.saved_params;
-    S.calibrated = true;
-    D.detectionBox.textContent = JSON.stringify(d, null, 2);
-    show(D.detectionBox);
-    D.btnStep1Next.disabled = false;
-    setStatus(D.status1, '⚠ 已用自动检测（卷毛狗可能不准，建议改用手动标定）');
-  } catch(e){
-    setStatus(D.status1, '❌ '+e.message, true);
-  }
-}
-
 async function renderMembraneMp4(){
   if(!S.currentProject){ alert('请先创建项目'); return; }
-  if(!S.calibrated){ alert('请先完成标定'); return; }
+  if(!assertBreedCalibrated()) return;
   if(S.activeSpecies !== 'dog'){ alert('当前仅狗项目支持标定后直接渲染'); return; }
   D.btnRenderMembrane.disabled = true;
   setStatus(D.statusMembrane, '⏳ 烘焙狗管线并渲染 MP4…');
@@ -1324,8 +1457,16 @@ async function runPomot(isRound2){
   try {
     let d;
     if(isRound2){
-      if(!S.lastPacket){ alert('请先生成'); return; }
-      d = await apiPost('/api/portal/pomot/round2', {nl, previous_packet:S.lastPacket, previous_baked:S.lastBaked});
+      if(!S.lastBaked && !S.lastPacket){ alert('请先生成'); return; }
+      d = await apiPost('/api/portal/pomot/round2', {
+        nl,
+        customer_id: S.customerId,
+        project_id: S.currentProject?.project_id || '',
+        species: S.activeSpecies,
+        emotion: S.activeEmotion,
+        breed: S.activeStyle,
+        previous_baked: S.lastBaked,
+      });
     } else {
       d = await apiPost('/api/portal/pomot/round1', {
         nl, species:S.activeSpecies, emotion:S.activeEmotion, breed:S.activeStyle,
@@ -1334,10 +1475,9 @@ async function runPomot(isRound2){
     }
     if(!d.ok) throw new Error(d.error||'失败');
     applyPomotResult(d);
-    await saveStep('pipeline', {note: isRound2?'Pomot微调':'Pomot生成'});
     D.btnStep3Next.disabled = false;
-    setStatus(D.status3, '✅ 管线完成，已保存');
-    addSavedStep(isRound2 ? '③ Pomot 微调' : '③ Pomot 生成');
+    setStatus(D.status3, '✅ 管线完成（未写入客户资产库，第⑤步点「保存客户资料」）');
+    addSavedStep(isRound2 ? '③ Pomot 微调（内存）' : '③ Pomot 生成（内存）');
   } catch(e){
     setStatus(D.status3, '❌ '+e.message, true);
   } finally { btn.disabled = false; }
@@ -1365,17 +1505,7 @@ function applyPomotResult(d){
   D.btnStep4Next.disabled = true;
   setStatus(D.status4, '③ 已更新生成数据 — 请到第④步重新「渲染 OpenCV 视频」（标定预览是中性脸，MP4 是情绪动画）');
   if(S.currentProject) loadProjectState(S.currentProject.project_id);
-  refreshResultPanels();
-  renderPomotSummary();
-}
-
-function refreshResultPanels(){
-  D.resultPacket.textContent = S.lastPacket ? JSON.stringify(S.lastPacket, null, 2) : '(尚未生成)';
-  D.resultSplit.textContent = S.lastSplit ? JSON.stringify({split:S.lastSplit, route:S.lastRoute}, null, 2) : '(尚未生成)';
-  D.resultBaked.textContent = S.lastBaked ? JSON.stringify(S.lastBaked, null, 2).slice(0,8000) : '(尚未生成)';
-  D.resultBeat.textContent = S.lastMetronome || '(尚未生成)';
-  D.resultPrompt.textContent = S.lastPrompt || '(尚未生成)';
-  D.resultTemplate.textContent = S.templateParams ? JSON.stringify(S.templateParams, null, 2) : '(标定后显示底膜参数)';
+  syncEnergyPulseFromState();
   refreshWanClipUI();
   renderPomotSummary();
 }
@@ -1383,6 +1513,7 @@ function refreshResultPanels(){
 /* ── Step 4: OpenCV 渲染 ── */
 async function renderVideo(){
   if(!S.lastBaked){ alert('请先生成管线（第③步）'); return; }
+  if(!assertBreedCalibrated()) return;
   const ms = S.membraneStatus;
   if(ms && ms.action === 'regenerate'){
     alert(ms.warning + '\n\n请回第③步点击「生成表情」，再回来渲染。');
@@ -1400,6 +1531,7 @@ async function renderVideo(){
       project_id: S.currentProject?.project_id||'',
       baked: S.lastBaked,
       species: S.activeSpecies,
+      breed: S.activeStyle || getCalibBreed(),
     });
     if(!d.ok) throw new Error(d.error||'渲染失败');
     S.videoUrl = d.video_url + '?t=' + Date.now();
@@ -1422,21 +1554,13 @@ async function renderVideo(){
 }
 
 /* ── 保存 / 导出 ── */
-async function saveStep(step, extra={}){
-  if(!S.customerId) return;
-  const body = archivePayload({...extra, note: extra.note||'', build_bundle: false});
-  body.step = step;
-  await apiPost('/api/portal/save-step', body);
-}
-
 async function saveAll(){
   if(!S.lastPacket && !S.calibrated){ alert('还没有可保存的内容'); return; }
   D.btnSaveAll.disabled = true;
   setStatus(D.status5, '⏳ 保存客户资料…');
   try {
-    await saveStep('final', {note:'完整保存'});
     const d = await saveCustomerArchive({note:'门户完整保存', build_bundle: true});
-    addSavedStep('⑤ 客户资料 v'+(d?.version||'?'));
+    addSavedStep('⑤ 客户资料（送扩散前完整包）');
     setStatus(D.status5, '✅ 已保存（客户资料.json + 扩散引擎包/）');
     await loadProjects();
   } catch(e){
@@ -1469,7 +1593,6 @@ async function doExport(){
     D.resultPrompt.textContent = S.lastPrompt || '(尚未生成)';
     refreshWanClipUI();
     renderPomotSummary();
-    await saveStep('export', {note:'扩散引擎两件套'});
     if(del.membrane_meta) S.membraneInfo = del.membrane_meta;
     S.lastProfile = d.profile || null;
     S.lastBundle = d.bundle || null;
@@ -1490,17 +1613,6 @@ function addSavedStep(label){
   D.stepSaves5.innerHTML = html;
 }
 
-/* ── 结果标签 ── */
-D.resultTabs.addEventListener('click', e=>{
-  const tab = e.target.closest('.result-tab');
-  if(!tab) return;
-  D.resultTabs.querySelectorAll('.result-tab').forEach(t=>t.classList.remove('active'));
-  tab.classList.add('active');
-  document.querySelectorAll('.result-content').forEach(el=>el.classList.remove('active'));
-  const target = $('result-'+tab.dataset.tab);
-  if(target) target.classList.add('active');
-});
-
 /* ── 事件 ── */
 D.btnEnter.onclick = () => showRegister();
 D.linkLogin.onclick = () => showLogin();
@@ -1512,7 +1624,6 @@ D.btnLogout.onclick = doLogout;
 D.btnNewProject.onclick = () => startNewProject(false);
 D.wizardBack.onclick = async () => { await loadProjects(); showDashboard(); };
 D.btnUpload.onclick = uploadPhotoOnly;
-D.btnAutoDetect.onclick = runAutoDetect;
 D.btnCalibrateSubmit.onclick = submitCalibration;
 D.btnRenderMembrane.onclick = renderMembraneMp4;
 D.btnStep1Next.onclick = () => goStep(2);
@@ -1534,11 +1645,31 @@ if(D.btnDownloadBundle) D.btnDownloadBundle.onclick = ()=>{
 };
 if(D.btnCopyWanPos) D.btnCopyWanPos.onclick = ()=> copyText(S.lastWanPositive, D.btnCopyWanPos);
 if(D.btnCopyWanNeg) D.btnCopyWanNeg.onclick = ()=> copyText(S.lastWanNegative, D.btnCopyWanNeg);
-D.speciesSelect.onchange = function(){
+if(D.calibBreedSelect) D.calibBreedSelect.onchange = function(){
+  S.calibBreed = this.value;
+  if(S.calibrated && S.calibratedBreed && S.calibBreed !== S.calibratedBreed){
+    S.calibrated = false;
+    S.calibratedBreed = '';
+    D.btnStep1Next.disabled = true;
+    hideMembranePreview();
+    setStatus(D.status1, '⚠ 品种已变更，请重新完成锚点标定', true);
+  }
+};
+D.speciesSelect.onchange = async function(){
   S.activeSpecies = this.value;
   const lb = $('species-label');
   if(lb) lb.textContent = this.value;
   renderPresets(this.value);
+  syncCalibBreedUI(this.value);
+  if(S.currentProject?.project_id){
+    try {
+      await apiPost('/api/customer/'+S.customerId+'/project/update', {
+        project_id: S.currentProject.project_id,
+        species: S.activeSpecies,
+      });
+      S.currentProject.species = S.activeSpecies;
+    } catch(e){ console.warn('项目物种更新失败', e); }
+  }
   if(!D.calibrateWrap.classList.contains('hidden') && !S.calibrated){
     S.calibAnchors = {}; S.calibStepIdx = 0; S.calibMarkEars = false;
     updateCalibHint(); drawCalibOverlay();

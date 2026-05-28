@@ -1,4 +1,4 @@
-"""ecursor / jintao_node_eye：能量工作台（已脱离 ComfyUI，Web-only 模式）。"""
+"""ecursor / jintao_node_eye：客户创作门户（Web-only，引擎在 gaze_engine/）。"""
 from __future__ import annotations
 
 import os
@@ -23,8 +23,6 @@ def _load_local_env() -> None:
 
 _load_local_env()
 
-# 启动工作台
-#   cd tools && python3 serve_workbench.py
-# 然后打开 http://127.0.0.1:8765/能量工作台.html
+# 启动门户：./一键打开创作门户.sh → http://127.0.0.1:8765/portal
 
 __all__ = []  # 无 ComfyUI 节点导出

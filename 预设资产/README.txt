@@ -1,10 +1,10 @@
 ecursor 预设资产库
 ==================
 
-两大分类
--------
+两大分类 + 底膜包
+-----------------
 
-① 预设情绪包/       ← 基本情绪滑杆基准值（macro + hold_seg + pad）
+① 情绪包/           ← 基本情绪滑杆 + PAD 气质（macro + hold_seg + pad）
 │
 ├── human/           ← 16种（施压·凝视、可怜·委屈、魅惑·勾人…）
 ├── cat/             ← 12种（警觉瞪视、狩猎锁定、愤怒嘶哈…含 ear + pad）
@@ -36,9 +36,19 @@ ecursor 预设资产库
     └── poodle_giant/  巨型贵宾/优雅型
 
 
+③ 底膜包/           ← 几何骨架预设（SpeciesTemplate 物种默认）
+│
+├── human/species_default.json
+├── cat/species_default.json
+└── dog/species_default.json
+    （品种几何：gaze_engine/{cat,dog}/breed_matrix.json · template_scales / template_structure）
+
+
 编辑指南
 --------
-改预设数值：   预设情绪包/human/可怜·委屈.json → 改 macro/hold_seg/pad
+改预设数值：   情绪包/human/可怜·委屈.json → 改 macro/hold_seg/pad
 改风格偏移：   风格包/human/天选者_大祭司/style.json → 改 base_offset/scale_factor
+改物种底膜：   底膜包/{species}/species_default.json → 对齐 species_template.py
 加新风格：     建 风格包/{species}/{风格名}/style.json
-客户自定义：   存到 客户资产库/
+客户配准结果： 存到 客户资产库/客户_{id}/物种底膜模板.json（门户标定，禁止美颜手改）
+❌ 不提供「眼睛大一点」类客户滑杆 — 合同/06_工程底膜/底膜模板选择与标定专篇.md

@@ -27,7 +27,7 @@ from gaze_engine._shared.slider_schema import SliderPacket  # noqa: E402
 
 from gaze_engine._shared.emotion_pad import EMOTION_PAD, resolve_pad  # noqa: E402
 
-_PIPELINE_DOC = "contracts/全量帧指令集规范.md · envelope-v1"
+_PIPELINE_DOC = "合同/全量帧指令集规范.md · envelope-v1"
 
 
 def _emotion_pad(emotion: str, packet: SliderPacket | None = None) -> tuple[float, float, float]:
@@ -196,11 +196,22 @@ def _make_species_baked(
         "energy_phases": phases,
         "slider_packet": packet.to_dict(),
     })
-    if report:
-        baked[f"{species}_pipeline_report"] = report
-    if species == "cat" and breed_id:
+    if breed_id:
         baked["breed"] = breed_id
         baked["style_layer"] = "styled"
+    elif species in ("dog", "cat"):
+        baked["style_layer"] = "pulse"
+    if report:
+        baked[f"{species}_pipeline_report"] = report
+    if isinstance(report, dict):
+        if report.get("prior_report"):
+            baked[f"{species}_prior_report"] = report["prior_report"]
+        if report.get("pulse_quality_report"):
+            baked["pulse_quality_report"] = report["pulse_quality_report"]
+            if report["pulse_quality_report"].get("fixes"):
+                baked["_pulse_quality_fix_log"] = report["pulse_quality_report"]["fixes"]
+            if report["pulse_quality_report"].get("remaining"):
+                baked["_pulse_quality_remaining"] = report["pulse_quality_report"]["remaining"]
 
     from gaze_engine._shared.channel_contract import validate_baked_delivery
     remaining = validate_baked_delivery(baked, channel_keys, frame_count)
@@ -246,6 +257,17 @@ def run_cat_pipeline(
 
         channels = apply_breed_style(channels, bid)
 
+    from gaze_engine.cat.prior import apply_cat_prior
+    from gaze_engine.cat.pulse_quality import fix_cat_pulse_quality
+
+    channels, prior_rep = apply_cat_prior(channels, pkt, frame_count=frame_count)
+    pq = fix_cat_pulse_quality(channels, pkt, frame_count=frame_count)
+
+    issues: list[str] = []
+    issues.extend(prior_rep.issues)
+    issues.extend(pq.fixes)
+    issues.extend(pq.remaining)
+
     report = {
         "enabled": True,
         "emotion": pkt.emotion,
@@ -253,6 +275,11 @@ def run_cat_pipeline(
         "ear_injected": ear_injected,
         "breed": bid or None,
         "style_layer": "styled" if bid else "pulse",
+        "cat_prior_skipped": not prior_rep.enabled,
+        "cat_quality_skipped": not pq.enabled,
+        "prior_report": prior_rep.to_dict(),
+        "pulse_quality_report": pq.to_dict(),
+        "issues": issues,
     }
     baked = _make_species_baked(
         pkt, channels,

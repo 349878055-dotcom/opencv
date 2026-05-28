@@ -9,7 +9,7 @@ F_WORKBENCH_CTX = "01_操作台上下文.json"
 
 _DEFAULT_L1_ATTACH = {
     "title": "L1 滑杆禁区",
-    "contract": "contracts/滑杆规范.md",
+    "contract": "合同/滑杆规范.md",
     "ui_script": "tools/packet_finalize_ui.js",
     "bounds_script": "tools/slider_forbidden_bounds.js",
     "note": "拖杆时浏览器内弹回；保存/出厂时 Python finalize_packet 写 02_滑杆_L1纠正.json",

@@ -1,0 +1,21 @@
+{
+  "schema": "ecursor_membrane_species_v1",
+  "species": "dog",
+  "label": "狗物种默认底膜",
+  "reference": "gaze_engine/_shared/species_template.py · _RENDERER_CONSTANTS.dog",
+  "texture": "gaze_engine/_shared/assets/eyelid_raw.png",
+  "template_params": {
+    "eye_distance": 1.0,
+    "eye_vertical": 1.0,
+    "eye_size": 1.0,
+    "eye_aspect": 1.0,
+    "pupil_size": 1.0,
+    "iris_size": 1.15,
+    "ear_size": 1.0,
+    "ear_droop": 0.6,
+    "ear_position_x": 1.0,
+    "ear_position_y": 1.0
+  },
+  "breed_layer": "预设资产/底膜包/dog/breeds/ → sync → breed_matrix.template_scales + template_structure",
+  "note": "品种耳控制点见 template_structure；客户配准见 客户资产库/物种底膜模板.json"
+}

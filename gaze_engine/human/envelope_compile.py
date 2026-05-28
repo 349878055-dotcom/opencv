@@ -254,7 +254,7 @@ def make_delivery_stub(
         "gaze_emotion_id": label or pkt.emotion,
         "mood": pkt.emotion,
         "energy_phases": ["蓄力", "启动", "保持", "缓和"],
-        "controls_doc": "contracts/滑杆规范.md",
+        "controls_doc": "合同/滑杆规范.md",
         "keys": list(HUMAN_CHANNELS),
         "keys_active": list(HUMAN_CHANNELS),
         "slider_packet": pkt.to_dict(),

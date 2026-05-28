@@ -3,7 +3,7 @@
   "id": "stray_cat",
   "label": "田园猫/机敏型",
   "species": "cat",
-  "notes": "田园猫/机敏型 品种风格偏移",
+  "notes": "中华田园猫，竖耳圆瞳，警惕扫视， blink 少、眼动幅度中等偏高 · [底膜] 田园猫中等眼、竖耳",
   "default_emotion": "",
   "base_offset": {
     "pupil_x": 0.6,

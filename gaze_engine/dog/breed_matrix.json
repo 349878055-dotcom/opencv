@@ -1,40 +1,827 @@
 {
   "_schema_version": "1.0",
-  "_description": "狗品种风格矩阵 — base_offset + scale_factor，叠加在基础情绪预设之上",
+  "_description": "狗品种风格矩阵 — base_offset + scale_factor",
+  "_note": "真源 gaze_engine/dog/breed_style_catalog.json；由 sync_species_style_pack.py 生成",
   "_frame_count": 150,
   "breed_personas": {
     "poodle_giant": {
       "species": "dog",
-      "label": "巨型贵宾犬",
-      "_reference": "AKC/FCI Standard Poodle 品种标准几何（巨型贵宾=poodle_giant；系统内仅此犬种底膜）",
+      "label": "巨型贵宾犬/优雅型",
       "base_offset": {
-        "pupil_x": 0.50, "pupil_y": 0.48, "blink": 0.55,
+        "pupil_x": 0.5,
+        "pupil_y": 0.48,
+        "blink": 0.55,
         "eyebrow": 0.25,
-        "pupil_scale": 0.50, "iris_scale": 0.45, "cornea_bulge": 0.45,
-        "squint": 0.50, "brow_raise": 0.40,
-        "lid_upper": 0.48, "lid_lower": 0.52, "eye_gloss": 0.55
+        "pupil_scale": 0.5,
+        "iris_scale": 0.45,
+        "cornea_bulge": 0.45,
+        "squint": 0.5,
+        "brow_raise": 0.4,
+        "lid_upper": 0.48,
+        "lid_lower": 0.52,
+        "eye_gloss": 0.55
       },
       "scale_factor": {
-        "pupil_x": 0.04, "pupil_y": 0.04, "blink": 0.25,
+        "pupil_x": 0.04,
+        "pupil_y": 0.04,
+        "blink": 0.25,
         "eyebrow": 0.08,
-        "pupil_scale": 0.12, "iris_scale": 0.10, "cornea_bulge": 0.12,
-        "squint": 0.15, "brow_raise": 0.08,
-        "lid_upper": 0.12, "lid_lower": 0.12, "eye_gloss": 0.05
+        "pupil_scale": 0.12,
+        "iris_scale": 0.1,
+        "cornea_bulge": 0.12,
+        "squint": 0.15,
+        "brow_raise": 0.08,
+        "lid_upper": 0.12,
+        "lid_lower": 0.12,
+        "eye_gloss": 0.05
       },
+      "_reference": "AKC Standard Poodle — oval eyes, long drop ears (images.akc.org/pdf/breeds/standards/Poodle.pdf)",
       "template_scales": {
-        "_note": "相对狗物种默认(1.0)的乘数，进入 SpeciesTemplate，可被客户标定继续叠加",
         "eye_size": 0.92,
         "eye_aspect": 0.895,
         "iris_size": 0.929,
-        "pupil_size": 0.889
+        "pupil_size": 0.889,
+        "ear_droop": 0.88
       },
       "template_structure": {
-        "_note": "仅耳/眉控制点，不覆盖 EYE_W 等客户可标定项",
-        "BROW_INNER_OFF": [-95, -72],
-        "BROW_PEAK_OFF": [0, -88],
-        "BROW_OUTER_OFF": [95, -72],
-        "EAR_LEFT_BASE": [[-168, 25], [-205, 145], [-158, 265]],
-        "EAR_RIGHT_BASE": [[168, 25], [205, 145], [158, 265]]
+        "BROW_INNER_OFF": [
+          -95,
+          -72
+        ],
+        "BROW_PEAK_OFF": [
+          0,
+          -88
+        ],
+        "BROW_OUTER_OFF": [
+          95,
+          -72
+        ],
+        "EAR_LEFT_BASE": [
+          [
+            -168,
+            25
+          ],
+          [
+            -205,
+            145
+          ],
+          [
+            -158,
+            265
+          ]
+        ],
+        "EAR_RIGHT_BASE": [
+          [
+            168,
+            25
+          ],
+          [
+            205,
+            145
+          ],
+          [
+            158,
+            265
+          ]
+        ]
+      }
+    },
+    "golden_retriever": {
+      "species": "dog",
+      "label": "金毛/温厚型",
+      "base_offset": {
+        "pupil_x": 0.5,
+        "pupil_y": 0.48,
+        "blink": 0.52,
+        "eyebrow": 0.32,
+        "pupil_scale": 0.52,
+        "iris_scale": 0.5,
+        "cornea_bulge": 0.5,
+        "squint": 0.42,
+        "brow_raise": 0.52,
+        "lid_upper": 0.46,
+        "lid_lower": 0.5,
+        "eye_gloss": 0.62
+      },
+      "scale_factor": {
+        "pupil_x": 0.05,
+        "pupil_y": 0.04,
+        "blink": 0.28,
+        "eyebrow": 0.14,
+        "pupil_scale": 0.14,
+        "iris_scale": 0.12,
+        "cornea_bulge": 0.14,
+        "squint": 0.14,
+        "brow_raise": 0.22,
+        "lid_upper": 0.14,
+        "lid_lower": 0.12,
+        "eye_gloss": 0.08
+      },
+      "_reference": "AKC Golden Retriever — medium-large almond eyes; short pendant ears (images.akc.org/pdf/breeds/standards/GoldenRetriever.pdf)",
+      "template_scales": {
+        "eye_size": 1.04,
+        "eye_aspect": 1.06,
+        "iris_size": 1.02,
+        "pupil_size": 0.96,
+        "ear_droop": 0.72
+      },
+      "template_structure": {
+        "BROW_INNER_OFF": [
+          -105,
+          -75
+        ],
+        "BROW_PEAK_OFF": [
+          0,
+          -92
+        ],
+        "BROW_OUTER_OFF": [
+          105,
+          -75
+        ],
+        "EAR_LEFT_BASE": [
+          [
+            -130,
+            -10
+          ],
+          [
+            -155,
+            90
+          ],
+          [
+            -120,
+            200
+          ]
+        ],
+        "EAR_RIGHT_BASE": [
+          [
+            130,
+            -10
+          ],
+          [
+            155,
+            90
+          ],
+          [
+            120,
+            200
+          ]
+        ]
+      }
+    },
+    "husky": {
+      "species": "dog",
+      "label": "哈士奇/凌厉型",
+      "base_offset": {
+        "pupil_x": 0.51,
+        "pupil_y": 0.49,
+        "blink": 0.44,
+        "eyebrow": 0.38,
+        "pupil_scale": 0.58,
+        "iris_scale": 0.5,
+        "cornea_bulge": 0.48,
+        "squint": 0.46,
+        "brow_raise": 0.32,
+        "lid_upper": 0.5,
+        "lid_lower": 0.48,
+        "eye_gloss": 0.5
+      },
+      "scale_factor": {
+        "pupil_x": 0.07,
+        "pupil_y": 0.06,
+        "blink": 0.16,
+        "eyebrow": 0.06,
+        "pupil_scale": 0.22,
+        "iris_scale": 0.14,
+        "cornea_bulge": 0.12,
+        "squint": 0.18,
+        "brow_raise": 0.04,
+        "lid_upper": 0.1,
+        "lid_lower": 0.1,
+        "eye_gloss": 0.04
+      },
+      "_reference": "AKC Siberian Husky — almond eyes oblique; erect triangular ears (images.akc.org/pdf/breeds/standards/SiberianHusky.pdf)",
+      "template_scales": {
+        "eye_size": 0.98,
+        "eye_aspect": 0.86,
+        "iris_size": 1.0,
+        "pupil_size": 1.02,
+        "ear_droop": 0.12
+      },
+      "template_structure": {
+        "BROW_INNER_OFF": [
+          -102,
+          -82
+        ],
+        "BROW_PEAK_OFF": [
+          0,
+          -102
+        ],
+        "BROW_OUTER_OFF": [
+          102,
+          -82
+        ],
+        "EAR_LEFT_BASE": [
+          [
+            -58,
+            -158
+          ],
+          [
+            -38,
+            -205
+          ],
+          [
+            12,
+            -175
+          ]
+        ],
+        "EAR_RIGHT_BASE": [
+          [
+            58,
+            -158
+          ],
+          [
+            38,
+            -205
+          ],
+          [
+            -12,
+            -175
+          ]
+        ]
+      }
+    },
+    "corgi": {
+      "species": "dog",
+      "label": "柯基/好奇型",
+      "base_offset": {
+        "pupil_x": 0.5,
+        "pupil_y": 0.48,
+        "blink": 0.48,
+        "eyebrow": 0.36,
+        "pupil_scale": 0.54,
+        "iris_scale": 0.52,
+        "cornea_bulge": 0.5,
+        "squint": 0.44,
+        "brow_raise": 0.48,
+        "lid_upper": 0.46,
+        "lid_lower": 0.5,
+        "eye_gloss": 0.58
+      },
+      "scale_factor": {
+        "pupil_x": 0.06,
+        "pupil_y": 0.05,
+        "blink": 0.22,
+        "eyebrow": 0.12,
+        "pupil_scale": 0.16,
+        "iris_scale": 0.12,
+        "cornea_bulge": 0.14,
+        "squint": 0.16,
+        "brow_raise": 0.14,
+        "lid_upper": 0.12,
+        "lid_lower": 0.12,
+        "eye_gloss": 0.06
+      },
+      "_reference": "AKC Pembroke Welsh Corgi — medium round eyes; erect ears (AKC breed standard)",
+      "template_scales": {
+        "eye_size": 1.06,
+        "eye_aspect": 1.08,
+        "iris_size": 1.04,
+        "pupil_size": 1.0,
+        "ear_droop": 0.15
+      },
+      "template_structure": {
+        "BROW_INNER_OFF": [
+          -104,
+          -76
+        ],
+        "BROW_PEAK_OFF": [
+          0,
+          -94
+        ],
+        "BROW_OUTER_OFF": [
+          104,
+          -76
+        ],
+        "EAR_LEFT_BASE": [
+          [
+            -62,
+            -150
+          ],
+          [
+            -42,
+            -200
+          ],
+          [
+            22,
+            -168
+          ]
+        ],
+        "EAR_RIGHT_BASE": [
+          [
+            62,
+            -150
+          ],
+          [
+            42,
+            -200
+          ],
+          [
+            -22,
+            -168
+          ]
+        ]
+      }
+    },
+    "shiba_inu": {
+      "species": "dog",
+      "label": "柴犬/警觉型",
+      "base_offset": {
+        "pupil_x": 0.52,
+        "pupil_y": 0.52,
+        "blink": 0.42,
+        "eyebrow": 0.4,
+        "pupil_scale": 0.5,
+        "iris_scale": 0.48,
+        "cornea_bulge": 0.46,
+        "squint": 0.54,
+        "brow_raise": 0.36,
+        "lid_upper": 0.52,
+        "lid_lower": 0.5,
+        "eye_gloss": 0.46
+      },
+      "scale_factor": {
+        "pupil_x": 0.05,
+        "pupil_y": 0.05,
+        "blink": 0.14,
+        "eyebrow": 0.08,
+        "pupil_scale": 0.12,
+        "iris_scale": 0.1,
+        "cornea_bulge": 0.1,
+        "squint": 0.2,
+        "brow_raise": 0.06,
+        "lid_upper": 0.1,
+        "lid_lower": 0.1,
+        "eye_gloss": 0.03
+      },
+      "_reference": "AKC Shiba Inu — small triangular eyes slightly upturned; small erect ears (AKC breed standard)",
+      "template_scales": {
+        "eye_size": 0.92,
+        "eye_aspect": 0.8,
+        "iris_size": 0.96,
+        "pupil_size": 0.94,
+        "ear_droop": 0.18
+      },
+      "template_structure": {
+        "BROW_INNER_OFF": [
+          -98,
+          -78
+        ],
+        "BROW_PEAK_OFF": [
+          0,
+          -98
+        ],
+        "BROW_OUTER_OFF": [
+          98,
+          -78
+        ],
+        "EAR_LEFT_BASE": [
+          [
+            -52,
+            -162
+          ],
+          [
+            -32,
+            -208
+          ],
+          [
+            18,
+            -178
+          ]
+        ],
+        "EAR_RIGHT_BASE": [
+          [
+            52,
+            -162
+          ],
+          [
+            32,
+            -208
+          ],
+          [
+            -18,
+            -178
+          ]
+        ]
+      }
+    },
+    "german_shepherd": {
+      "species": "dog",
+      "label": "德牧/专注型",
+      "base_offset": {
+        "pupil_x": 0.49,
+        "pupil_y": 0.47,
+        "blink": 0.42,
+        "eyebrow": 0.42,
+        "pupil_scale": 0.54,
+        "iris_scale": 0.5,
+        "cornea_bulge": 0.48,
+        "squint": 0.52,
+        "brow_raise": 0.38,
+        "lid_upper": 0.5,
+        "lid_lower": 0.5,
+        "eye_gloss": 0.48
+      },
+      "scale_factor": {
+        "pupil_x": 0.03,
+        "pupil_y": 0.03,
+        "blink": 0.14,
+        "eyebrow": 0.1,
+        "pupil_scale": 0.14,
+        "iris_scale": 0.1,
+        "cornea_bulge": 0.12,
+        "squint": 0.16,
+        "brow_raise": 0.06,
+        "lid_upper": 0.1,
+        "lid_lower": 0.1,
+        "eye_gloss": 0.04
+      },
+      "_reference": "AKC German Shepherd — medium almond eyes; erect ears (AKC breed standard)",
+      "template_scales": {
+        "eye_size": 0.96,
+        "eye_aspect": 0.88,
+        "iris_size": 0.98,
+        "pupil_size": 0.98,
+        "ear_droop": 0.1
+      },
+      "template_structure": {
+        "BROW_INNER_OFF": [
+          -100,
+          -80
+        ],
+        "BROW_PEAK_OFF": [
+          0,
+          -100
+        ],
+        "BROW_OUTER_OFF": [
+          100,
+          -80
+        ],
+        "EAR_LEFT_BASE": [
+          [
+            -58,
+            -158
+          ],
+          [
+            -38,
+            -205
+          ],
+          [
+            12,
+            -175
+          ]
+        ],
+        "EAR_RIGHT_BASE": [
+          [
+            58,
+            -158
+          ],
+          [
+            38,
+            -205
+          ],
+          [
+            -12,
+            -175
+          ]
+        ]
+      }
+    },
+    "labrador": {
+      "species": "dog",
+      "label": "拉布拉多/友善型",
+      "base_offset": {
+        "pupil_x": 0.5,
+        "pupil_y": 0.48,
+        "blink": 0.5,
+        "eyebrow": 0.3,
+        "pupil_scale": 0.52,
+        "iris_scale": 0.5,
+        "cornea_bulge": 0.5,
+        "squint": 0.44,
+        "brow_raise": 0.5,
+        "lid_upper": 0.46,
+        "lid_lower": 0.5,
+        "eye_gloss": 0.6
+      },
+      "scale_factor": {
+        "pupil_x": 0.05,
+        "pupil_y": 0.04,
+        "blink": 0.24,
+        "eyebrow": 0.12,
+        "pupil_scale": 0.14,
+        "iris_scale": 0.12,
+        "cornea_bulge": 0.14,
+        "squint": 0.14,
+        "brow_raise": 0.18,
+        "lid_upper": 0.12,
+        "lid_lower": 0.12,
+        "eye_gloss": 0.07
+      },
+      "_reference": "AKC Labrador Retriever — kind medium eyes, otter tail; ears pendant (AKC breed standard)",
+      "template_scales": {
+        "eye_size": 1.05,
+        "eye_aspect": 1.07,
+        "iris_size": 1.03,
+        "pupil_size": 0.97,
+        "ear_droop": 0.7
+      },
+      "template_structure": {
+        "BROW_INNER_OFF": [
+          -108,
+          -74
+        ],
+        "BROW_PEAK_OFF": [
+          0,
+          -90
+        ],
+        "BROW_OUTER_OFF": [
+          108,
+          -74
+        ],
+        "EAR_LEFT_BASE": [
+          [
+            -130,
+            -10
+          ],
+          [
+            -155,
+            90
+          ],
+          [
+            -120,
+            200
+          ]
+        ],
+        "EAR_RIGHT_BASE": [
+          [
+            130,
+            -10
+          ],
+          [
+            155,
+            90
+          ],
+          [
+            120,
+            200
+          ]
+        ]
+      }
+    },
+    "pomeranian": {
+      "species": "dog",
+      "label": "博美/机警型",
+      "base_offset": {
+        "pupil_x": 0.51,
+        "pupil_y": 0.49,
+        "blink": 0.46,
+        "eyebrow": 0.34,
+        "pupil_scale": 0.56,
+        "iris_scale": 0.54,
+        "cornea_bulge": 0.52,
+        "squint": 0.46,
+        "brow_raise": 0.44,
+        "lid_upper": 0.48,
+        "lid_lower": 0.5,
+        "eye_gloss": 0.56
+      },
+      "scale_factor": {
+        "pupil_x": 0.08,
+        "pupil_y": 0.07,
+        "blink": 0.2,
+        "eyebrow": 0.12,
+        "pupil_scale": 0.18,
+        "iris_scale": 0.14,
+        "cornea_bulge": 0.14,
+        "squint": 0.16,
+        "brow_raise": 0.12,
+        "lid_upper": 0.12,
+        "lid_lower": 0.12,
+        "eye_gloss": 0.06
+      },
+      "_reference": "AKC Pomeranian — fox-like almond eyes; small erect ears (AKC breed standard)",
+      "template_scales": {
+        "eye_size": 0.88,
+        "eye_aspect": 0.9,
+        "iris_size": 0.94,
+        "pupil_size": 0.92,
+        "ear_droop": 0.16
+      },
+      "template_structure": {
+        "BROW_INNER_OFF": [
+          -96,
+          -84
+        ],
+        "BROW_PEAK_OFF": [
+          0,
+          -104
+        ],
+        "BROW_OUTER_OFF": [
+          96,
+          -84
+        ],
+        "EAR_LEFT_BASE": [
+          [
+            -50,
+            -165
+          ],
+          [
+            -30,
+            -212
+          ],
+          [
+            16,
+            -182
+          ]
+        ],
+        "EAR_RIGHT_BASE": [
+          [
+            50,
+            -165
+          ],
+          [
+            30,
+            -212
+          ],
+          [
+            -16,
+            -182
+          ]
+        ]
+      }
+    },
+    "samoyed": {
+      "species": "dog",
+      "label": "萨摩耶/笑眼型",
+      "base_offset": {
+        "pupil_x": 0.5,
+        "pupil_y": 0.48,
+        "blink": 0.5,
+        "eyebrow": 0.28,
+        "pupil_scale": 0.5,
+        "iris_scale": 0.48,
+        "cornea_bulge": 0.5,
+        "squint": 0.4,
+        "brow_raise": 0.46,
+        "lid_upper": 0.48,
+        "lid_lower": 0.5,
+        "eye_gloss": 0.68
+      },
+      "scale_factor": {
+        "pupil_x": 0.05,
+        "pupil_y": 0.04,
+        "blink": 0.22,
+        "eyebrow": 0.1,
+        "pupil_scale": 0.12,
+        "iris_scale": 0.1,
+        "cornea_bulge": 0.14,
+        "squint": 0.12,
+        "brow_raise": 0.14,
+        "lid_upper": 0.12,
+        "lid_lower": 0.12,
+        "eye_gloss": 0.1
+      },
+      "_reference": "AKC Samoyed — almond dark eyes; erect triangular ears (AKC breed standard)",
+      "template_scales": {
+        "eye_size": 0.99,
+        "eye_aspect": 0.92,
+        "iris_size": 1.0,
+        "pupil_size": 0.98,
+        "ear_droop": 0.14
+      },
+      "template_structure": {
+        "BROW_INNER_OFF": [
+          -103,
+          -81
+        ],
+        "BROW_PEAK_OFF": [
+          0,
+          -99
+        ],
+        "BROW_OUTER_OFF": [
+          103,
+          -81
+        ],
+        "EAR_LEFT_BASE": [
+          [
+            -58,
+            -158
+          ],
+          [
+            -38,
+            -205
+          ],
+          [
+            12,
+            -175
+          ]
+        ],
+        "EAR_RIGHT_BASE": [
+          [
+            58,
+            -158
+          ],
+          [
+            38,
+            -205
+          ],
+          [
+            -12,
+            -175
+          ]
+        ]
+      }
+    },
+    "border_collie": {
+      "species": "dog",
+      "label": "边牧/聪慧型",
+      "base_offset": {
+        "pupil_x": 0.51,
+        "pupil_y": 0.47,
+        "blink": 0.42,
+        "eyebrow": 0.4,
+        "pupil_scale": 0.56,
+        "iris_scale": 0.52,
+        "cornea_bulge": 0.5,
+        "squint": 0.48,
+        "brow_raise": 0.42,
+        "lid_upper": 0.48,
+        "lid_lower": 0.48,
+        "eye_gloss": 0.52
+      },
+      "scale_factor": {
+        "pupil_x": 0.07,
+        "pupil_y": 0.06,
+        "blink": 0.16,
+        "eyebrow": 0.1,
+        "pupil_scale": 0.18,
+        "iris_scale": 0.14,
+        "cornea_bulge": 0.14,
+        "squint": 0.16,
+        "brow_raise": 0.08,
+        "lid_upper": 0.1,
+        "lid_lower": 0.1,
+        "eye_gloss": 0.05
+      },
+      "_reference": "AKC Border Collie — oval medium eyes; semi-erect ears (AKC breed standard)",
+      "template_scales": {
+        "eye_size": 0.97,
+        "eye_aspect": 0.9,
+        "iris_size": 1.0,
+        "pupil_size": 1.0,
+        "ear_droop": 0.32
+      },
+      "template_structure": {
+        "BROW_INNER_OFF": [
+          -101,
+          -79
+        ],
+        "BROW_PEAK_OFF": [
+          0,
+          -97
+        ],
+        "BROW_OUTER_OFF": [
+          101,
+          -79
+        ],
+        "EAR_LEFT_BASE": [
+          [
+            -60,
+            -145
+          ],
+          [
+            -48,
+            -188
+          ],
+          [
+            8,
+            -158
+          ]
+        ],
+        "EAR_RIGHT_BASE": [
+          [
+            60,
+            -145
+          ],
+          [
+            48,
+            -188
+          ],
+          [
+            -8,
+            -158
+          ]
+        ]
       }
     }
   }

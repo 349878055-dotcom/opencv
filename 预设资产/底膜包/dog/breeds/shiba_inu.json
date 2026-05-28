@@ -1,0 +1,57 @@
+{
+  "breed_id": "shiba_inu",
+  "species": "dog",
+  "label": "柴犬/警觉型",
+  "_reference": "AKC Shiba Inu — small triangular eyes slightly upturned; small erect ears (AKC breed standard)",
+  "membrane_notes": "小三角上吊眼、立耳",
+  "template_scales": {
+    "eye_size": 0.92,
+    "eye_aspect": 0.8,
+    "iris_size": 0.96,
+    "pupil_size": 0.94,
+    "ear_droop": 0.18
+  },
+  "template_structure": {
+    "BROW_INNER_OFF": [
+      -98,
+      -78
+    ],
+    "BROW_PEAK_OFF": [
+      0,
+      -98
+    ],
+    "BROW_OUTER_OFF": [
+      98,
+      -78
+    ],
+    "EAR_LEFT_BASE": [
+      [
+        -52,
+        -162
+      ],
+      [
+        -32,
+        -208
+      ],
+      [
+        18,
+        -178
+      ]
+    ],
+    "EAR_RIGHT_BASE": [
+      [
+        52,
+        -162
+      ],
+      [
+        32,
+        -208
+      ],
+      [
+        -18,
+        -178
+      ]
+    ]
+  },
+  "schema": "ecursor_membrane_breed_v1"
+}

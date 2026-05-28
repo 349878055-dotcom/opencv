@@ -1,319 +1,36 @@
 {
-  "schema": "slider_adjustment_v1",
+  "schema": "slider_current_v1",
   "project_id": "P001",
   "customer_id": "C001",
-  "version": 10,
-  "history": [
-    {
-      "version": 1,
-      "timestamp": "2026-05-27T06:00:46.401832+00:00",
-      "note": "Pomot生成",
-      "packet": {
-        "schema": "slider-packet-v1",
-        "emotion": "s01_pressure",
-        "style": "default",
-        "macro": {
-          "push": 50,
-          "power": 50,
-          "speed": 50,
-          "steady": 50,
-          "grip": 50,
-          "outro": 50
-        },
-        "hold_seg": {
-          "shape": "flat",
-          "pulse_rate": 0,
-          "pulse_depth": 0,
-          "swell": 0
-        }
-      }
+  "saved_at": "2026-05-28T04:00:25.442521+00:00",
+  "note": "门户完整保存",
+  "packet": {
+    "schema": "slider-packet-v1",
+    "emotion": "委屈·幼犬眼",
+    "style": "default",
+    "macro": {
+      "push": 15,
+      "power": 26,
+      "speed": 22,
+      "steady": 62,
+      "grip": 68,
+      "outro": 22
     },
-    {
-      "version": 2,
-      "timestamp": "2026-05-27T06:02:18.050880+00:00",
-      "note": "Pomot生成",
-      "packet": {
-        "schema": "slider-packet-v1",
-        "emotion": "s01_pressure",
-        "style": "default",
-        "macro": {
-          "push": 50,
-          "power": 50,
-          "speed": 50,
-          "steady": 50,
-          "grip": 50,
-          "outro": 50
-        },
-        "hold_seg": {
-          "shape": "flat",
-          "pulse_rate": 0,
-          "pulse_depth": 0,
-          "swell": 0
-        }
-      }
+    "hold_seg": {
+      "shape": "tremble",
+      "pulse_rate": 18,
+      "pulse_depth": 22,
+      "swell": 8
     },
-    {
-      "version": 3,
-      "timestamp": "2026-05-27T06:26:27.717072+00:00",
-      "note": "Pomot生成",
-      "packet": {
-        "schema": "slider-packet-v1",
-        "emotion": "s01_pressure",
-        "style": "default",
-        "macro": {
-          "push": 50,
-          "power": 50,
-          "speed": 50,
-          "steady": 50,
-          "grip": 50,
-          "outro": 50
-        },
-        "hold_seg": {
-          "shape": "flat",
-          "pulse_rate": 0,
-          "pulse_depth": 0,
-          "swell": 0
-        }
-      }
-    },
-    {
-      "version": 4,
-      "timestamp": "2026-05-27T06:30:06.189262+00:00",
-      "note": "Pomot生成",
-      "packet": {
-        "schema": "slider-packet-v1",
-        "emotion": "委屈·幼犬眼",
-        "style": "default",
-        "macro": {
-          "push": 15,
-          "power": 26,
-          "speed": 22,
-          "steady": 62,
-          "grip": 68,
-          "outro": 22
-        },
-        "hold_seg": {
-          "shape": "tremble",
-          "pulse_rate": 18,
-          "pulse_depth": 22,
-          "swell": 8
-        },
-        "ear": {
-          "left": [
-            -0.7,
-            -0.3
-          ],
-          "right": [
-            -0.7,
-            -0.3
-          ]
-        }
-      }
-    },
-    {
-      "version": 5,
-      "timestamp": "2026-05-27T06:44:02.437925+00:00",
-      "note": "Pomot生成",
-      "packet": {
-        "schema": "slider-packet-v1",
-        "emotion": "委屈·幼犬眼",
-        "style": "default",
-        "macro": {
-          "push": 15,
-          "power": 26,
-          "speed": 22,
-          "steady": 62,
-          "grip": 68,
-          "outro": 22
-        },
-        "hold_seg": {
-          "shape": "tremble",
-          "pulse_rate": 18,
-          "pulse_depth": 22,
-          "swell": 8
-        },
-        "ear": {
-          "left": [
-            -0.7,
-            -0.3
-          ],
-          "right": [
-            -0.7,
-            -0.3
-          ]
-        }
-      }
-    },
-    {
-      "version": 6,
-      "timestamp": "2026-05-27T10:11:58.025794+00:00",
-      "note": "Pomot生成",
-      "packet": {
-        "schema": "slider-packet-v1",
-        "emotion": "委屈·幼犬眼",
-        "style": "default",
-        "macro": {
-          "push": 15,
-          "power": 26,
-          "speed": 22,
-          "steady": 62,
-          "grip": 68,
-          "outro": 22
-        },
-        "hold_seg": {
-          "shape": "tremble",
-          "pulse_rate": 18,
-          "pulse_depth": 22,
-          "swell": 8
-        },
-        "ear": {
-          "left": [
-            -0.7,
-            -0.3
-          ],
-          "right": [
-            -0.7,
-            -0.3
-          ]
-        }
-      }
-    },
-    {
-      "version": 7,
-      "timestamp": "2026-05-27T10:32:34.141703+00:00",
-      "note": "Pomot生成",
-      "packet": {
-        "schema": "slider-packet-v1",
-        "emotion": "委屈·幼犬眼",
-        "style": "default",
-        "macro": {
-          "push": 15,
-          "power": 26,
-          "speed": 22,
-          "steady": 62,
-          "grip": 68,
-          "outro": 22
-        },
-        "hold_seg": {
-          "shape": "tremble",
-          "pulse_rate": 18,
-          "pulse_depth": 22,
-          "swell": 8
-        },
-        "ear": {
-          "left": [
-            -0.7,
-            -0.3
-          ],
-          "right": [
-            -0.7,
-            -0.3
-          ]
-        }
-      }
-    },
-    {
-      "version": 8,
-      "timestamp": "2026-05-27T10:32:51.379756+00:00",
-      "note": "完整保存",
-      "packet": {
-        "schema": "slider-packet-v1",
-        "emotion": "委屈·幼犬眼",
-        "style": "default",
-        "macro": {
-          "push": 15,
-          "power": 26,
-          "speed": 22,
-          "steady": 62,
-          "grip": 68,
-          "outro": 22
-        },
-        "hold_seg": {
-          "shape": "tremble",
-          "pulse_rate": 18,
-          "pulse_depth": 22,
-          "swell": 8
-        },
-        "ear": {
-          "left": [
-            -0.7,
-            -0.3
-          ],
-          "right": [
-            -0.7,
-            -0.3
-          ]
-        }
-      }
-    },
-    {
-      "version": 9,
-      "timestamp": "2026-05-27T10:33:51.257350+00:00",
-      "note": "Pomot生成",
-      "packet": {
-        "schema": "slider-packet-v1",
-        "emotion": "委屈·幼犬眼",
-        "style": "default",
-        "macro": {
-          "push": 15,
-          "power": 26,
-          "speed": 22,
-          "steady": 62,
-          "grip": 68,
-          "outro": 22
-        },
-        "hold_seg": {
-          "shape": "tremble",
-          "pulse_rate": 18,
-          "pulse_depth": 22,
-          "swell": 8
-        },
-        "ear": {
-          "left": [
-            -0.7,
-            -0.3
-          ],
-          "right": [
-            -0.7,
-            -0.3
-          ]
-        }
-      }
-    },
-    {
-      "version": 10,
-      "timestamp": "2026-05-27T10:34:01.818385+00:00",
-      "note": "完整保存",
-      "packet": {
-        "schema": "slider-packet-v1",
-        "emotion": "委屈·幼犬眼",
-        "style": "default",
-        "macro": {
-          "push": 15,
-          "power": 26,
-          "speed": 22,
-          "steady": 62,
-          "grip": 68,
-          "outro": 22
-        },
-        "hold_seg": {
-          "shape": "tremble",
-          "pulse_rate": 18,
-          "pulse_depth": 22,
-          "swell": 8
-        },
-        "ear": {
-          "left": [
-            -0.7,
-            -0.3
-          ],
-          "right": [
-            -0.7,
-            -0.3
-          ]
-        }
-      }
+    "ear": {
+      "left": [
+        -0.7,
+        -0.3
+      ],
+      "right": [
+        -0.7,
+        -0.3
+      ]
     }
-  ],
-  "current_version": 10
+  }
 }

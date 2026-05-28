@@ -1,4 +1,4 @@
-"""客户资产库核心模块：客户/项目 CRUD + 滑杆调整版本管理 + 密码认证。
+"""客户资产库核心模块：客户/项目 CRUD + 当前滑杆包（无版本历史）+ 密码认证。
 
 依赖 asset_lib.py 中的路径工具，使用独立的 客户资产库/ 目录存放客户私有数据，
 与 预设资产/ 中的预设人格包完全分离。
@@ -53,7 +53,8 @@ from gaze_engine._shared.species_template import (
 
 CUSTOMER_SCHEMA = "customer_v2"
 PROJECT_SCHEMA = "customer_project_v2"
-ADJUSTMENT_SCHEMA = "slider_adjustment_v1"
+ADJUSTMENT_SCHEMA = "slider_current_v1"
+LEGACY_ADJUSTMENT_SCHEMA = "slider_adjustment_v1"
 TEMPLATE_PARAMS_SCHEMA = "species_template_v1"
 
 
@@ -164,7 +165,7 @@ def create_customer(
     contact: str = "",
     default_persona: str = "",
     default_emotion: str = "",
-    preferred_species: str = "human",
+    preferred_species: str = "",
     breed: str = "",
     template_adjustments: dict[str, float] | None = None,
     password: str = "",
@@ -177,7 +178,7 @@ def create_customer(
         contact: 联系备注
         default_persona: 默认人格包 ID
         default_emotion: 默认情绪 ID
-        preferred_species: 偏好的物种（human/cat/dog）
+        preferred_species: 已废弃；物种按项目设定，注册时不填
         breed: 品种 ID（如 "poodle_giant", "ragdoll_cat"）
         template_adjustments: 客户照片检测得到的底膜调整参数
         password: 登录密码（不传则无密码认证）
@@ -203,8 +204,9 @@ def create_customer(
     _ensure_dir(customer_ref_photos_dir(cid))
     _write_json(customer_info_path(cid), info)
 
-    # 保存默认物种底膜模板（含客户调整）
-    _save_template_params(cid, preferred_species, breed, template_adjustments)
+    # 底膜模板在标定时按项目物种写入，注册时不绑定物种
+    if preferred_species:
+        _save_template_params(cid, preferred_species, breed, template_adjustments)
 
     return cid
 
@@ -245,6 +247,14 @@ def get_template_params(customer_id: str) -> SpeciesTemplate | None:
     if not data or not data.get("params"):
         return None
     return SpeciesTemplate.from_dict(data["params"])
+
+
+def get_template_breed(customer_id: str) -> str:
+    """读取标定记录绑定的品种 id（猫/狗），无则返回空串。"""
+    data = _read_json(customer_template_params_path(customer_id))
+    if not data:
+        return ""
+    return str(data.get("breed") or "").strip()
 
 
 def get_customer_species_and_breed(customer_id: str) -> tuple[str, str]:
@@ -448,14 +458,14 @@ def create_project(
     _ensure_dir(project_adjustment_dir(customer_id, pid))
     _write_json(project_config_path(customer_id, pid), config)
 
-    # 初始化空的调整记录
+    # 初始化当前滑杆包占位（无版本历史）
     adjustments = {
         "schema": ADJUSTMENT_SCHEMA,
         "project_id": pid,
         "customer_id": customer_id,
-        "version": 0,
-        "history": [],
-        "current_version": 0,
+        "saved_at": "",
+        "note": "",
+        "packet": None,
     }
     _write_json(project_adjustments_path(customer_id, pid), adjustments)
     return pid
@@ -500,8 +510,20 @@ def delete_project(customer_id: str, project_id: str) -> bool:
 
 
 # ═══════════════════════════════════════════════════════════
-# 滑杆调整版本管理
+# 滑杆包（仅保留当前一份，无中间过程版本）
 # ═══════════════════════════════════════════════════════════
+
+def _clear_adjustment_snapshots(customer_id: str, project_id: str) -> None:
+    """删除旧版「调整过程/调整_XX.json」快照文件。"""
+    adj_dir = project_adjustment_dir(customer_id, project_id)
+    if not adj_dir.is_dir():
+        return
+    for f in adj_dir.glob("调整_*.json"):
+        try:
+            f.unlink()
+        except OSError:
+            pass
+
 
 def save_adjustment(
     customer_id: str,
@@ -512,96 +534,85 @@ def save_adjustment(
     diff: dict | None = None,
     extra: dict | None = None,
 ) -> int | None:
-    """保存一次滑杆调整快照，返回新版本号。
+    """覆盖写入当前滑杆包（客户点「保存」时调用，不追加版本历史）。
 
-    Args:
-        customer_id: 客户 ID
-        project_id: 项目 ID
-        packet: 完整 SliderPacket 的 dict 表示
-        note: 本次调整说明
-        diff: 相对上次的变更描述（如 {"macro.power": "+15"}）
-        extra: 额外元数据
+    diff/extra 仅写入 note 旁注，兼容旧 API 调用方。
 
     Returns:
-        新版本号（1-based），若项目不存在返回 None
+        1 表示已保存当前包；项目不存在时返回 None。
     """
-    adjustments = _read_json(project_adjustments_path(customer_id, project_id))
-    if not adjustments or not adjustments.get("schema"):
+    if get_project(customer_id, project_id) is None:
         return None
 
-    version = adjustments["current_version"] + 1
-    entry: dict[str, Any] = {
-        "version": version,
-        "timestamp": _now_iso(),
+    record: dict[str, Any] = {
+        "schema": ADJUSTMENT_SCHEMA,
+        "project_id": project_id,
+        "customer_id": customer_id,
+        "saved_at": _now_iso(),
         "note": note or "",
         "packet": packet,
     }
     if diff:
-        entry["diff"] = diff
+        record["diff"] = diff
     if extra:
-        entry["extra"] = extra
+        record["extra"] = extra
 
-    adjustments["version"] = version
-    adjustments["current_version"] = version
-    adjustments["history"].append(entry)
-
-    _write_json(project_adjustments_path(customer_id, project_id), adjustments)
-
-    # 同时保存独立版本文件（便于外部直接引用）
-    version_file = project_adjustment_dir(customer_id, project_id) / f"调整_{version:02d}.json"
-    _write_json(version_file, entry)
-
-    return version
+    _write_json(project_adjustments_path(customer_id, project_id), record)
+    _clear_adjustment_snapshots(customer_id, project_id)
+    return 1
 
 
 def get_adjustment_history(
     customer_id: str, project_id: str
 ) -> list[dict]:
-    """获取项目的完整调整历史。"""
+    """兼容旧接口：仅返回当前已保存的一包（无历史列表）。"""
     adjustments = _read_json(project_adjustments_path(customer_id, project_id))
-    if not adjustments or not adjustments.get("schema"):
+    if not adjustments:
         return []
-    return adjustments.get("history", [])
+    schema = adjustments.get("schema", "")
+    if schema == LEGACY_ADJUSTMENT_SCHEMA:
+        return adjustments.get("history", [])
+    pkt = adjustments.get("packet")
+    if pkt:
+        return [{
+            "version": 1,
+            "timestamp": adjustments.get("saved_at", ""),
+            "note": adjustments.get("note", ""),
+            "packet": pkt,
+        }]
+    return []
 
 
 def load_adjustment(
     customer_id: str, project_id: str, version: int | None = None
 ) -> dict | None:
-    """加载指定版本的滑杆包。
-
-    Args:
-        customer_id: 客户 ID
-        project_id: 项目 ID
-        version: 版本号，None 表示加载最新版
-
-    Returns:
-        该版本的 packet dict，若不存在返回 None
-    """
+    """加载当前滑杆包（version 参数仅兼容旧调用，忽略非 1 的版本号）。"""
     adjustments = _read_json(project_adjustments_path(customer_id, project_id))
-    if not adjustments or not adjustments.get("history"):
+    if not adjustments:
         return None
 
-    history = adjustments["history"]
-    if version is not None:
-        for entry in history:
-            if entry.get("version") == version:
-                return entry.get("packet")
-        return None
-
-    # 加载最新版
-    if history:
+    schema = adjustments.get("schema", "")
+    if schema == LEGACY_ADJUSTMENT_SCHEMA:
+        history = adjustments.get("history") or []
+        if not history:
+            return None
+        if version is not None:
+            for entry in history:
+                if entry.get("version") == version:
+                    return entry.get("packet")
+            return None
         return history[-1].get("packet")
-    return None
+
+    if version is not None and version != 1:
+        return None
+    return adjustments.get("packet")
 
 
 def get_current_adjustment_version(
     customer_id: str, project_id: str
 ) -> int:
-    """获取当前调整版本号（0 = 无调整）。"""
-    adjustments = _read_json(project_adjustments_path(customer_id, project_id))
-    if not adjustments:
-        return 0
-    return adjustments.get("current_version", 0)
+    """当前是否已有保存的滑杆包：0=无，1=有。"""
+    return 1 if load_adjustment(customer_id, project_id) else 0
 
 
 # ═══════════════════════════════════════════════════════════

@@ -39,7 +39,7 @@ DOG_CONSTRAINT: str = (
     "叙事含「回头」时 pupil_x 扫视可暗示头转（无 head 通道时靠眼动补偿）。"
 )
 
-# 04 正向 Prompt · 情感化视觉词（按预设情绪包文件名）
+# 04 正向 Prompt · 情感化视觉词（按情绪包文件名）
 EMOTION_VISUAL_PROMPTS: Dict[str, str] = {
     "委屈·幼犬眼": (
         "近景特写，委屈表情，湿润的大眼睛，眼睑微垂，泪光盈盈，"

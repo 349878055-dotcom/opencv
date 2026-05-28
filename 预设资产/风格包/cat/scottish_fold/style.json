@@ -1,0 +1,36 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "scottish_fold",
+  "label": "折耳猫/软萌型",
+  "species": "cat",
+  "notes": "圆眼宽距 owl 感，折耳显无辜，慢柔眨，眼动收敛 · [底膜] 大圆眼宽距、折耳",
+  "default_emotion": "",
+  "base_offset": {
+    "pupil_x": 0.47,
+    "pupil_y": 0.46,
+    "blink": 0.56,
+    "eyebrow": 0.4,
+    "brow_raise": 0.38,
+    "pupil_scale": 0.52,
+    "iris_scale": 0.52,
+    "cornea_bulge": 0.5,
+    "squint": 0.5,
+    "lid_upper": 0.5,
+    "lid_lower": 0.48,
+    "eye_gloss": 0.54
+  },
+  "scale_factor": {
+    "pupil_x": 0.03,
+    "pupil_y": 0.03,
+    "blink": 0.26,
+    "eyebrow": 0.06,
+    "brow_raise": 0.06,
+    "pupil_scale": 0.1,
+    "iris_scale": 0.1,
+    "cornea_bulge": 0.1,
+    "squint": 0.12,
+    "lid_upper": 0.1,
+    "lid_lower": 0.1,
+    "eye_gloss": 0.05
+  }
+}

@@ -401,7 +401,7 @@ def diff_template_params(
         if k == "eye_vertical":
             hint = "上移" if delta > 0 else "下移"
         elif k in ("eye_distance", "eye_size", "iris_size", "pupil_size", "ear_size"):
-            hint = "变大" if delta > 0 else "变小"
+            hint = "相对品种基准偏宽" if delta > 0 else "相对品种基准偏窄"
         elif k == "ear_droop":
             hint = "更垂" if delta > 0 else "更立"
         else:

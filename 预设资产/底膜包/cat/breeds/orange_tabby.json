@@ -1,0 +1,16 @@
+{
+  "breed_id": "orange_tabby",
+  "species": "cat",
+  "label": "橘猫/贪玩型",
+  "_reference": "Domestic shorthair / common mackerel tabby — round alert eyes (general feline morphology)",
+  "membrane_notes": "家猫圆眼机警",
+  "template_scales": {
+    "eye_size": 1.02,
+    "eye_aspect": 1.04,
+    "iris_size": 1.0,
+    "pupil_size": 1.0,
+    "ear_size": 1.0,
+    "ear_angle": 0.62
+  },
+  "schema": "ecursor_membrane_breed_v1"
+}

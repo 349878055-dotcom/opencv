@@ -191,17 +191,30 @@ def validate_all() -> list[str]:
     return out
 
 def packet_from_acting_preset(name: str) -> "SliderPacket":
+    import json
+
+    from asset_lib import HUMAN_PRESETS_DIR
+    from gaze_engine._shared.emotion_pad import ensure_pad_on_packet
     from gaze_engine._shared.slider_schema import HoldSegment, MacroSliders, SliderPacket
+
+    json_path = HUMAN_PRESETS_DIR / f"{name}.json"
+    if json_path.is_file():
+        raw = json.loads(json_path.read_text(encoding="utf-8"))
+        pkt = SliderPacket.from_dict(raw)
+        if not pkt.emotion or pkt.emotion == "s01_pressure":
+            pkt.emotion = name
+        return ensure_pad_on_packet(pkt, "human")
 
     data = PRESETS.get(name)
     if not data:
         raise KeyError(f"未知预设: {name}，可选: {', '.join(PRESETS)}")
-    return SliderPacket(
+    pkt = SliderPacket(
         emotion=name,
         style="default",
         macro=MacroSliders(**data["macro"]),  # type: ignore[arg-type]
         hold_seg=HoldSegment(**data["hold_seg"]),  # type: ignore[arg-type]
     ).clamped()
+    return ensure_pad_on_packet(pkt, "human")
 
 def export_workbench_json() -> dict[str, Any]:
     """导出工作台 UI 数据。

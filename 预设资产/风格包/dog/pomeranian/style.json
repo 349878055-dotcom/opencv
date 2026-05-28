@@ -1,0 +1,36 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "pomeranian",
+  "label": "博美/机警型",
+  "species": "dog",
+  "notes": "小体圆眼明亮，机警快眨，扫视幅度中等偏高 · [底膜] 狐狸眼、小立耳",
+  "default_emotion": "",
+  "base_offset": {
+    "pupil_x": 0.51,
+    "pupil_y": 0.49,
+    "blink": 0.46,
+    "eyebrow": 0.34,
+    "pupil_scale": 0.56,
+    "iris_scale": 0.54,
+    "cornea_bulge": 0.52,
+    "squint": 0.46,
+    "brow_raise": 0.44,
+    "lid_upper": 0.48,
+    "lid_lower": 0.5,
+    "eye_gloss": 0.56
+  },
+  "scale_factor": {
+    "pupil_x": 0.08,
+    "pupil_y": 0.07,
+    "blink": 0.2,
+    "eyebrow": 0.12,
+    "pupil_scale": 0.18,
+    "iris_scale": 0.14,
+    "cornea_bulge": 0.14,
+    "squint": 0.16,
+    "brow_raise": 0.12,
+    "lid_upper": 0.12,
+    "lid_lower": 0.12,
+    "eye_gloss": 0.06
+  }
+}

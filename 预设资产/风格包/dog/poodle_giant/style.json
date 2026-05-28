@@ -3,7 +3,7 @@
   "id": "poodle_giant",
   "label": "巨型贵宾犬/优雅型",
   "species": "dog",
-  "notes": "巨型贵宾犬/优雅型 品种风格偏移",
+  "notes": "椭圆眼距宽，优雅慢眨，眉弓柔和；含品种底膜几何偏移 · [底膜] 椭圆眼、长垂耳；工程基准品种",
   "default_emotion": "",
   "base_offset": {
     "pupil_x": 0.5,

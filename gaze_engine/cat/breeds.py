@@ -1,6 +1,6 @@
 """
-猫品种配置 · 4 品种
-从 cat/breed_matrix.json 读取品种风格（base_offset + scale_factor）
+猫品种配置
+真源：预设资产/风格包/cat/{id}/style.json；回退 cat/breed_matrix.json
 """
 from __future__ import annotations
 
@@ -49,12 +49,16 @@ def apply_breed_style(
     if not breed_id or breed_id in ("default", ""):
         return channels
     from gaze_engine.cat.envelope_compile import CAT_CHANNELS
-    from gaze_engine._shared.style_compose import apply_style_offset
-
-    cfg = get_cat_breed(breed_id)
-    return apply_style_offset(
-        channels,
-        cfg["base_offset"],
-        cfg["scale_factor"],
-        channel_keys=CAT_CHANNELS,
+    from gaze_engine._shared.style_compose import (
+        apply_style_offset,
+        load_style_json,
+        style_offsets_from_dict,
     )
+
+    raw = load_style_json("cat", breed_id)
+    if raw is not None:
+        bo, sf = style_offsets_from_dict(raw)
+    else:
+        cfg = get_cat_breed(breed_id)
+        bo, sf = cfg["base_offset"], cfg["scale_factor"]
+    return apply_style_offset(channels, bo, sf, channel_keys=CAT_CHANNELS)

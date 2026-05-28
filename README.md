@@ -27,17 +27,17 @@
 ## 启动
 
 ```bash
-./一键打开能量工作台.sh
-# → http://127.0.0.1:8765/01_工作台服务/能量工作台.html
+./一键打开创作门户.sh
+# → http://127.0.0.1:8765/portal
 ```
 
 ## 项目入口
 
 | 用途 | 文件 |
 |------|------|
-| **架构设计（核心文档）** | [`contracts/06_架构/流程设计.md`](contracts/06_架构/流程设计.md) |
+| **架构设计（核心文档）** | [`合同/08_架构与验收/流程设计.md`](合同/08_架构与验收/流程设计.md) |
 | HTTP 服务 | [`tools/01_工作台服务/serve_workbench.py`](tools/01_工作台服务/serve_workbench.py) |
-| 网页工作台 | [`tools/01_工作台服务/能量工作台.html`](tools/01_工作台服务/能量工作台.html) |
+| 客户创作门户 | [`tools/01_工作台服务/客户门户.html`](tools/01_工作台服务/客户门户.html) |
 | 核心引擎 | [`gaze_engine/`](gaze_engine/) |
 | 代码依赖图谱 | [`AI_INDEX.md`](AI_INDEX.md) |
-| 合同索引 | [`contracts/README.md`](contracts/README.md) |
+| 合同索引 | [`合同/README.md`](合同/README.md) |

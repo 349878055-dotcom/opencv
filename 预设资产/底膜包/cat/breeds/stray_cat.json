@@ -1,0 +1,16 @@
+{
+  "breed_id": "stray_cat",
+  "species": "cat",
+  "label": "田园猫/机敏型",
+  "_reference": "中华田园猫 — medium almond-round eyes; upright ears (general domestic cat)",
+  "membrane_notes": "田园猫中等眼、竖耳",
+  "template_scales": {
+    "eye_size": 1.0,
+    "eye_aspect": 1.0,
+    "iris_size": 1.0,
+    "pupil_size": 1.0,
+    "ear_size": 1.02,
+    "ear_angle": 0.65
+  },
+  "schema": "ecursor_membrane_breed_v1"
+}

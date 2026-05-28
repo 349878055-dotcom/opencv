@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Any
 
 from asset_lib import (
+    BAKED_OUTPUT_BY_SPECIES,
+    LEGACY_BAKED_FILENAME,
     customer_dir,
     customer_info_path,
     customer_ref_photos_dir,
@@ -28,6 +30,20 @@ MANIFEST_SCHEMA = "diffusion_bundle_v1"
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _pad_from_payload(payload: dict[str, Any]) -> dict[str, Any] | None:
+    """从 packet / baked.slider_packet 提取 PAD 归档块。"""
+    for block in (
+        payload.get("packet"),
+        (payload.get("baked") or {}).get("slider_packet"),
+    ):
+        if not isinstance(block, dict):
+            continue
+        pad = block.get("pad")
+        if isinstance(pad, dict) and "P" in pad:
+            return pad
+    return None
 
 
 def _write_json(path: Path, data: dict) -> None:
@@ -49,9 +65,12 @@ def save_project_profile(
     bundle = diffusion_bundle_dir(customer_id, project_id)
 
     files: dict[str, Any] = {}
+    baked_names = list(dict.fromkeys(
+        list(BAKED_OUTPUT_BY_SPECIES.values()) + [LEGACY_BAKED_FILENAME]
+    ))
     for name in (
         "01_滑杆包.json",
-        "02_烘焙_真人律.json",
+        *baked_names,
         "03_工程底模.mp4",
         "03_工程底模.meta.json",
         "04_Prompt.txt",
@@ -96,6 +115,7 @@ def save_project_profile(
             "action": payload.get("action") or "",
             "split": payload.get("split"),
             "route": payload.get("route"),
+            "pad": _pad_from_payload(payload),
         },
         "pipeline": {
             "revision": (payload.get("baked") or {}).get("revision")
@@ -104,6 +124,7 @@ def save_project_profile(
             "baked_mood": (payload.get("baked") or {}).get("mood")
             or (payload.get("baked") or {}).get("gaze_emotion_id")
             or "",
+            "pad_layer": "S1",
         },
         "wan": {
             "positive_len": len(payload.get("wan_positive_clip") or payload.get("wan_positive") or ""),

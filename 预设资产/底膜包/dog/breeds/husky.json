@@ -1,0 +1,57 @@
+{
+  "breed_id": "husky",
+  "species": "dog",
+  "label": "哈士奇/凌厉型",
+  "_reference": "AKC Siberian Husky — almond eyes oblique; erect triangular ears (images.akc.org/pdf/breeds/standards/SiberianHusky.pdf)",
+  "membrane_notes": "杏仁斜眼、立耳",
+  "template_scales": {
+    "eye_size": 0.98,
+    "eye_aspect": 0.86,
+    "iris_size": 1.0,
+    "pupil_size": 1.02,
+    "ear_droop": 0.12
+  },
+  "template_structure": {
+    "BROW_INNER_OFF": [
+      -102,
+      -82
+    ],
+    "BROW_PEAK_OFF": [
+      0,
+      -102
+    ],
+    "BROW_OUTER_OFF": [
+      102,
+      -82
+    ],
+    "EAR_LEFT_BASE": [
+      [
+        -58,
+        -158
+      ],
+      [
+        -38,
+        -205
+      ],
+      [
+        12,
+        -175
+      ]
+    ],
+    "EAR_RIGHT_BASE": [
+      [
+        58,
+        -158
+      ],
+      [
+        38,
+        -205
+      ],
+      [
+        -12,
+        -175
+      ]
+    ]
+  },
+  "schema": "ecursor_membrane_breed_v1"
+}

@@ -6,30 +6,30 @@
   "notes": "畏缩怯懦，眼神躲闪",
   "base_offset": {
     "pupil_x": 0.5,
-    "pupil_y": 0.5,
-    "blink": 0.5,
-    "eyebrow": 0.5,
+    "pupil_y": 0.44,
+    "blink": 0.55,
+    "eyebrow": 0.46,
     "pupil_scale": 0.5,
     "iris_scale": 0.5,
     "cornea_bulge": 0.5,
-    "squint": 0.5,
-    "brow_raise": 0.5,
-    "lid_upper": 0.5,
+    "squint": 0.48,
+    "brow_raise": 0.46,
+    "lid_upper": 0.45,
     "lid_lower": 0.5,
-    "eye_gloss": 0.5
+    "eye_gloss": 0.55
   },
   "scale_factor": {
     "pupil_x": 0.5,
-    "pupil_y": 0.5,
-    "blink": 0.5,
-    "eyebrow": 0.5,
-    "pupil_scale": 0.5,
-    "iris_scale": 0.5,
-    "cornea_bulge": 0.5,
-    "squint": 0.5,
-    "brow_raise": 0.5,
-    "lid_upper": 0.5,
-    "lid_lower": 0.5,
-    "eye_gloss": 0.5
+    "pupil_y": 0.4,
+    "blink": 0.58,
+    "eyebrow": 0.32,
+    "pupil_scale": 0.42,
+    "iris_scale": 0.38,
+    "cornea_bulge": 0.4,
+    "squint": 0.28,
+    "brow_raise": 0.36,
+    "lid_upper": 0.38,
+    "lid_lower": 0.35,
+    "eye_gloss": 0.3
   }
 }

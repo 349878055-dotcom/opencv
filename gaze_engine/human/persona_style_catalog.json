@@ -1,0 +1,132 @@
+{
+  "_schema": "persona_style_catalog_v1",
+  "_description": "九大人格风格真源 — sync_human_style_pack.py 同步到 style.json 与 persona_matrix.json",
+  "personas": {
+    "天选者_大祭司": {
+      "label": "天选者/大祭司",
+      "notes": "冷峻克制，天生压迫感",
+      "base_offset": {
+        "pupil_x": 0.48, "pupil_y": 0.48, "blink": 0.50, "eyebrow": 0.40,
+        "pupil_scale": 0.50, "iris_scale": 0.50, "cornea_bulge": 0.50,
+        "squint": 0.50, "brow_raise": 0.50, "lid_upper": 0.50, "lid_lower": 0.50, "eye_gloss": 0.46
+      },
+      "scale_factor": {
+        "pupil_x": 0.02, "pupil_y": 0.02, "blink": 0.25, "eyebrow": 0.90,
+        "pupil_scale": 0.10, "iris_scale": 0.10, "cornea_bulge": 0.15,
+        "squint": 0.20, "brow_raise": 0.05, "lid_upper": 0.15, "lid_lower": 0.15, "eye_gloss": 0.03
+      }
+    },
+    "魅惑者_温碧霞": {
+      "label": "魅惑者/温碧霞",
+      "notes": "温碧霞风格，眼波流转",
+      "base_offset": {
+        "pupil_x": 0.50, "pupil_y": 0.50, "blink": 0.50, "eyebrow": 0.50,
+        "pupil_scale": 0.50, "iris_scale": 0.50, "cornea_bulge": 0.50,
+        "squint": 0.50, "brow_raise": 0.50, "lid_upper": 0.58, "lid_lower": 0.42, "eye_gloss": 0.90
+      },
+      "scale_factor": {
+        "pupil_x": 0.55, "pupil_y": 0.50, "blink": 0.75, "eyebrow": 0.55,
+        "pupil_scale": 0.50, "iris_scale": 0.50, "cornea_bulge": 0.55,
+        "squint": 0.40, "brow_raise": 0.45, "lid_upper": 0.55, "lid_lower": 0.50, "eye_gloss": 0.55
+      }
+    },
+    "魅惑者_部落巫医": {
+      "label": "魅惑者/部落巫医",
+      "notes": "妖冶诱惑，野性与神秘感",
+      "base_offset": {
+        "pupil_x": 0.50, "pupil_y": 0.50, "blink": 0.50, "eyebrow": 0.46,
+        "pupil_scale": 0.50, "iris_scale": 0.50, "cornea_bulge": 0.50,
+        "squint": 0.54, "brow_raise": 0.50, "lid_upper": 0.56, "lid_lower": 0.44, "eye_gloss": 0.68
+      },
+      "scale_factor": {
+        "pupil_x": 0.62, "pupil_y": 0.48, "blink": 0.68, "eyebrow": 0.58,
+        "pupil_scale": 0.48, "iris_scale": 0.48, "cornea_bulge": 0.52,
+        "squint": 0.52, "brow_raise": 0.52, "lid_upper": 0.50, "lid_lower": 0.48, "eye_gloss": 0.38
+      }
+    },
+    "狠厉者_铁血将军": {
+      "label": "狠厉者/铁血将军",
+      "notes": "铁血无情，杀气凌厉",
+      "base_offset": {
+        "pupil_x": 0.49, "pupil_y": 0.47, "blink": 0.47, "eyebrow": 0.42,
+        "pupil_scale": 0.48, "iris_scale": 0.48, "cornea_bulge": 0.46,
+        "squint": 0.58, "brow_raise": 0.40, "lid_upper": 0.54, "lid_lower": 0.50, "eye_gloss": 0.38
+      },
+      "scale_factor": {
+        "pupil_x": 0.28, "pupil_y": 0.22, "blink": 0.24, "eyebrow": 0.88,
+        "pupil_scale": 0.18, "iris_scale": 0.14, "cornea_bulge": 0.18,
+        "squint": 0.44, "brow_raise": 0.10, "lid_upper": 0.26, "lid_lower": 0.22, "eye_gloss": 0.05
+      }
+    },
+    "怯弱者_逃兵": {
+      "label": "怯弱者/逃兵",
+      "notes": "畏缩怯懦，眼神躲闪",
+      "base_offset": {
+        "pupil_x": 0.50, "pupil_y": 0.44, "blink": 0.55, "eyebrow": 0.46,
+        "pupil_scale": 0.50, "iris_scale": 0.50, "cornea_bulge": 0.50,
+        "squint": 0.48, "brow_raise": 0.46, "lid_upper": 0.45, "lid_lower": 0.50, "eye_gloss": 0.55
+      },
+      "scale_factor": {
+        "pupil_x": 0.50, "pupil_y": 0.40, "blink": 0.58, "eyebrow": 0.32,
+        "pupil_scale": 0.42, "iris_scale": 0.38, "cornea_bulge": 0.40,
+        "squint": 0.28, "brow_raise": 0.36, "lid_upper": 0.38, "lid_lower": 0.35, "eye_gloss": 0.30
+      }
+    },
+    "悲悯者_圣徒": {
+      "label": "悲悯者/圣徒",
+      "notes": "悲天悯人，圣洁温厚",
+      "base_offset": {
+        "pupil_x": 0.50, "pupil_y": 0.50, "blink": 0.50, "eyebrow": 0.47,
+        "pupil_scale": 0.50, "iris_scale": 0.50, "cornea_bulge": 0.52,
+        "squint": 0.46, "brow_raise": 0.48, "lid_upper": 0.48, "lid_lower": 0.44, "eye_gloss": 0.76
+      },
+      "scale_factor": {
+        "pupil_x": 0.38, "pupil_y": 0.38, "blink": 0.48, "eyebrow": 0.40,
+        "pupil_scale": 0.36, "iris_scale": 0.42, "cornea_bulge": 0.48,
+        "squint": 0.26, "brow_raise": 0.32, "lid_upper": 0.40, "lid_lower": 0.42, "eye_gloss": 0.45
+      }
+    },
+    "呆滞者_傀儡": {
+      "label": "呆滞者/傀儡",
+      "notes": "空洞失神，反应迟钝",
+      "base_offset": {
+        "pupil_x": 0.50, "pupil_y": 0.50, "blink": 0.50, "eyebrow": 0.50,
+        "pupil_scale": 0.50, "iris_scale": 0.50, "cornea_bulge": 0.50,
+        "squint": 0.50, "brow_raise": 0.50, "lid_upper": 0.50, "lid_lower": 0.50, "eye_gloss": 0.36
+      },
+      "scale_factor": {
+        "pupil_x": 0.08, "pupil_y": 0.08, "blink": 0.14, "eyebrow": 0.10,
+        "pupil_scale": 0.06, "iris_scale": 0.06, "cornea_bulge": 0.08,
+        "squint": 0.08, "brow_raise": 0.06, "lid_upper": 0.10, "lid_lower": 0.08, "eye_gloss": 0.04
+      }
+    },
+    "癫狂者_疯僧": {
+      "label": "癫狂者/疯僧",
+      "notes": "疯癫狂乱，不可预测",
+      "base_offset": {
+        "pupil_x": 0.52, "pupil_y": 0.50, "blink": 0.52, "eyebrow": 0.50,
+        "pupil_scale": 0.52, "iris_scale": 0.50, "cornea_bulge": 0.50,
+        "squint": 0.48, "brow_raise": 0.54, "lid_upper": 0.50, "lid_lower": 0.50, "eye_gloss": 0.60
+      },
+      "scale_factor": {
+        "pupil_x": 0.78, "pupil_y": 0.70, "blink": 0.72, "eyebrow": 0.60,
+        "pupil_scale": 0.58, "iris_scale": 0.52, "cornea_bulge": 0.55,
+        "squint": 0.50, "brow_raise": 0.65, "lid_upper": 0.55, "lid_lower": 0.52, "eye_gloss": 0.42
+      }
+    },
+    "天真者_幼童": {
+      "label": "天真者/幼童",
+      "notes": "天真无邪，纯净明亮",
+      "base_offset": {
+        "pupil_x": 0.50, "pupil_y": 0.50, "blink": 0.50, "eyebrow": 0.50,
+        "pupil_scale": 0.56, "iris_scale": 0.55, "cornea_bulge": 0.52,
+        "squint": 0.44, "brow_raise": 0.54, "lid_upper": 0.62, "lid_lower": 0.46, "eye_gloss": 0.74
+      },
+      "scale_factor": {
+        "pupil_x": 0.48, "pupil_y": 0.46, "blink": 0.56, "eyebrow": 0.48,
+        "pupil_scale": 0.58, "iris_scale": 0.52, "cornea_bulge": 0.46,
+        "squint": 0.32, "brow_raise": 0.58, "lid_upper": 0.50, "lid_lower": 0.45, "eye_gloss": 0.52
+      }
+    }
+  }
+}

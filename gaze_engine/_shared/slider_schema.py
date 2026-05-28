@@ -1,4 +1,4 @@
-"""滑杆规范 v1：LLM 刻度 ↔ Python 映射（见 contracts/滑杆规范.md）。"""
+"""滑杆规范 v1：LLM 刻度 ↔ Python 映射（见 合同/滑杆规范.md）。"""
 from __future__ import annotations
 
 import json

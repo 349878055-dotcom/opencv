@@ -1,0 +1,57 @@
+{
+  "breed_id": "border_collie",
+  "species": "dog",
+  "label": "边牧/聪慧型",
+  "_reference": "AKC Border Collie — oval medium eyes; semi-erect ears (AKC breed standard)",
+  "membrane_notes": "椭圆专注眼、半立耳",
+  "template_scales": {
+    "eye_size": 0.97,
+    "eye_aspect": 0.9,
+    "iris_size": 1.0,
+    "pupil_size": 1.0,
+    "ear_droop": 0.32
+  },
+  "template_structure": {
+    "BROW_INNER_OFF": [
+      -101,
+      -79
+    ],
+    "BROW_PEAK_OFF": [
+      0,
+      -97
+    ],
+    "BROW_OUTER_OFF": [
+      101,
+      -79
+    ],
+    "EAR_LEFT_BASE": [
+      [
+        -60,
+        -145
+      ],
+      [
+        -48,
+        -188
+      ],
+      [
+        8,
+        -158
+      ]
+    ],
+    "EAR_RIGHT_BASE": [
+      [
+        60,
+        -145
+      ],
+      [
+        48,
+        -188
+      ],
+      [
+        -8,
+        -158
+      ]
+    ]
+  },
+  "schema": "ecursor_membrane_breed_v1"
+}

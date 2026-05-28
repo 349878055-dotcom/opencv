@@ -19,7 +19,7 @@ SAMPLE_ACTION = "委屈地跑回笼子再回头看了一眼"
 
 
 def export_species(species: str, out_root: Path) -> int:
-    preset_dir = ROOT / "预设资产" / "预设情绪包" / species
+    preset_dir = ROOT / "预设资产" / "情绪包" / species
     breed = DEFAULT_BREED.get(species, "")
     count = 0
     asm = DiffusionPromptAssembler()

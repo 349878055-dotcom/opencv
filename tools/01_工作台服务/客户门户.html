@@ -170,6 +170,17 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
 .wan-clip-pre { margin:0; padding:10px; font-size:0.68rem; max-height:140px; overflow:auto; white-space:pre-wrap; word-break:break-all; font-family:monospace; }
 .test-cmd-pre { margin:0; padding:10px 12px; background:#1e293b; color:#e2e8f0; border-radius:8px; font-size:0.72rem; overflow:auto; }
 .btn-sm { padding:3px 8px; font-size:0.72rem; }
+
+/* ── 第②步 · 能量脉冲图 ── */
+.energy-pulse-wrap { margin:16px 0; padding:14px; background:#f8fafc; border:1px solid var(--border); border-radius:10px; }
+.energy-pulse-wrap h4 { margin:0 0 8px; font-size:0.9rem; color:var(--primary); }
+.energy-pulse-labels { display:flex; gap:12px; font-size:0.72rem; margin-bottom:6px; }
+.energy-pulse-labels .rise { color:#3b82f6; }
+.energy-pulse-labels .move { color:#d97706; }
+.energy-pulse-labels .fall { color:#6366f1; }
+#energy-pulse-curve { width:100%; height:96px; display:block; background:#fafbfd; border-radius:6px; border:1px solid var(--border); }
+.energy-pulse-info { font-size:0.75rem; color:var(--text-muted); margin:6px 0 0; }
+.energy-pulse-macro { font-size:0.7rem; color:var(--text-muted); margin-top:4px; font-family:ui-monospace,monospace; }
 </style>
 </head>
 <body>
@@ -179,7 +190,6 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
   <div class="header-right">
     <span id="logged-user" class="hidden"></span>
     <button id="btn-logout" class="logout-btn hidden">退出</button>
-    <a href="/" class="back-link">← 工作台</a>
   </div>
 </header>
 
@@ -204,13 +214,7 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
       <div class="form-group"><label>客户名称 *</label><input id="reg-name" placeholder="例如：张三工作室"/></div>
       <div class="form-group"><label>密码 *</label><input type="password" id="reg-pwd" placeholder="至少4位"/></div>
       <div class="form-group"><label>确认密码 *</label><input type="password" id="reg-pwd2"/></div>
-      <div class="form-group"><label>默认物种</label>
-        <select id="reg-species">
-          <option value="human">🙂 人类</option>
-          <option value="cat">🐱 猫</option>
-          <option value="dog">🐶 狗</option>
-        </select>
-      </div>
+      <p style="font-size:0.78rem;color:var(--text-muted);margin:-4px 0 12px">账号仅用于登录；人/猫/狗在项目里分别选择，同一账号可建多个不同物种的项目。</p>
       <button class="btn-primary" id="btn-register">注册并开始</button>
       <div class="form-switch"><a id="switch-to-login">已有账号？去登录</a></div>
     </div>
@@ -264,7 +268,8 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
       <div class="wizard-card">
         <h3>📷 上传参考照片</h3>
         <div id="membrane-alert-step1" class="membrane-alert hidden"></div>
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">先选物种，上传后在图上标定<strong>左眼、右眼、鼻尖</strong>。狗/猫<strong>品种</strong>在第②步从 <code style="font-size:0.76rem">预设资产/风格包/</code> 加载；标定后垂耳线条来自所选品种模板。</p>
+        <p class="membrane-policy-note">本软件做<strong>眼眉表演</strong>与<strong>照片解剖配准</strong>，不提供「眼睛大一点」等美颜功能（与美图类软件无关）。标定仅用于对齐工程线条与参考照比例。</p>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">先选物种与品种（猫/狗），上传后在图上标定<strong>左眼、右眼、鼻尖</strong>。未标耳尖时，垂耳/立耳线条按所选<strong>品种模板</strong>绘制。</p>
         <div style="margin-bottom:12px">
           <label style="font-size:0.8rem;font-weight:600">物种：</label>
           <select id="species-select">
@@ -272,6 +277,10 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
             <option value="cat">🐱 猫</option>
             <option value="dog">🐶 狗</option>
           </select>
+        </div>
+        <div id="calib-breed-wrap" class="hidden" style="margin-bottom:12px">
+          <label style="font-size:0.8rem;font-weight:600">品种（与底膜绑定，换品种须重新标定）：</label>
+          <select id="calib-breed-select"></select>
         </div>
         <div class="upload-zone" id="upload-zone">
           <input type="file" id="photo-input" accept="image/*"/>
@@ -305,16 +314,16 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
           <p id="membrane-breed-ref" class="membrane-preview-note" style="margin-top:4px;color:#64748b"></p>
           <div class="membrane-compare">
             <div class="membrane-compare-item">
-              <h5>① 品种基准（poodle_giant，未用你的照片）</h5>
+              <h5>① 品种基准（未用您的照片）</h5>
               <img id="membrane-preview-breed" class="membrane-preview-img" alt="品种默认底膜"/>
             </div>
             <div class="membrane-compare-item">
-              <h5>② 标定后（眼距/眼位/眼大小等叠加）</h5>
+              <h5>② 照片配准后（眼距/眼位等解剖对齐，非美颜）</h5>
               <img id="membrane-preview-custom" class="membrane-preview-img" alt="标定后底膜"/>
             </div>
           </div>
           <div id="membrane-diff-wrap">
-            <p style="font-size:0.78rem;color:#94a3b8;margin:0 0 6px">标定引起的微调：</p>
+            <p style="font-size:0.78rem;color:#94a3b8;margin:0 0 6px">相对品种基准的配准差（来自照片测量，不可手调）：</p>
             <table class="membrane-diff-table" id="membrane-diff-table">
               <thead><tr><th>项目</th><th>品种默认</th><th>标定后</th><th>变化</th></tr></thead>
               <tbody id="membrane-diff-body"></tbody>
@@ -327,9 +336,7 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
           <div class="status-msg" id="status-membrane" style="margin-top:8px"></div>
         </div>
 
-        <div id="detection-box" class="detection-box hidden"></div>
         <div class="wizard-nav">
-          <button class="btn" id="btn-auto-detect">自动检测（不推荐）</button>
           <button class="btn" id="btn-step1-next" disabled>下一步 →</button>
         </div>
         <div class="status-msg" id="status-1"></div>
@@ -347,7 +354,7 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
             <span id="preset-emotion-title">情绪预设</span>
             <span class="preset-count-badge" id="preset-emotion-count">0</span>
           </div>
-          <p class="preset-section-hint" id="preset-emotion-hint">预设资产/预设情绪包/</p>
+          <p class="preset-section-hint" id="preset-emotion-hint">预设资产/情绪包/（门户只存选项，数值由服务端调取）</p>
           <div class="preset-scroll tall" id="preset-container"></div>
         </div>
 
@@ -358,6 +365,18 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
           </div>
           <p class="preset-section-hint" id="preset-style-hint">预设资产/风格包/</p>
           <div class="preset-scroll tall" id="style-container"></div>
+        </div>
+
+        <div class="energy-pulse-wrap hidden" id="energy-pulse-wrap">
+          <h4>⚡ 能量脉冲 · 5秒容器 <span id="energy-pulse-emotion" style="font-weight:500;color:var(--text-muted)"></span></h4>
+          <div class="energy-pulse-labels">
+            <span class="rise">起 · 上升沿</span>
+            <span class="move">动 · 平顶段</span>
+            <span class="fall">收 · 下降沿</span>
+          </div>
+          <svg id="energy-pulse-curve" viewBox="0 0 300 100" preserveAspectRatio="none" aria-label="能量脉冲曲线"></svg>
+          <p class="energy-pulse-info" id="energy-pulse-info">选情绪后显示 E(t) 曲线</p>
+          <p class="energy-pulse-macro" id="energy-pulse-macro"></p>
         </div>
 
         <textarea class="nl-input" id="nl-input" placeholder="例如：狗狗委屈地回头看了一眼"></textarea>
@@ -400,28 +419,6 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
           <video id="preview-video" controls loop muted playsinline></video>
         </div>
         <div class="status-msg" id="status-4"></div>
-      </div>
-
-      <div class="wizard-card">
-        <h3>📦 中间产物（调试用，不送扩散引擎）</h3>
-        <div class="result-tabs" id="result-tabs">
-          <button class="result-tab active" data-tab="packet">滑杆包</button>
-          <button class="result-tab" data-tab="split">NL拆解</button>
-          <button class="result-tab" data-tab="baked">烘焙JSON</button>
-          <button class="result-tab" data-tab="beat">节拍表</button>
-          <button class="result-tab" data-tab="prompt">04_Prompt</button>
-          <button class="result-tab" data-tab="wan-pos">Wan正向</button>
-          <button class="result-tab" data-tab="wan-neg">Wan负向</button>
-          <button class="result-tab" data-tab="template">底膜参数</button>
-        </div>
-        <div class="result-content active" id="result-packet"></div>
-        <div class="result-content" id="result-split"></div>
-        <div class="result-content" id="result-baked"></div>
-        <div class="result-content" id="result-beat"></div>
-        <div class="result-content" id="result-prompt"></div>
-        <div class="result-content" id="result-wan-pos"></div>
-        <div class="result-content" id="result-wan-neg"></div>
-        <div class="result-content" id="result-template"></div>
       </div>
     </div>
 
@@ -470,14 +467,6 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
             </div>
           </div>
         </div>
-      </div>
-      <div class="wizard-card">
-        <h3>🧪 本地验收（可选）</h3>
-        <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 10px">导出后在项目根目录运行，确认 Prompt 链路与狗 150 帧编译合同：</p>
-        <pre class="test-cmd-pre">python3 scripts/verify_diffusion_prompt_contract.py
-python3 scripts/verify_dog_150_compile_contract.py
-python3 scripts/export_prompt_samples.py</pre>
-        <p style="font-size:0.78rem;color:var(--text-muted);margin:8px 0 0">样例输出：<code>_runtime/prompt_samples/</code> · 合同导读：<code>contracts/06_架构/扩散Prompt全链路方案_导读.md</code></p>
       </div>
       <div class="wizard-card">
         <h3>💾 客户资料 & 扩散引擎包</h3>

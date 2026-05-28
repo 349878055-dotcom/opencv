@@ -16,7 +16,7 @@ F_ENVELOPE = "03_能量包络.json"
 F_DENSE_ENV = "04_全量_包络展开.json"
 F_DENSE_PRIOR = "05_全量_真人律.json"
 F_DENSE_QUALITY = "06_全量_平庸纠正.json"
-F_BAKED = "02_烘焙_真人律.json"
+F_BAKED = "02_烘焙_真人律.json"  # 人类默认；狗/猫见 asset_lib.baked_output_filename()
 F_CONTEXT = "04_交付上下文.json"
 
 def cmd_dir() -> Path:

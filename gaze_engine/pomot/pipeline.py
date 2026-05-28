@@ -224,9 +224,9 @@ class PomotPipeline:
         # 写入文件（如果指定了输出目录）
         if output_dir:
             from pathlib import Path
+            from asset_lib import write_baked_json
 
             out = Path(output_dir)
-            out.mkdir(parents=True, exist_ok=True)
-            write_delivery_json(baked, out / "02_烘焙_真人律.json")
+            write_baked_json(out, baked, species=species)
 
         return baked

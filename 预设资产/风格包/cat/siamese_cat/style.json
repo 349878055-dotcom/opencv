@@ -3,7 +3,7 @@
   "id": "siamese_cat",
   "label": "暹罗猫/高冷型",
   "species": "cat",
-  "notes": "暹罗猫/高冷型 品种风格偏移",
+  "notes": "杏仁蓝眼、细长脸，警觉竖耳，瞳孔动态偏大，气质话痨机敏 · [底膜] 杏仁蓝眼、大立耳",
   "default_emotion": "",
   "base_offset": {
     "pupil_x": 0.5,

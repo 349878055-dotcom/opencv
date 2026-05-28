@@ -1,5 +1,5 @@
 """
-SliderPacket 收口：滑杆禁区 L1（contracts/滑杆规范.md §10 · slider_bounds.py）。
+SliderPacket 收口：滑杆禁区 L1（合同/滑杆规范.md §10 · slider_bounds.py）。
 
 调用点：compile 前、delivery 前、apply_llm_delta 后；工作台 packet_finalize_ui.js。
 """

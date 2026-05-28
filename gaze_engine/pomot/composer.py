@@ -68,11 +68,15 @@ class PomotComposer:
                         model=llm_model or None,
                     )
                     if llm_pkt:
-                        return llm_pkt.clamped()
+                        from gaze_engine._shared.emotion_pad import ensure_pad_on_packet
+
+                        return ensure_pad_on_packet(llm_pkt.clamped(), route.species)
             except Exception:
                 pass  # 回退到规则
 
-        return pkt.clamped()
+        from gaze_engine._shared.emotion_pad import ensure_pad_on_packet
+
+        return ensure_pad_on_packet(pkt.clamped(), route.species)
 
     def _base_packet_from_template(
         self,
@@ -93,12 +97,12 @@ class PomotComposer:
 
                 return dog_packet_from_file(route.preset_name)
             elif route.species == "cat":
-                from gaze_engine.cat.presets import CAT_PRESETS
+                from gaze_engine.cat.presets import cat_packet_from_file, cat_packet_from_preset
 
-                raw = CAT_PRESETS.get(route.preset_name)
-                if isinstance(raw, dict):
-                    return SliderPacket.from_dict(raw)
-                return raw  # type: ignore[return-value]
+                try:
+                    return cat_packet_from_file(route.preset_name)
+                except KeyError:
+                    return cat_packet_from_preset(route.preset_name)
         except Exception:
             pass
 

@@ -21,7 +21,7 @@ from gaze_engine.dog.pad_weights import DOG_BASE_SCALE, DOG_PAD_WEIGHTS
 
 
 def _load_packet(name: str = "委屈·幼犬眼") -> SliderPacket:
-    p = ROOT / "预设资产" / "预设情绪包" / "dog" / f"{name}.json"
+    p = ROOT / "预设资产" / "情绪包" / "dog" / f"{name}.json"
     return SliderPacket.from_dict(json.loads(p.read_text(encoding="utf-8")))
 
 

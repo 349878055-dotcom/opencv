@@ -1,8 +1,10 @@
 """
-猫情绪预设 · 12 个
+猫情绪预设 · 12 个（代码回退）+ 预设资产 JSON（真源，含 pad）
 """
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 from gaze_engine._shared.slider_schema import EarParams, HoldSegment, MacroSliders, SliderPacket
@@ -90,16 +92,60 @@ CAT_PRESET_GROUPS: tuple[dict[str, Any], ...] = (
 )
 
 
+def _presets_dir() -> Path:
+    from asset_lib import CAT_PRESETS_DIR
+
+    return CAT_PRESETS_DIR
+
+
+def cat_packet_from_file(name: str) -> SliderPacket:
+    """按预设文件名（不含 .json）或 emotion id 加载 SliderPacket。"""
+    from gaze_engine._shared.emotion_pad import ensure_pad_on_packet
+
+    presets_dir = _presets_dir()
+    candidates = [presets_dir / f"{name}.json"]
+    if not candidates[0].is_file():
+        for f in presets_dir.glob("*.json"):
+            if f.name.startswith("_"):
+                continue
+            try:
+                raw = json.loads(f.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            if raw.get("emotion") == name or raw.get("label") == name:
+                candidates = [f]
+                break
+    path = candidates[0]
+    if not path.is_file():
+        available = sorted(
+            p.stem for p in presets_dir.glob("*.json") if not p.name.startswith("_")
+        )
+        raise KeyError(f"未知猫预设: {name}，可选: {', '.join(available)}")
+
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    pkt = SliderPacket.from_dict(raw)
+    if not pkt.emotion or pkt.emotion == "s01_pressure":
+        pkt.emotion = str(raw.get("emotion") or name)
+    return ensure_pad_on_packet(pkt, "cat")
+
+
 def cat_packet_from_preset(name: str) -> SliderPacket:
-    """猫预设名 → SliderPacket（含 EarParams）"""
+    """猫预设名 → SliderPacket（优先 JSON 资产，回退代码表）"""
+    from gaze_engine._shared.emotion_pad import ensure_pad_on_packet
+
+    try:
+        return cat_packet_from_file(name)
+    except KeyError:
+        pass
     data = CAT_PRESETS.get(name)
     if not data:
         raise KeyError(f"未知猫预设: {name}，可选: {', '.join(CAT_PRESETS)}")
     ear = EarParams.from_preset_dict(data.get("ear") or {})
-    return SliderPacket(
+    pkt = SliderPacket(
         emotion=name,
         style="default",
         macro=MacroSliders(**data["macro"]),  # type: ignore[arg-type]
         hold_seg=HoldSegment(**data["hold_seg"]),  # type: ignore[arg-type]
         ear=ear,
     ).clamped()
+    return ensure_pad_on_packet(pkt, "cat")

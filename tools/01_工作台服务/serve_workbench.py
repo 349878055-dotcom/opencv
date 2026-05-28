@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""能量工作台 v13 · HTTP 后端 — 全管线 API（NL→滑杆→包络→真人→平庸→烘焙→扩散节拍）。"""
+"""客户创作门户 · HTTP 后端 — 门户 API（标定→Pomot→烘焙→底膜→扩散导出）。"""
 from __future__ import annotations
 
 import base64, json, sys, time
@@ -129,7 +129,7 @@ class Handler(SimpleHTTPRequestHandler):
         path = unquote(raw).rstrip("/")
         if path in ("", "/", "/index.html"):
             self.send_response(302)
-            self.send_header("Location", "/01_%E5%B7%A5%E4%BD%9C%E5%8F%B0%E6%9C%8D%E5%8A%A1/%E8%83%BD%E9%87%8F%E5%B7%A5%E4%BD%9C%E5%8F%B0.html")
+            self.send_header("Location", "/portal")
             self.end_headers()
             return
         if path in ("/portal", "/customer-portal"):
@@ -185,49 +185,10 @@ def health(self: Handler):
         "portal_build": PORTAL_BUILD,
         "portal_features": list(PORTAL_FEATURES),
         "server_boot_at": SERVER_BOOT_AT,
-        "note": "能量工作台 v13 · 全管线 API",
-        "endpoints": [
-            "GET  /health", "GET  /control_surface.json",
-            "GET  /workbench_context.json", "GET  /persona_matrix.json",
-            "GET  /api/asset-browser", "GET  /api/customer-list",
-            "GET  /api/customer-context",
-            "GET  /api/customer/photos/{cid}",
-            "GET  /api/customer/photo-preview/{cid}/{name}",
-            "GET  /portal                         ← 客户资产门户",
-            "GET  /api/customer-portal/{cid}      ← 客户门户数据",
-            "GET  /api/customer-portal/{cid}/file/{pid}/{name} ← 门户文件",
-            "POST /api/nl-to-packet", "POST /api/run-pipeline",
-            "POST /api/export-metronome", "POST /api/asset-load-baked",
-            "POST /api/dog-test", "POST /render_control_video",
-            "POST /save_packet", "POST /save_context",
-            "POST /api/customer/create|update|delete",
-            "POST /api/customer/{cid}/project/create|update|delete",
-            "POST /api/customer/{cid}/project/{pid}/save-adjustment",
-            "POST /api/customer-context/save",
-            "POST /api/customer/upload-photo",
-            "POST /api/customer/template-estimate",
-        ],
+        "note": "客户创作门户 · HTTP API",
+        "portal_url": "/portal",
     })
 
-@Route.get("/control_surface.json")
-def control_surface(self: Handler):
-    from gaze_engine.human.control_surface import export_workbench_json
-    self._json(export_workbench_json())
-
-@Route.get("/workbench_context.json")
-def workbench_context(self: Handler):
-    from gaze_engine._shared.workbench_context import read_workbench_context
-    self._json(read_workbench_context())
-
-# 监听的静态文件（用于开发热重载）
-_DEV_WATCH_FILES = [
-    ROOT / "static" / "app.js",
-    ROOT / "static" / "style.css",
-    WORKBENCH_SVC / "能量工作台.html",
-    PORTAL_HTML,
-    PORTAL_JS,
-    Path(__file__).resolve(),
-]
 
 @Route.get("/api/portal/version")
 def portal_version(self: Handler):
@@ -252,83 +213,6 @@ def dev_reload_token(self: Handler):
                 latest = m
     self._json({"token": latest})
 
-@Route.get("/api/styles")
-def api_styles(self: Handler):
-    """返回 预设资产/风格包/ 下所有物种的风格/品种列表，从 style.json 读取 id/label/notes。"""
-    from asset_lib import STYLE_HUMAN, STYLE_CAT, STYLE_DOG
-    result = {}
-    for species_key, style_dir in [("human", STYLE_HUMAN), ("cat", STYLE_CAT), ("dog", STYLE_DOG)]:
-        items = []
-        if style_dir.is_dir():
-            for entry in sorted(style_dir.iterdir()):
-                if entry.is_dir():
-                    sf = entry / "style.json"
-                    if sf.exists():
-                        try:
-                            d = json.loads(sf.read_text("utf-8"))
-                            items.append({
-                                "id": d.get("id", entry.name),
-                                "label": d.get("label", entry.name),
-                                "notes": d.get("notes", ""),
-                            })
-                        except Exception:
-                            items.append({"id": entry.name, "label": entry.name, "notes": ""})
-        result[species_key] = items
-    self._json({"ok": True, "styles": result})
-
-@Route.get("/api/asset-browser")
-def asset_browser(self: Handler):
-    from asset_lib import ASSET_LIB, CUSTOMER_DB
-    from asset_lib import HUMAN_PRESETS_DIR, CAT_PRESETS_DIR, DOG_PRESETS_DIR
-
-    def scan(path: Path, depth: int = 3) -> list:
-        if depth <= 0 or not path.is_dir():
-            return []
-        items = []
-        for e in sorted(path.iterdir(), key=lambda x: (x.is_file(), x.name)):
-            if e.name.startswith(".") or e.name == "_archive":
-                continue
-            item = {"name": e.name, "type": "dir" if e.is_dir() else "file"}
-            if e.is_dir():
-                item["children"] = scan(e, depth - 1)
-            else:
-                item["size"] = e.stat().st_size
-                item["ext"] = e.suffix.lower()
-                tags = {"02_烘焙": "烘焙", "05_扩散": "节拍表",
-                        "情绪": "情绪",
-                        "客户信息": "客户", "项目配置": "项目", "滑杆调整": "调整"}
-                for k, v in tags.items():
-                    if k in e.name:
-                        item["tag"] = v
-                        break
-            items.append(item)
-        return items
-
-    preset_root = {
-        "name": "📚 预设资产库", "type": "dir", "children": [
-            {"name": label, "type": "dir", "children": scan(sp)}
-            for sp, label in [(HUMAN_PRESETS_DIR, "🧑 人类预设"),
-                              (CAT_PRESETS_DIR, "🐱 猫预设"),
-                              (DOG_PRESETS_DIR, "🐶 狗预设")]
-            if sp.is_dir()
-        ],
-    }
-
-    self._json({
-        "ok": True,
-        "root": [preset_root, {"name": "👤 客户资产库", "type": "dir", "children": scan(CUSTOMER_DB, 4) if CUSTOMER_DB.is_dir() else []}],
-    })
-
-@Route.get("/api/customer-list")
-def customer_list(self: Handler):
-    from gaze_engine._shared.customer_db import list_customers
-    self._json({"ok": True, "customers": list_customers()})
-
-@Route.get("/api/customer-context")
-def customer_context(self: Handler):
-    from gaze_engine._shared.customer_db import load_workbench_context
-    ctx = load_workbench_context()
-    self._json({"ok": True, **ctx})
 
 @Route.get("/api/customer/photos/{cid}")
 def customer_photos(self: Handler, cid: str):
@@ -575,211 +459,6 @@ def customer_portal_file(self: Handler, cid: str, pid: str, name: str):
 # POST 路由
 # ═══════════════════════════════════════════════════════════════
 
-@Route.post("/save_packet")
-def save_packet(self: Handler, body: bytes):
-    from gaze_engine.human.envelope_compile import channels_from_packet, make_delivery_stub
-    from gaze_engine.human.human_prior import apply_human_prior
-    from gaze_engine._shared.pipeline_io import F_DENSE_PRIOR, F_DENSE_QUALITY, cmd_dir, write_dense
-    from gaze_engine.human.pulse_quality import fix_pulse_quality
-    from gaze_engine._shared.slider_schema import SliderPacket
-    from gaze_engine._shared.workbench_io import finalize_and_write_l1, read_slider_packet, write_slider_packet
-
-    pkt = SliderPacket.from_dict(self._read_body(body))
-    p01 = write_slider_packet(pkt)
-    p_l1 = finalize_and_write_l1(pkt)
-    pkt_l1, _ = read_slider_packet(str(p_l1))
-    ch = channels_from_packet(pkt_l1)
-    stub = make_delivery_stub(pkt_l1, ch)
-    root = cmd_dir()
-    p04 = write_dense(ch, packet=pkt_l1, stub=stub)
-    ch_h, _ = apply_human_prior(ch, pkt_l1, stub)
-    p05 = write_dense(ch_h, packet=pkt_l1, stub=stub, path=root / F_DENSE_PRIOR)
-    ch_q, _ = fix_pulse_quality(ch_h, pkt_l1, stub)
-    p06 = write_dense(ch_q, packet=pkt_l1, stub=stub, path=root / F_DENSE_QUALITY)
-    self._json({"ok": True, "path": str(p01), "l1_path": str(p_l1),
-                "dense04_path": str(p04), "dense05_path": str(p05), "dense06_path": str(p06)})
-
-@Route.post("/save_context")
-def save_context(self: Handler, body: bytes):
-    from gaze_engine._shared.workbench_context import write_workbench_context
-    from gaze_engine._shared.pipeline_io import F_NL, cmd_dir
-    data = self._read_body(body)
-    write_workbench_context(
-        natural_language=data.get("natural_language"),
-        energy_map_note=data.get("energy_map_note") or data.get("prompt"),
-        knowledge_base=data.get("knowledge_base"),
-    )
-    nl = (data.get("natural_language") or "").strip()
-    if nl:
-        (cmd_dir() / F_NL).write_text(nl + "\n", encoding="utf-8")
-    self._json({"ok": True})
-
-@Route.post("/compile_pipeline")
-def compile_pipeline(self: Handler, body: bytes):
-    data = self._read_body(body)
-    self._json(_run_pipeline(data))
-
-@Route.post("/api/run-pipeline")
-def run_pipeline(self: Handler, body: bytes):
-    data = self._read_body(body)
-    pkt_dict = data.get("packet")
-    if not pkt_dict:
-        nl = (data.get("nl") or "").strip()
-        if not nl:
-            return self._json({"ok": False, "error": "需要 packet 或 nl"}, status=400)
-        from gaze_engine._shared.llm_openai import chatgpt_customer_nl, openai_configured
-        from gaze_engine.nl_intent import INTENT_APPLY
-        from gaze_engine.nl_to_packet import packet_from_natural_language
-        kb = data.get("knowledge_base", "")
-        if openai_configured():
-            result = chatgpt_customer_nl(nl, knowledge_base=kb)
-        else:
-            pkt = packet_from_natural_language(nl, use_llm=False)
-            from gaze_engine.nl_intent import CustomerNLResult
-            result = CustomerNLResult(intent=INTENT_APPLY, reply="", packet=pkt, meta={})
-        if result.intent != INTENT_APPLY or result.packet is None:
-            return self._json({"ok": False, "error": "NL 无法转为 apply", "reply": result.reply})
-        pkt_dict = result.packet.to_dict()
-
-    from gaze_engine._shared.slider_schema import SliderPacket
-    from gaze_engine.delivery_pipeline import run_delivery_from_packet
-    from gaze_engine._shared.envelope_compile import export_envelope_series
-    from gaze_engine._shared.packet_finalize import finalize_packet
-    from gaze_engine._shared.rhythm_compiler import build_metronome_text
-
-    pkt = SliderPacket.from_dict(pkt_dict)
-    pkt, fin_rep = finalize_packet(pkt)
-    env = export_envelope_series(pkt)
-    baked, _, prior_rep, pq_rep = run_delivery_from_packet(pkt)
-    metronome = build_metronome_text(baked, species="human")
-    archive = _archive_to_customer(data, baked, metronome, pkt.to_dict())
-    self._json({
-        "ok": True, "emotion": pkt.emotion, "packet": pkt.to_dict(),
-        "finalize_fixes": fin_rep.fixes or [],
-        "stages": {"envelope": env, "prior_report": prior_rep.to_dict(),
-                    "pulse_quality_report": pq_rep.to_dict()},
-        "baked": baked, "metronome": metronome, "archive": archive,
-    })
-
-@Route.post("/api/export-metronome")
-def export_metronome(self: Handler, body: bytes):
-    data = self._read_body(body)
-    from gaze_engine._shared.rhythm_compiler import build_metronome_text
-    baked = data.get("baked")
-    if baked:
-        return self._json({"ok": True, "metronome": build_metronome_text(baked, species="human")})
-    p = Path(data.get("path") or data.get("sparse_json_path", ""))
-    if not p.is_file():
-        return self._json({"ok": False, "error": f"文件不存在: {p}"}, status=404)
-    baked = json.loads(p.read_text("utf-8"))
-    self._json({"ok": True, "metronome": build_metronome_text(baked, source_path=str(p), species="human")})
-
-@Route.post("/api/asset-load-baked")
-def asset_load_baked(self: Handler, body: bytes):
-    data = self._read_body(body)
-    ps = data.get("path", "")
-    for base in (Path(ps), ROOT / ps, PKG / ps):
-        if base.is_file():
-            break
-    else:
-        return self._json({"ok": False, "error": f"文件不存在: {ps}"}, status=404)
-    try:
-        baked = json.loads(base.read_text("utf-8"))
-    except Exception as e:
-        return self._json({"ok": False, "error": f"JSON 解析失败: {e}"}, status=400)
-    from gaze_engine._shared.rhythm_compiler import build_metronome_text
-    metronome = ""
-    try:
-        metronome = build_metronome_text(baked, source_path=str(base), species="human")
-    except Exception:
-        pass
-    self._json({
-        "ok": True, "baked": baked, "packet": baked.get("slider_packet", {}),
-        "metronome": metronome, "path": str(base),
-        "emotion": baked.get("mood") or baked.get("emotion") or "",
-    })
-
-@Route.post("/render_control_video")
-def render_control_video(self: Handler, body: bytes):
-    import cv2
-    from gaze_engine.human.affine_renderer import AffineRenderer, CANONICAL_KEYS
-    from gaze_engine._shared.slider_schema import SliderPacket
-    from gaze_engine.delivery_pipeline import run_delivery_from_packet
-
-    pkt = SliderPacket.from_dict(self._read_body(body))
-    _, dense_out, _, _ = run_delivery_from_packet(pkt)
-    channels = dense_out
-    fc = len(next(iter(channels.values())))
-    CONTROL_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
-    renderer = AffineRenderer()
-    frames_dir = CONTROL_VIDEO_DIR / "_frames"
-    frames_dir.mkdir(exist_ok=True)
-    for t in range(fc):
-        fd = {k: channels[k][t] for k in CANONICAL_KEYS if k in channels}
-        cv2.imwrite(str(frames_dir / f"f_{t:04d}.png"), renderer.render_frame(fd))
-    import shutil, subprocess
-    subprocess.run(["ffmpeg", "-y", "-f", "image2", "-r", "30",
-                    "-i", str(frames_dir / "f_%04d.png"),
-                    "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
-                    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18",
-                    str(CONTROL_VIDEO_PATH)], capture_output=True, check=True)
-    shutil.rmtree(frames_dir)
-    self._json({"ok": True, "path": "/control_video.mp4", "frames": fc})
-
-@Route.post("/api/nl-to-packet")
-def nl_to_packet(self: Handler, body: bytes):
-    data = self._read_body(body)
-    nl = (data.get("nl") or "").strip()
-    if not nl:
-        return self._json({"ok": False, "error": "缺少 nl"}, status=400)
-    from gaze_engine._shared.llm_openai import chatgpt_customer_nl, openai_configured
-    from gaze_engine.nl_to_packet import packet_from_natural_language
-    from gaze_engine.nl_intent import INTENT_APPLY
-    kb = data.get("knowledge_base", "")
-    use_llm = data.get("use_llm", True)
-    if use_llm and openai_configured():
-        result = chatgpt_customer_nl(nl, knowledge_base=kb, model=data.get("model") or None)
-    else:
-        pkt = packet_from_natural_language(nl, use_llm=False)
-        from gaze_engine.nl_intent import CustomerNLResult
-        result = CustomerNLResult(intent=INTENT_APPLY, reply=f"【已生成】预设「{pkt.emotion}」", packet=pkt, meta={"intent_source": "keyword"})
-    if result.intent != INTENT_APPLY or result.packet is None:
-        return self._json({"ok": True, "intent": "consult", "reply": result.reply, "packet": None})
-    self._json({"ok": True, "intent": "apply", "reply": result.reply, "packet": result.packet.to_dict(), "meta": result.meta or {}})
-
-# ── 客户资产库 CRUD ─────────────────────────────────────────
-
-@Route.post("/api/customer/create")
-def customer_create(self: Handler, body: bytes):
-    from gaze_engine._shared.customer_db import create_customer, get_customer
-    data = self._read_body(body)
-    name = (data.get("display_name") or "").strip()
-    if not name:
-        return self._json({"ok": False, "error": "缺少 display_name"}, status=400)
-    cid = create_customer(name, contact=data.get("contact", ""),
-                          default_persona=data.get("default_persona", ""),
-                          default_emotion=data.get("default_emotion", ""),
-                          preferred_species=data.get("preferred_species", "human"))
-    self._json({"ok": True, "customer_id": cid, "customer": get_customer(cid)})
-
-@Route.post("/api/customer/update")
-def customer_update(self: Handler, body: bytes):
-    from gaze_engine._shared.customer_db import update_customer
-    data = self._read_body(body)
-    cid = data.get("customer_id", "").strip()
-    if not cid:
-        return self._json({"ok": False, "error": "缺少 customer_id"}, status=400)
-    ok = update_customer(cid, **{k: data[k] for k in data if k != "customer_id"})
-    self._json({"ok": ok})
-
-@Route.post("/api/customer/delete")
-def customer_delete(self: Handler, body: bytes):
-    from gaze_engine._shared.customer_db import delete_customer
-    data = self._read_body(body)
-    cid = data.get("customer_id", "").strip()
-    if not cid:
-        return self._json({"ok": False, "error": "缺少 customer_id"}, status=400)
-    self._json({"ok": delete_customer(cid)})
 
 @Route.post("/api/customer/{cid}/project/create")
 def project_create(self: Handler, body: bytes, cid: str):
@@ -827,54 +506,6 @@ def project_save_adjustment(self: Handler, body: bytes, cid: str, pid: str):
     if ver is None:
         return self._json({"ok": False, "error": "项目不存在"}, status=404)
     self._json({"ok": True, "version": ver})
-
-@Route.post("/api/customer-context/save")
-def customer_context_save(self: Handler, body: bytes):
-    from gaze_engine._shared.customer_db import save_workbench_context
-    data = self._read_body(body)
-    self._json({"ok": True, "context": save_workbench_context(
-        customer_id=data.get("customer_id"), project_id=data.get("project_id"))})
-
-@Route.post("/api/customer/template-estimate")
-def customer_template_estimate(self: Handler, body: bytes):
-    from gaze_engine._shared.species_detector import auto_detect_for_customer
-    data = self._read_body(body)
-    cid = data.get("customer_id", "").strip()
-    if not cid:
-        return self._json({"ok": False, "error": "缺少 customer_id"}, status=400)
-    result = auto_detect_for_customer(cid, data.get("species"))
-    self._json(result, status=200 if result.get("ok") else 404)
-
-@Route.post("/api/customer/upload-photo")
-def customer_upload_photo(self: Handler, body: bytes):
-    data = self._read_body(body)
-    cid = data.get("customer_id", "").strip()
-    if not cid:
-        return self._json({"ok": False, "error": "缺少 customer_id"}, status=400)
-    b64 = data.get("photo_data", "")
-    if not b64:
-        return self._json({"ok": False, "error": "缺少 photo_data (base64)"}, status=400)
-    from asset_lib import customer_ref_photos_dir
-    ref = customer_ref_photos_dir(cid)
-    ref.mkdir(parents=True, exist_ok=True)
-    photo_name = data.get("photo_name", "reference.jpg")
-    save_path = ref / photo_name
-    c = 1
-    while save_path.exists():
-        save_path = ref / f"{Path(photo_name).stem}_{c}{Path(photo_name).suffix or '.jpg'}"
-        c += 1
-    try:
-        save_path.write_bytes(base64.b64decode(b64))
-    except Exception as e:
-        return self._json({"ok": False, "error": f"图片解码失败: {e}"}, status=400)
-    from gaze_engine._shared.species_detector import auto_detect_for_customer
-    det = auto_detect_for_customer(cid, data.get("species"))
-    self._json({
-        "ok": True, "photo_name": save_path.name,
-        "photo_url": f"/api/customer/photo-preview/{cid}/{save_path.name}",
-        "detection": det.get("detection"), "adjustments": det.get("adjustments"),
-        "saved_params": det.get("saved_params"),
-    })
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -950,19 +581,57 @@ def auth_verify(self: Handler, body: bytes):
 # 门户创作 API（客户登录后使用）
 # ═══════════════════════════════════════════════════════════════
 
+def _load_project_slider_packet(customer_id: str, project_id: str) -> dict | None:
+    """从客户项目输出读取 01_滑杆包（管线产物，非预设资产库）。"""
+    from asset_lib import project_output_dir
+
+    path = project_output_dir(customer_id, project_id) / "01_滑杆包.json"
+    if not path.is_file():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _resolve_slider_packet(data: dict) -> dict | None:
+    """解析 SliderPacket：优先管线产物，否则从 预设资产/情绪包 加载。"""
+    from asset_lib import load_emotion_slider_packet
+
+    packet = data.get("packet")
+    if isinstance(packet, dict) and packet.get("macro"):
+        return packet
+    baked = data.get("baked") or {}
+    sp = baked.get("slider_packet")
+    if isinstance(sp, dict) and sp.get("macro"):
+        return sp
+    cid = (data.get("customer_id") or "").strip()
+    pid = (data.get("project_id") or "").strip()
+    if cid and pid:
+        proj_pkt = _load_project_slider_packet(cid, pid)
+        if isinstance(proj_pkt, dict) and proj_pkt.get("macro"):
+            return proj_pkt
+    species = (data.get("species") or "human").strip().lower()
+    emotion = (data.get("emotion") or data.get("active_emotion") or "").strip()
+    if emotion:
+        pkt = load_emotion_slider_packet(species, emotion)
+        if pkt:
+            return pkt.to_dict()
+    return None
+
+
 @Route.get("/api/portal/presets")
 def portal_presets(self: Handler):
-    """返回所有预设资产（情绪包 + 风格包 + 分组），与 预设资产/ 目录一一对应。"""
-    from asset_lib import ASSET_LIB
+    """返回预设索引（仅 id/label/路径）；数值从 预设资产/ 按需调取，不下发 macro/pad。"""
+    from asset_lib import ASSET_LIB, EMOTION_PACK_DIR
 
     style_kind = {"human": "人格风格", "cat": "猫品种", "dog": "狗品种"}
     result = {"human": {"emotions": [], "styles": [], "emotion_groups": []},
               "cat": {"emotions": [], "styles": [], "emotion_groups": []},
               "dog": {"emotions": [], "styles": [], "emotion_groups": []}}
 
-    # 扫描预设情绪包
     for species in ("human", "cat", "dog"):
-        emotions_dir = ASSET_LIB / "预设情绪包" / species
+        emotions_dir = EMOTION_PACK_DIR / species
         if emotions_dir.is_dir():
             groups_f = emotions_dir / "_groups.json"
             if groups_f.is_file():
@@ -978,15 +647,14 @@ def portal_presets(self: Handler):
                         d = json.loads(f.read_text(encoding="utf-8"))
                         result[species]["emotions"].append({
                             "id": f.stem,
-                            "label": f.stem,
-                            "file": f"预设资产/预设情绪包/{species}/{f.name}",
-                            "macro": d.get("macro", {}),
-                            "hold_seg": d.get("hold_seg", {}),
+                            "label": d.get("label") or f.stem,
+                            "emotion_id": d.get("emotion") or f.stem,
+                            "file": f"预设资产/情绪包/{species}/{f.name}",
+                            "note": d.get("note") or "",
                         })
                     except Exception:
                         pass
 
-    # 扫描风格包
     for species in ("human", "cat", "dog"):
         styles_dir = ASSET_LIB / "风格包" / species
         if styles_dir.is_dir():
@@ -1002,21 +670,48 @@ def portal_presets(self: Handler):
                                 "notes": d.get("notes", ""),
                                 "folder": entry.name,
                                 "file": f"预设资产/风格包/{species}/{entry.name}/style.json",
-                                "base_offset": d.get("base_offset", {}),
-                                "scale_factor": d.get("scale_factor", {}),
                             })
                         except Exception:
                             pass
 
         result[species]["meta"] = {
-            "emotions_dir": f"预设资产/预设情绪包/{species}/",
+            "emotions_dir": f"预设资产/情绪包/{species}/",
             "styles_dir": f"预设资产/风格包/{species}/",
             "style_kind": style_kind[species],
             "emotion_count": len(result[species]["emotions"]),
             "style_count": len(result[species]["styles"]),
+            "asset_source": "预设资产库",
         }
 
     self._json({"ok": True, "presets": result})
+
+
+@Route.get("/api/portal/preset/emotion-preview")
+def portal_preset_emotion_preview(self: Handler):
+    """按需从 情绪包 读取 macro/hold（供门户 E(t) 示意图，不缓存 preset 数值）。"""
+    from urllib.parse import parse_qs, urlparse
+    from asset_lib import load_emotion_preset_raw
+
+    qs = parse_qs(urlparse(self.path).query)
+    species = (qs.get("species") or ["human"])[0].strip().lower()
+    preset_id = (qs.get("id") or [""])[0].strip()
+    if species not in ("human", "cat", "dog") or not preset_id:
+        return self._json({"ok": False, "error": "缺少 species 或 id"}, status=400)
+
+    raw = load_emotion_preset_raw(species, preset_id)
+    if not raw:
+        return self._json({"ok": False, "error": f"未找到情绪: {preset_id}"}, status=404)
+
+    self._json({
+        "ok": True,
+        "species": species,
+        "id": preset_id,
+        "label": raw.get("label") or preset_id,
+        "emotion_id": raw.get("emotion") or preset_id,
+        "file": f"预设资产/情绪包/{species}/{preset_id}.json",
+        "macro": raw.get("macro") or {},
+        "hold_seg": raw.get("hold_seg") or {},
+    })
 
 
 @Route.post("/api/portal/pomot/round1")
@@ -1078,12 +773,20 @@ def portal_pomot_round2(self: Handler, body: bytes):
     data = self._read_body(body)
     nl = (data.get("nl") or "").strip()
     packet_dict = data.get("previous_packet")
+    cid = (data.get("customer_id") or "").strip()
+    pid = (data.get("project_id") or "").strip()
+    previous_baked = data.get("previous_baked")
+    if not packet_dict and isinstance(previous_baked, dict):
+        packet_dict = previous_baked.get("slider_packet")
+    if not packet_dict and cid and pid:
+        packet_dict = _load_project_slider_packet(cid, pid)
+    if not packet_dict:
+        packet_dict = _resolve_slider_packet(data)
     if not nl:
         return self._json({"ok": False, "error": "缺少 nl"}, status=400)
     if not packet_dict:
-        return self._json({"ok": False, "error": "缺少 previous_packet"}, status=400)
+        return self._json({"ok": False, "error": "缺少 previous_packet（请先完成第一轮生成）"}, status=400)
     previous_packet = SliderPacket.from_dict(packet_dict)
-    previous_baked = data.get("previous_baked")
     pipeline = PomotPipeline()
     result = pipeline.round2(nl, previous_packet, previous_baked, run_pipeline=True)
     from gaze_engine.pomot.assembler import DiffusionPromptAssembler
@@ -1118,6 +821,9 @@ def portal_save(self: Handler, body: bytes):
     baked = data.get("baked")
     metronome = data.get("metronome", "")
     note = (data.get("note") or "").strip()
+    resolved = _resolve_slider_packet(data)
+    if resolved:
+        packet = resolved
 
     if not cid:
         return self._json({"ok": False, "error": "缺少 customer_id"}, status=400)
@@ -1279,9 +985,16 @@ def portal_calibrate_template(self: Handler, body: bytes):
 
     ears_marked = bool(anchors.get("left_ear") and anchors.get("right_ear"))
     ear_source = "marked" if ears_marked else "breed_template"
-    breed = (get_customer(cid) or {}).get("breed", "")
-    if species == "dog":
-        breed = DOG_BREED
+    breed = (data.get("breed") or "").strip()
+    if species in ("dog", "cat"):
+        if not breed:
+            breed = (get_customer(cid) or {}).get("breed", "")
+        if species == "dog" and not breed:
+            breed = DOG_BREED
+        if not breed:
+            return self._json({"ok": False, "error": "猫/狗标定须先选择品种"}, status=400)
+    else:
+        breed = ""
 
     # 眼/鼻来自标点；耳未标则用品种模板（巨型贵宾垂耳线条）
     customer_adj = {
@@ -1798,6 +1511,7 @@ def portal_render_preview(self: Handler, body: bytes):
     pid = (data.get("project_id") or "").strip()
     species = data.get("species", "human")
     baked = data.get("baked")
+    req_breed = (data.get("breed") or "").strip()
 
     project_species = species
     if cid and pid:
@@ -1818,6 +1532,7 @@ def portal_render_preview(self: Handler, body: bytes):
             baked=baked,
             species=project_species,
             customer_id=cid,
+            breed_id=req_breed,
         )
     except Exception as e:
         return self._json({"ok": False, "error": str(e)}, status=500)
@@ -2039,6 +1754,9 @@ def portal_archive(self: Handler, body: bytes):
     out.mkdir(parents=True, exist_ok=True)
     packet = data.get("packet")
     baked = data.get("baked")
+    resolved = _resolve_slider_packet(data)
+    if resolved:
+        packet = resolved
     if packet:
         (out / "01_滑杆包.json").write_text(
             json.dumps(packet, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -2126,11 +1844,20 @@ _DIFFUSION_VIDEO_NAME = "03_工程底模.mp4"
 _DIFFUSION_PROMPT_NAME = "04_Prompt.txt"
 
 
-def _resolve_breed_id(customer_id: str, fallback: str = "poodle_giant") -> str:
+def _resolve_breed_id(customer_id: str, species: str = "dog", fallback: str = "") -> str:
     if not customer_id:
-        return fallback
-    from gaze_engine._shared.customer_db import get_customer
-    return (get_customer(customer_id) or {}).get("breed") or fallback
+        return fallback or ("poodle_giant" if species == "dog" else "")
+    from gaze_engine._shared.customer_db import get_customer, get_template_breed
+
+    saved = get_template_breed(customer_id)
+    if saved:
+        return saved
+    cust = (get_customer(customer_id) or {}).get("breed") or ""
+    if cust:
+        return cust
+    if species == "dog":
+        return fallback or "poodle_giant"
+    return fallback
 
 
 def _membrane_renderer(
@@ -2151,7 +1878,7 @@ def _membrane_renderer(
         template = get_effective_template(customer_id) if customer_id else None
     elif isinstance(template, dict):
         template = SpeciesTemplate.from_dict(template)
-    bid = breed_id or (_resolve_breed_id(customer_id) if sp == "dog" else "")
+    bid = breed_id or (_resolve_breed_id(customer_id, sp) if sp == "dog" else "")
     constants = template_to_renderer_constants(sp, template, breed_id=bid or None)
     if sp == "cat":
         from gaze_engine.cat.affine_renderer import CatAffineRenderer
@@ -2286,6 +2013,7 @@ def _render_opencv_video(
     baked: dict | None = None,
     species: str = "human",
     customer_id: str = "",
+    breed_id: str = "",
 ) -> tuple[Path, int, dict]:
     """从 baked 的 channel_tracks 渲染 OpenCV 工程底膜 MP4。"""
     import cv2
@@ -2293,8 +2021,8 @@ def _render_opencv_video(
     import subprocess
     from gaze_engine._shared.slider_schema import SliderPacket
     from gaze_engine.delivery_pipeline import run_species_delivery
+    from gaze_engine._shared.customer_db import get_effective_template, get_template_breed
     from gaze_engine._shared.species_template import template_to_renderer_constants
-    from gaze_engine._shared.customer_db import get_effective_template
 
     sp = (baked or {}).get("species") or species or "human"
     keys = _species_channel_keys(sp)
@@ -2312,7 +2040,16 @@ def _render_opencv_video(
 
     fc = len(next(iter(channels.values())))
     template = get_effective_template(customer_id) if customer_id else None
-    bid = _resolve_breed_id(customer_id) if sp == "dog" else ""
+    bid = (breed_id or "").strip()
+    if customer_id and sp in ("dog", "cat"):
+        saved_breed = get_template_breed(customer_id)
+        if saved_breed and bid and saved_breed != bid:
+            raise ValueError(
+                f"渲染品种「{bid}」与标定品种「{saved_breed}」不一致，请回第①步重新标定"
+            )
+        bid = bid or saved_breed or _resolve_breed_id(customer_id, sp)
+    elif sp == "dog":
+        bid = bid or _resolve_breed_id(customer_id, "dog")
     constants = template_to_renderer_constants(sp, template, breed_id=bid or None)
 
     if sp == "cat":
@@ -2365,73 +2102,9 @@ def _render_opencv_video(
     return out_path, fc, render_info
 
 
-def _run_pipeline(pkt_dict: dict) -> dict:
-    from gaze_engine.human.envelope_compile import channels_from_packet, make_delivery_stub
-    from gaze_engine._shared.envelope_compile import export_envelope_series
-    from gaze_engine.human.human_prior import apply_human_prior
-    from gaze_engine._shared.packet_finalize import finalize_packet
-    from gaze_engine.human.pulse_quality import fix_pulse_quality
-    from gaze_engine._shared.slider_schema import SliderPacket
-
-    pkt_s, fin_rep = finalize_packet(SliderPacket.from_dict(pkt_dict))
-    env_doc = export_envelope_series(pkt_s)
-    fc = int(env_doc.get("frame_count") or 150)
-    fps = int(env_doc.get("fps") or 30)
-    ch = channels_from_packet(pkt_s, fc)
-    stub = make_delivery_stub(pkt_s, ch, frame_count=fc, label=pkt_s.emotion or "")
-    if fin_rep.fixes:
-        stub["_finalize_fixes"] = fin_rep.fixes
-    ch_h, prior_rep = apply_human_prior(ch, pkt_s, stub, frame_count=fc, fps=fps)
-    ch_q, pq_rep = fix_pulse_quality(ch_h, pkt_s, stub, frame_count=fc)
-
-    def stage(chs, **extra):
-        b = {"frame_count": fc, "fps": fps, "channels": chs}
-        b.update(extra)
-        return b
-
-    return {
-        "source": "compile", "emotion": pkt_s.emotion or "",
-        "frame_count": fc, "fps": fps,
-        "envelope": env_doc.get("envelope", []),
-        "stages": {
-            "envelope": stage(ch),
-            "human": stage(ch_h, extra={"prior_report": prior_rep.to_dict()}),
-            "quality": stage(ch_q, extra={"prior_report": prior_rep.to_dict(), "pulse_quality_report": pq_rep.to_dict()}),
-        },
-    }
-
-
-def _archive_to_customer(data: dict, baked: dict, metronome: str, packet_dict: dict) -> dict:
-    cid = (data.get("customer_id") or "").strip()
-    pid = (data.get("project_id") or "").strip()
-    if not cid or not pid:
-        try:
-            from gaze_engine._shared.customer_db import load_workbench_context
-            ctx = load_workbench_context()
-            cid = ctx.get("customer_id", "") or cid
-            pid = ctx.get("project_id", "") or pid
-        except Exception:
-            pass
-    if not cid or not pid:
-        return {}
-    from gaze_engine._shared.customer_db import get_project, save_adjustment
-    from asset_lib import project_output_dir
-    if not get_project(cid, pid):
-        return {"error": f"项目 {cid}/{pid} 不存在"}
-    out = project_output_dir(cid, pid)
-    out.mkdir(parents=True, exist_ok=True)
-    (out / "02_烘焙_真人律.json").write_text(json.dumps(baked, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (out / "05_扩散节拍表.txt").write_text(metronome, encoding="utf-8")
-    (out / "01_滑杆包.json").write_text(json.dumps(packet_dict, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    save_adjustment(cid, pid, packet_dict, note="管线自动归档", extra={"emotion": packet_dict.get("emotion", "")})
-    return {"customer_id": cid, "project_id": pid, "output_dir": str(out)}
-
-
-# ── 启动 ─────────────────────────────────────────────────────
-
 def main() -> int:
     host, port = "0.0.0.0", PORT
-    url = f"http://127.0.0.1:{port}/01_%E5%B7%A5%E4%BD%9C%E5%8F%B0%E6%9C%8D%E5%8A%A1/%E8%83%BD%E9%87%8F%E5%B7%A5%E4%BD%9C%E5%8F%B0.html"
+    url = f"http://127.0.0.1:{port}/portal"
     for _ in range(3):
         try:
             httpd = ThreadingHTTPServer((host, port), Handler)
@@ -2444,8 +2117,8 @@ def main() -> int:
             time.sleep(0.5)
     else:
         raise RuntimeError(f"端口 {port} 无法绑定")
-    print(f"⚡ 能量工作台 v{VERSION}: {url}")
-    print(f"🐶 客户门户 build={PORTAL_BUILD} → http://127.0.0.1:{port}/portal")
+    print(f"🎨 客户创作门户 v{VERSION}: {url}")
+    print(f"   build={PORTAL_BUILD}")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

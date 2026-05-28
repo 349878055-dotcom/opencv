@@ -1,0 +1,36 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "persian_cat",
+  "label": "波斯猫/慵懒型",
+  "species": "cat",
+  "notes": "扁脸圆眼半阖，慢眨 dignified，扫视幅度极小，眯眼底噪偏高 · [底膜] 扁脸大圆眼、小耳",
+  "default_emotion": "",
+  "base_offset": {
+    "pupil_x": 0.46,
+    "pupil_y": 0.44,
+    "blink": 0.58,
+    "eyebrow": 0.38,
+    "brow_raise": 0.36,
+    "pupil_scale": 0.5,
+    "iris_scale": 0.52,
+    "cornea_bulge": 0.5,
+    "squint": 0.56,
+    "lid_upper": 0.54,
+    "lid_lower": 0.5,
+    "eye_gloss": 0.52
+  },
+  "scale_factor": {
+    "pupil_x": 0.02,
+    "pupil_y": 0.02,
+    "blink": 0.24,
+    "eyebrow": 0.04,
+    "brow_raise": 0.04,
+    "pupil_scale": 0.08,
+    "iris_scale": 0.08,
+    "cornea_bulge": 0.1,
+    "squint": 0.14,
+    "lid_upper": 0.12,
+    "lid_lower": 0.1,
+    "eye_gloss": 0.04
+  }
+}

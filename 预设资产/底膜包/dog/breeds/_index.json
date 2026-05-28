@@ -1,0 +1,19 @@
+{
+  "schema": "ecursor_membrane_index_v1",
+  "species": "dog",
+  "breed_count": 10,
+  "breeds": [
+    "border_collie",
+    "corgi",
+    "german_shepherd",
+    "golden_retriever",
+    "husky",
+    "labrador",
+    "pomeranian",
+    "poodle_giant",
+    "samoyed",
+    "shiba_inu"
+  ],
+  "sync": "python3 tools/03_工具脚本/sync_membrane_pack.py",
+  "_reference_policy": "几何乘数依据 AKC/FCI 品种标准眼型/耳型描述；数值为工程标定，非医学测量"
+}

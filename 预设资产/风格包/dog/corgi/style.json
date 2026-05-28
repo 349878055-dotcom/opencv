@@ -1,0 +1,36 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "corgi",
+  "label": "柯基/好奇型",
+  "species": "dog",
+  "notes": "圆眼距宽，机敏好奇，眉耳联动明显，友善注视 · [底膜] 圆眼、大立耳",
+  "default_emotion": "",
+  "base_offset": {
+    "pupil_x": 0.5,
+    "pupil_y": 0.48,
+    "blink": 0.48,
+    "eyebrow": 0.36,
+    "pupil_scale": 0.54,
+    "iris_scale": 0.52,
+    "cornea_bulge": 0.5,
+    "squint": 0.44,
+    "brow_raise": 0.48,
+    "lid_upper": 0.46,
+    "lid_lower": 0.5,
+    "eye_gloss": 0.58
+  },
+  "scale_factor": {
+    "pupil_x": 0.06,
+    "pupil_y": 0.05,
+    "blink": 0.22,
+    "eyebrow": 0.12,
+    "pupil_scale": 0.16,
+    "iris_scale": 0.12,
+    "cornea_bulge": 0.14,
+    "squint": 0.16,
+    "brow_raise": 0.14,
+    "lid_upper": 0.12,
+    "lid_lower": 0.12,
+    "eye_gloss": 0.06
+  }
+}

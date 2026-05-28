@@ -41,7 +41,7 @@ def _assert_04_structure(prompt_04: str, *, species: str, action: str) -> None:
 
 
 def verify_dog_emotion(name: str, breed_id: str = "poodle_giant") -> None:
-    p = ROOT / "预设资产" / "预设情绪包" / "dog" / f"{name}.json"
+    p = ROOT / "预设资产" / "情绪包" / "dog" / f"{name}.json"
     pkt = SliderPacket.from_dict(json.loads(p.read_text(encoding="utf-8")))
     baked, _, _ = run_dog_pipeline(pkt, breed_id=breed_id, narrative_action=SAMPLE_ACTION)
     asm = DiffusionPromptAssembler()
@@ -60,7 +60,7 @@ def verify_dog_emotion(name: str, breed_id: str = "poodle_giant") -> None:
 
 
 def verify_all_dog_presets() -> None:
-    preset_dir = ROOT / "预设资产" / "预设情绪包" / "dog"
+    preset_dir = ROOT / "预设资产" / "情绪包" / "dog"
     for f in sorted(preset_dir.glob("*.json")):
         if f.name.startswith("_"):
             continue
@@ -68,7 +68,7 @@ def verify_all_dog_presets() -> None:
 
 
 def verify_human_sample() -> None:
-    p = ROOT / "预设资产" / "预设情绪包" / "human" / "魅惑·勾人.json"
+    p = ROOT / "预设资产" / "情绪包" / "human" / "魅惑·勾人.json"
     pkt = SliderPacket.from_dict(json.loads(p.read_text(encoding="utf-8")))
     baked, _, _, _ = run_species_delivery(
         pkt, "human", style_id="魅惑者_温碧霞", narrative_action="微微侧头"
@@ -83,7 +83,7 @@ def verify_human_sample() -> None:
 
 
 def verify_cat_sample() -> None:
-    p = ROOT / "预设资产" / "预设情绪包" / "cat" / "狩猎锁定.json"
+    p = ROOT / "预设资产" / "情绪包" / "cat" / "狩猎锁定.json"
     pkt = SliderPacket.from_dict(json.loads(p.read_text(encoding="utf-8")))
     baked, _, _, _ = run_species_delivery(
         pkt, "cat", breed_id="ragdoll_cat", narrative_action="伏低盯住"

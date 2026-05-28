@@ -3,7 +3,7 @@
   "id": "british_cat",
   "label": "英短/憨厚型",
   "species": "cat",
-  "notes": "英短/憨厚型 品种风格偏移",
+  "notes": "圆脸大圆眼，宽距，表情甜稳，眼动收敛（CFA/TICA 圆眼宽距标准） · [底膜] 大圆眼宽距、中小耳",
   "default_emotion": "",
   "base_offset": {
     "pupil_x": 0.45,

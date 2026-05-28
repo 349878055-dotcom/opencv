@@ -1,0 +1,36 @@
+{
+  "schema": "ecursor_style_v1",
+  "id": "german_shepherd",
+  "label": "德牧/专注型",
+  "species": "dog",
+  "notes": "竖耳钉视，工作犬专注， blink 少，扫视幅度克制 · [底膜] 中等杏仁眼、立耳",
+  "default_emotion": "",
+  "base_offset": {
+    "pupil_x": 0.49,
+    "pupil_y": 0.47,
+    "blink": 0.42,
+    "eyebrow": 0.42,
+    "pupil_scale": 0.54,
+    "iris_scale": 0.5,
+    "cornea_bulge": 0.48,
+    "squint": 0.52,
+    "brow_raise": 0.38,
+    "lid_upper": 0.5,
+    "lid_lower": 0.5,
+    "eye_gloss": 0.48
+  },
+  "scale_factor": {
+    "pupil_x": 0.03,
+    "pupil_y": 0.03,
+    "blink": 0.14,
+    "eyebrow": 0.1,
+    "pupil_scale": 0.14,
+    "iris_scale": 0.1,
+    "cornea_bulge": 0.12,
+    "squint": 0.16,
+    "brow_raise": 0.06,
+    "lid_upper": 0.1,
+    "lid_lower": 0.1,
+    "eye_gloss": 0.04
+  }
+}

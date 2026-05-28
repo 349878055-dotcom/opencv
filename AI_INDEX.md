@@ -1,6 +1,6 @@
 # AI_INDEX · jintao_node_eye 代码依赖图谱
 
-> **核心架构**：双模驱动中间件（Eye-Figma Engine）— 详见 [`contracts/06_架构/流程设计.md`](contracts/06_架构/流程设计.md)
+> **核心架构**：双模驱动中间件（Eye-Figma Engine）— 详见 [`合同/00_管线导读/00_从门户到扩散_管线总览.md`](合同/00_管线导读/00_从门户到扩散_管线总览.md) · [`合同/08_架构与验收/流程设计.md`](合同/08_架构与验收/流程设计.md)
 >
 > **用途**：AI Agent 首次进入项目时读取此文件，一次性理解全项目结构、依赖关系、入口函数。
 > **无需遍历目录**，读完此文件即可精准定位代码。
@@ -19,7 +19,7 @@
 ├── .env / .env.example     ← 环境变量
 ├── .gitignore              ← Git 忽略规则
 ├── yolov8n-cls.pt          ← YOLOv8 品种分类模型权重
-├── 一键打开能量工作台.sh     ← 启动入口
+├── 一键打开创作门户.sh       ← 启动入口
 ├── __init__.py              ← 项目初始化 / ComfyUI 节点注册入口
 ├── asset_lib.py             ← 预设资产+客户资产路径工具
 │
@@ -27,17 +27,14 @@
 │
 ├── tools/                   ← 网页工作台 + HTTP 服务
 │   ├── 01_工作台服务/        ← 主应用
-│   │   ├── serve_workbench.py   ← 🏆 HTTP 后端主入口 v13：管线API + 客户CRUD + **照片上传/底膜自动检测** + **认证API** + **Pomot创作API**
-│   │   ├── workbench_backend.py ← 旧版管线后端（FastAPI，已不推荐）
-│   │   ├── 能量工作台.html      ← 前端 UI（含客户照片上传+底膜检测区域）
-│   │   ├── 客户门户.html        ← 🆕 客户创作工作室（登录→项目→预设→创作→导出）
+│   │   ├── serve_workbench.py   ← 🏆 HTTP 后端：门户 API + 认证 + Pomot + 标定 + 底膜渲染 + 扩散导出
+│   │   ├── 客户门户.html        ← 客户创作工作室（登录→项目→预设→脉冲图→Pomot→导出）
 │   │   └── static/
-│   │       ├── app.js           ← 能量工作台前端逻辑
-│   │       ├── portal.js        ← 🆕 客户创作工作室前端逻辑（认证+预设+Pomot+保存导出）
-│   │       └── style.css        ← 通用样式
-│   ├── 02_前端插件/          ← JS 底层插件（工作台自动加载）
+│   │       ├── portal.js        ← 门户前端逻辑
+│   │       └── style.css        ← 共享按钮/工具类样式
+│   ├── 02_前端插件/          ← （已清空，门户逻辑在 static/portal.js）
 │   ├── 03_工具脚本/          ← 构建/维护脚本
-│   │   ├── generate_species_contracts.py  ← 从预设资产同步 → contracts/02_情绪 + 05_人格化
+│   │   ├── generate_species_contracts.py  ← 从预设资产同步 → 合同/02_情绪与能量 + 05_风格化
 │   │   ├── build_workbench_pipeline_cache.py
 │   │   ├── estimate_template_from_photo.py
 │   │   └── build_standalone_share.py + ssh_*.py
@@ -127,40 +124,18 @@
 │   ├── __init__.py              ← Python 包初始化
 │   └── test_persona_integrity.py ← 人格完整性自检
 │
-├── contracts/                ← 合同规范（一种情绪/风格 = 一份独立 md）
+├── 合同/                ← 合同规范（按管线阶段编号；一种情绪/风格 = 一份独立 md）
 │   ├── 合同规范.md            ← 统一合同模板（五段格式）
-│   ├── README.md              ← contracts 索引 + 生成器说明
-│   ├── 01_总纲/               ← 全局理论+工程（6 份，物种通用）
-│   │   ├── 滑杆规范.md
-│   │   ├── 节奏说明书.md
-│   │   ├── 节奏说明书编译器.md
-│   │   ├── 全量帧指令集规范.md
-│   │   ├── 眼眉真人默认律.md
-│   │   └── 眼眉指令集_全局情绪节奏主钟.md
-│   ├── 02_情绪/               ← 按物种分目录，38 份独立情绪合同
-│   │   ├── 人/                ← 16 份 + 人类情绪与能量曲线.md（索引）+ PAD定位索引.md
-│   │   ├── 猫/                ← 12 份 + 猫情绪与能量曲线.md（索引）+ PAD定位索引.md
-│   │   ├── 狗/                ← 10 份 + 狗情绪与能量曲线.md（索引）+ PAD定位索引.md
-│   │   └── 魅惑勾人.md          ← 根目录 stub 重定向
-│   ├── 03_工程底膜/           ← 工程底膜（扩散引擎消费的视觉骨架）
-│   │   ├── 工程底膜合同.md
-│   │   └── 工程底膜驱动规范.md
-│   ├── 04_接口/               ← 上下游对接
-│   │   ├── UI设计原则.md
-│   │   └── 扩散引擎提示词拼装规范.md
-│   ├── 05_人格化/             ← 按物种分目录，每风格一份独立 md
-│   │   ├── 人/                ← 9 份人格 + 人类人格风格偏向.md（索引）
-│   │   ├── 猫/                ← 4 份品种 + 猫品种风格偏向.md（索引）
-│   │   ├── 狗/                ← poodle_giant + 狗品种风格偏向.md + 情绪与品种合成约定.md
-│   │   └── 风格化偏向.md        ← 根目录总纲
-│   └── 06_架构/               ← 顶层设计（核心）
-│       ├── 流程设计.md
-│       ├── pomot合成规范.md
-│       ├── 公共层边界合同.md
-│       ├── 狗150帧全量编译合同_上篇.md
-│       ├── 5秒气质精品成片合同.md   ← C端第一步：5s气质+Wan定稿精品P1
-│       ├── 扩散Prompt全链路方案_导读.md
-│       └── 人格品种与Et正交审计.md
+│   ├── README.md              ← 合同 索引 + 生成器说明
+│   ├── 00_管线导读/           ← 从门户到扩散阅读地图
+│   ├── 01_输入与收口/         ← S0：滑杆、macro/hold、L1 禁区
+│   ├── 02_情绪与能量/         ← S2：38 份情绪 macro/E(t)（人16·猫12·狗10）
+│   ├── 03_情绪坐标/           ← S1：情绪坐标理论（扁平 5 篇）+ 人猫狗 38 份单项
+│   ├── 04_通道与先验/         ← S4–S6：12 通道、真人律、节拍表
+│   ├── 05_风格化/             ← S5：人格/品种风格
+│   ├── 06_工程底膜/           ← RGB 三色工程底膜
+│   ├── 07_输出与扩散/         ← 04 Prompt、UI 接口
+│   └── 08_架构与验收/         ← S0–S7 全链、P0/P1 验收
 │
 ├── scripts/                  ← 工具脚本
 │   ├── s01_从能量生成02.sh        ← 主出厂（CLI）
@@ -181,7 +156,7 @@
 │   └── 开源社区对比调研.md    ← 开源社区对比调研
 │
 ├── 预设资产/                 ← 🔵 预设资产（两大分类）
-│   ├── 预设情绪包/           ← ① 基本情绪包（macro+hold_seg 基准值）
+│   ├── 情绪包/           ← ① 情绪包（macro+hold_seg+pad）
 │   │   ├── human/            ← 16种（含怒视·压人）
 │   │   ├── cat/              ← 12种 警觉瞪视、狩猎锁定…
 │   │   └── dog/              ← 10种 警觉·竖耳、委屈·幼犬眼…
@@ -226,10 +201,10 @@
 >
 > | 层级 | 目录 | 内容 | 作用于 | 数据来源 |
 > |------|------|------|--------|---------|
-> | ① 基本情绪包 | `预设情绪包/{human,cat,dog}/` | macro+hold_seg，滑杆基准值 | 单情绪 | `control_surface.py` / `cat/dog presets.py` |
+> | ① 情绪包 | `情绪包/{human,cat,dog}/` | macro+hold_seg+pad，滑杆与气质基准 | 单情绪 | `control_surface.py` / `cat/dog presets.py` |
 > | ② 品种风格包 | `风格包/{cat,dog}/` | base_offset+scale_factor，12通道偏移 | 该物种所有情绪 | `breed_matrix.json` + `style_compose` |
 > | ③ 人格包 | `风格包/human/` | base_offset+scale_factor，12通道偏移 | 指定演员+情绪 | `persona_matrix.json` + style.json |
-> | — | 合同正文 | 38 情绪 + 14 风格独立 md | 审定真源 | `contracts/02_情绪/` + `contracts/05_人格化/` |
+> | — | 合同正文 | 38 情绪 + 14 风格独立 md | 审定真源 | `合同/02_情绪与能量/` + `合同/05_风格化/` |
 
 ---
 
@@ -262,7 +237,7 @@
                                     → 送 Wan 扩散引擎
 ```
 
-### 2B. 核心管线数据流（能量工作台旧版）
+### 2B. 核心管线数据流（引擎内部，门户经 Pomot 调用）
 
 ```
 API: POST /api/run-pipeline
@@ -450,13 +425,13 @@ API: POST /api/run-pipeline
 | "改狗情绪预设" | [`dog/presets.py`](gaze_engine/dog/presets.py) | `DOG_PRESETS[` | 具体预设 ~8 行 |
 | "改 L1 禁区" | [`_shared/slider_bounds.py`](gaze_engine/_shared/slider_bounds.py) | `G1` ~ `G8` | 具体禁区 ~10 行 |
 | "加新人类预设" | [`human/control_surface.py:18`](gaze_engine/human/control_surface.py:18) + [`_shared/slider_bounds.py`](gaze_engine/_shared/slider_bounds.py) | `PRESETS` + `load_rules` | 各 ~10 行 |
-| "改前端 UI" | [`能量工作台.html`](tools/01_工作台服务/能量工作台.html) | 按钮 ID / 函数名 | 具体函数 ~30 行 |
+| "改门户前端 UI" | [`客户门户.html`](tools/01_工作台服务/客户门户.html) + [`static/portal.js`](tools/01_工作台服务/static/portal.js) | 步骤面板 / `paintEnergyPulse` | 目标区块 ~50 行 |
 | "改人格矩阵" | [`human/persona_matrix.json`](gaze_engine/human/persona_matrix.json) | 人格 ID | 具体人格 ~15 行 |
 | "启用/停用驱动引擎（人类）" | [`human/affine_renderer.py:86`](gaze_engine/human/affine_renderer.py:86) | `_AFFINE_DISABLED` | 当前 `False`（已启用） |
 | "启用音频编译" | [`audio_compiler.py:12`](gaze_engine/audio_compiler.py:12) | `_AUDIO_DISABLED` | 改 `True`→`False` |
 | "改工程底膜驱动（人类）" | [`human/affine_renderer.py`](gaze_engine/human/affine_renderer.py) | `EyeMesh.deform` / `render_frame` | ~340 行 |
-| "看工程底膜合同" | [`contracts/03_工程底膜/工程底膜合同.md`](contracts/03_工程底膜/工程底膜合同.md) | 全文 | 格式协议+验收标准 |
-| "看驱动引擎规范" | [`contracts/03_工程底膜/工程底膜驱动规范.md`](contracts/03_工程底膜/工程底膜驱动规范.md) | 全文 | 核心机制+注意事项 |
+| "看工程底膜合同" | [`合同/06_工程底膜/工程底膜合同.md`](合同/06_工程底膜/工程底膜合同.md) | 全文 | 格式协议+验收标准 |
+| "看驱动引擎规范" | [`合同/06_工程底膜/工程底膜驱动规范.md`](合同/06_工程底膜/工程底膜驱动规范.md) | 全文 | 核心机制+注意事项 |
 | "改 6 输出分流" | [`_shared/rhythm_compiler.py`](gaze_engine/_shared/rhythm_compiler.py) | `build_metronome_text` | ~100 行 |
 | "改节奏说明书编译器" | [`_shared/rhythm_compiler.py`](gaze_engine/_shared/rhythm_compiler.py) | `build_metronome_text` | ~100 行 |
 | "改猫通道适配器" | [`cat/channel_adapter.py`](gaze_engine/cat/channel_adapter.py) | `ear_to_channel_values` | ~30 行 |
@@ -464,18 +439,18 @@ API: POST /api/run-pipeline
 | "改狗完整管线" | [`dog/dog_pipeline.py`](gaze_engine/dog/dog_pipeline.py) | `run_dog_pipeline` | ~70 行 |
 | "改猫面部检测" | [`cat/detect.py`](gaze_engine/cat/detect.py) | `estimate_cat_ear` | ~80 行 |
 | "改狗面部检测" | [`dog/detect.py`](gaze_engine/dog/detect.py) | `estimate_dog_ear` | ~80 行 |
-| "改架构设计" | [`contracts/06_架构/流程设计.md`](contracts/06_架构/流程设计.md) | 全文 | 全文 |
-| "改某一情绪合同" | [`contracts/02_情绪/{人\|猫\|狗}/{情绪名}.md`](contracts/02_情绪/) | 五段格式正文 | 全文 |
+| "改架构设计" | [`合同/08_架构与验收/流程设计.md`](合同/08_架构与验收/流程设计.md) | 全文 | 全文 |
+| "改某一情绪合同" | [`合同/02_情绪与能量/{人\|猫\|狗}/{情绪名}.md`](合同/02_情绪与能量/) | 五段格式正文 | 全文 |
 | "同步情绪合同数值" | [`tools/03_工具脚本/generate_species_contracts.py`](tools/03_工具脚本/generate_species_contracts.py) | `main()` | 全文 |
-| "改某一风格/人格合同" | [`contracts/05_人格化/{人\|猫\|狗}/{id}.md`](contracts/05_人格化/) | 五段格式正文 | 全文 |
+| "改某一风格/人格合同" | [`合同/05_风格化/{人\|猫\|狗}/{id}.md`](合同/05_风格化/) | 五段格式正文 | 全文 |
 | "改项目归档/导出包" | [`_shared/project_archive.py`](gaze_engine/_shared/project_archive.py) | `save_project_profile` / `build_diffusion_bundle` | ~120 行 |
 | "改 S5 风格合成" | [`_shared/style_compose.py`](gaze_engine/_shared/style_compose.py) | `apply_style_offset` / `load_style_from_asset` | ~75 行 |
-| "改合同索引" | [`contracts/README.md`](contracts/README.md) | 全文 | 全文 |
-| "改节奏说明书合同" | [`contracts/01_总纲/节奏说明书.md`](contracts/01_总纲/节奏说明书.md) | 全文 | 全文 |
-| "改公共层边界合同" | [`contracts/06_架构/公共层边界合同.md`](contracts/06_架构/公共层边界合同.md) | 全文 | 全文 |
-| "改全局情绪节奏主钟" | [`contracts/01_总纲/眼眉指令集_全局情绪节奏主钟.md`](contracts/01_总纲/眼眉指令集_全局情绪节奏主钟.md) | 全文 | 全文 |
-| "改工程底膜合同" | [`contracts/03_工程底膜/工程底膜合同.md`](contracts/03_工程底膜/工程底膜合同.md) | 全文 | 全文 |
-| "改工程底膜驱动规范" | [`contracts/03_工程底膜/工程底膜驱动规范.md`](contracts/03_工程底膜/工程底膜驱动规范.md) | 全文 | 全文 |
+| "改合同索引" | [`合同/README.md`](合同/README.md) | 全文 | 全文 |
+| "改节奏说明书合同" | [`合同/04_通道与先验/节奏说明书.md`](合同/04_通道与先验/节奏说明书.md) | 全文 | 全文 |
+| "改公共层边界合同" | [`合同/08_架构与验收/公共层边界合同.md`](合同/08_架构与验收/公共层边界合同.md) | 全文 | 全文 |
+| "改全局情绪节奏主钟" | [`合同/04_通道与先验/眼眉指令集_全局情绪节奏主钟.md`](合同/04_通道与先验/眼眉指令集_全局情绪节奏主钟.md) | 全文 | 全文 |
+| "改工程底膜合同" | [`合同/06_工程底膜/工程底膜合同.md`](合同/06_工程底膜/工程底膜合同.md) | 全文 | 全文 |
+| "改工程底膜驱动规范" | [`合同/06_工程底膜/工程底膜驱动规范.md`](合同/06_工程底膜/工程底膜驱动规范.md) | 全文 | 全文 |
 | "改 NL 路由" | [`nl_router.py`](gaze_engine/nl_router.py) | `process_customer_nl` | 整函数 ~55 行 |
 | "改 LLM 集成" | [`_shared/llm_openai.py`](gaze_engine/_shared/llm_openai.py) | `chatgpt_customer_nl` / `chatgpt_nl_to_packet` | 各 ~50 行 |
 | "改人格编译器" | [`human/persona_compiler.py`](gaze_engine/human/persona_compiler.py) | `Persona` / `compile_to_channels` | ~80 行 |
@@ -491,7 +466,7 @@ API: POST /api/run-pipeline
 | "改 PAD 真源" | [`_shared/emotion_pad.py`](gaze_engine/_shared/emotion_pad.py) | `EMOTION_PAD` / `resolve_pad` | 全文 |
 | "跑 Prompt 验收" | [`scripts/verify_diffusion_prompt_contract.py`](scripts/verify_diffusion_prompt_contract.py) | `main()` | 全文 |
 | "跑狗150帧验收" | [`scripts/verify_dog_150_compile_contract.py`](scripts/verify_dog_150_compile_contract.py) | `main()` | 全文 |
-| "气质精品成片验收" | [`contracts/06_架构/5秒气质精品成片合同.md`](contracts/06_架构/5秒气质精品成片合同.md) | §5.2 P1 | 全文 |
+| "气质精品成片验收" | [`合同/08_架构与验收/5秒气质精品成片合同.md`](合同/08_架构与验收/5秒气质精品成片合同.md) | §5.2 P1 | 全文 |
 | "导出 Prompt 样例" | [`scripts/export_prompt_samples.py`](scripts/export_prompt_samples.py) | `export_species()` | 全文 |
 | "改 Prompt 模板合成" | [`pomot/`](gaze_engine/pomot/) | `PomotPipeline` / `composer` | 各文件 ~50 行 |
 | "改客户密码认证" | [`_shared/customer_db.py`](gaze_engine/_shared/customer_db.py) | `verify_customer_password` / `create_auth_token` | 各函数 ~15 行 |
@@ -520,28 +495,30 @@ API: POST /api/run-pipeline
 - 狗完整管线: [`dog/dog_pipeline.py`](gaze_engine/dog/dog_pipeline.py)
 - 人类节奏说明书文案: [`human/rhythm_data.py`](gaze_engine/human/rhythm_data.py)
 - 节奏说明书编译器: [`_shared/rhythm_compiler.py`](gaze_engine/_shared/rhythm_compiler.py)
-- 合同物种索引: [`contracts/README.md`](contracts/README.md) — 02_情绪 38 份 + 05_人格化 14 份
-- 人类情绪索引: [`contracts/02_情绪/人/人类情绪与能量曲线.md`](contracts/02_情绪/人/人类情绪与能量曲线.md)
-- 猫情绪索引: [`contracts/02_情绪/猫/猫情绪与能量曲线.md`](contracts/02_情绪/猫/猫情绪与能量曲线.md)
-- 狗情绪索引: [`contracts/02_情绪/狗/狗情绪与能量曲线.md`](contracts/02_情绪/狗/狗情绪与能量曲线.md)
-- 人格品种正交审计: [`contracts/06_架构/人格品种与Et正交审计.md`](contracts/06_架构/人格品种与Et正交审计.md)
-- 合同生成器: [`tools/03_工具脚本/generate_species_contracts.py`](tools/03_工具脚本/generate_species_contracts.py) — 预设资产 → contracts 同步
+- 合同管线导读: [`合同/00_管线导读/00_从门户到扩散_管线总览.md`](合同/00_管线导读/00_从门户到扩散_管线总览.md)
+- 合同物种索引: [`合同/README.md`](合同/README.md) — 02_情绪与能量 38 份 + 03_情绪坐标 38 份 + 05_风格化 28 份
+- PAD 专题目录: [`合同/03_情绪坐标/00_情绪坐标导读.md`](合同/03_情绪坐标/00_情绪坐标导读.md)
+- 人类情绪索引: [`合同/02_情绪与能量/人/人类情绪与能量曲线.md`](合同/02_情绪与能量/人/人类情绪与能量曲线.md)
+- 猫情绪索引: [`合同/02_情绪与能量/猫/猫情绪与能量曲线.md`](合同/02_情绪与能量/猫/猫情绪与能量曲线.md)
+- 狗情绪索引: [`合同/02_情绪与能量/狗/狗情绪与能量曲线.md`](合同/02_情绪与能量/狗/狗情绪与能量曲线.md)
+- 人格品种正交审计: [`合同/08_架构与验收/人格品种与Et正交审计.md`](合同/08_架构与验收/人格品种与Et正交审计.md)
+- 合同生成器: [`tools/03_工具脚本/generate_species_contracts.py`](tools/03_工具脚本/generate_species_contracts.py) — 预设资产 → 合同 同步
 - S5 风格合成: [`gaze_engine/_shared/style_compose.py`](gaze_engine/_shared/style_compose.py) — `apply_style_offset()` 不改 E(t)
 - 项目归档: [`gaze_engine/_shared/project_archive.py`](gaze_engine/_shared/project_archive.py) — `save_project_profile()` / `build_diffusion_bundle()`
-- 合同规范模板: [`contracts/合同规范.md`](contracts/合同规范.md)
-- 全量帧指令集规范: [`contracts/01_总纲/全量帧指令集规范.md`](contracts/01_总纲/全量帧指令集规范.md)
-- 眼眉真人默认律: [`contracts/01_总纲/眼眉真人默认律.md`](contracts/01_总纲/眼眉真人默认律.md)
-- 眼眉指令集·全局情绪节奏主钟: [`contracts/01_总纲/眼眉指令集_全局情绪节奏主钟.md`](contracts/01_总纲/眼眉指令集_全局情绪节奏主钟.md)
-- 节奏说明书: [`contracts/01_总纲/节奏说明书.md`](contracts/01_总纲/节奏说明书.md)
-- 节奏说明书编译器合同: [`contracts/01_总纲/节奏说明书编译器.md`](contracts/01_总纲/节奏说明书编译器.md)
-- 工程底膜合同: [`contracts/03_工程底膜/工程底膜合同.md`](contracts/03_工程底膜/工程底膜合同.md)
-- 工程底膜驱动规范: [`contracts/03_工程底膜/工程底膜驱动规范.md`](contracts/03_工程底膜/工程底膜驱动规范.md)
-- 双模驱动架构: [`contracts/06_架构/流程设计.md`](contracts/06_架构/流程设计.md)
-- 公共层边界合同: [`contracts/06_架构/公共层边界合同.md`](contracts/06_架构/公共层边界合同.md)
-- 狗 150 帧编译合同: [`contracts/06_架构/狗150帧全量编译合同_上篇.md`](contracts/06_架构/狗150帧全量编译合同_上篇.md)
-- 5 秒气质精品成片: [`contracts/06_架构/5秒气质精品成片合同.md`](contracts/06_架构/5秒气质精品成片合同.md) — Wan 定稿 P1 + 连续 3 次精品
-- 扩散 Prompt 全链路导读: [`contracts/06_架构/扩散Prompt全链路方案_导读.md`](contracts/06_架构/扩散Prompt全链路方案_导读.md)
-- 04 拼装规范: [`contracts/04_接口/扩散引擎提示词拼装规范.md`](contracts/04_接口/扩散引擎提示词拼装规范.md)
+- 合同规范模板: [`合同/合同规范.md`](合同/合同规范.md)
+- 全量帧指令集规范: [`合同/04_通道与先验/全量帧指令集规范.md`](合同/04_通道与先验/全量帧指令集规范.md)
+- 眼眉真人默认律: [`合同/04_通道与先验/眼眉真人默认律.md`](合同/04_通道与先验/眼眉真人默认律.md)
+- 眼眉指令集·全局情绪节奏主钟: [`合同/04_通道与先验/眼眉指令集_全局情绪节奏主钟.md`](合同/04_通道与先验/眼眉指令集_全局情绪节奏主钟.md)
+- 节奏说明书: [`合同/04_通道与先验/节奏说明书.md`](合同/04_通道与先验/节奏说明书.md)
+- 节奏说明书编译器合同: [`合同/04_通道与先验/节奏说明书编译器.md`](合同/04_通道与先验/节奏说明书编译器.md)
+- 工程底膜合同: [`合同/06_工程底膜/工程底膜合同.md`](合同/06_工程底膜/工程底膜合同.md)
+- 工程底膜驱动规范: [`合同/06_工程底膜/工程底膜驱动规范.md`](合同/06_工程底膜/工程底膜驱动规范.md)
+- 双模驱动架构: [`合同/08_架构与验收/流程设计.md`](合同/08_架构与验收/流程设计.md)
+- 公共层边界合同: [`合同/08_架构与验收/公共层边界合同.md`](合同/08_架构与验收/公共层边界合同.md)
+- 狗 150 帧编译合同: [`合同/08_架构与验收/狗150帧全量编译合同_上篇.md`](合同/08_架构与验收/狗150帧全量编译合同_上篇.md)
+- 5 秒气质精品成片: [`合同/08_架构与验收/5秒气质精品成片合同.md`](合同/08_架构与验收/5秒气质精品成片合同.md) — Wan 定稿 P1 + 连续 3 次精品
+- 扩散 Prompt 全链路导读: [`合同/08_架构与验收/扩散Prompt全链路方案_导读.md`](合同/08_架构与验收/扩散Prompt全链路方案_导读.md)
+- 04 拼装规范: [`合同/07_输出与扩散/扩散引擎提示词拼装规范.md`](合同/07_输出与扩散/扩散引擎提示词拼装规范.md)
 - PAD 真源: [`gaze_engine/_shared/emotion_pad.py`](gaze_engine/_shared/emotion_pad.py)
 - Prompt P0 验收: [`scripts/verify_diffusion_prompt_contract.py`](scripts/verify_diffusion_prompt_contract.py)
 - 狗 150 帧 P0 验收: [`scripts/verify_dog_150_compile_contract.py`](scripts/verify_dog_150_compile_contract.py)

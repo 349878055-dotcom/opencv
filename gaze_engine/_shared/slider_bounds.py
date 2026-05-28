@@ -1,5 +1,5 @@
 """
-滑杆禁区 L1 · 机器真源（合同：contracts/滑杆规范.md §10）
+滑杆禁区 L1 · 机器真源（合同：合同/滑杆规范.md §10）
 
 预设中心值来自 control_surface.py；半径与 G 条在此模块。
 改规则后运行：python3 scripts/export_slider_forbidden_js.py
@@ -155,7 +155,7 @@ def load_rules() -> dict[str, Any]:
 
     return {
         "schema": "slider-forbidden-v1",
-        "_doc": "contracts/滑杆规范.md §10 · gaze_engine/slider_bounds.py",
+        "_doc": "合同/滑杆规范.md §10 · gaze_engine/slider_bounds.py",
         "dead_zone": DEAD_ZONE,
         "mood_groups": {
             k: {"presets": v["presets"], "allowed_shapes": v.get("allowed_shapes")}

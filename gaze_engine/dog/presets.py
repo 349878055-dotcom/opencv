@@ -1,12 +1,12 @@
 """
-狗情绪预设 · 从 预设资产/预设情绪包/dog/*.json 加载
+狗情绪预设 · 从 预设资产/情绪包/dog/*.json 加载
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from gaze_engine._shared.slider_schema import EarParams, HoldSegment, MacroSliders, SliderPacket
+from gaze_engine._shared.slider_schema import SliderPacket
 
 # 兼容旧 CLI 名 → 文件预设名
 _LEGACY_ALIASES: dict[str, str] = {
@@ -31,15 +31,12 @@ def dog_packet_from_file(name: str) -> SliderPacket:
         raise KeyError(f"未知狗预设: {name}，可选: {', '.join(available)}")
 
     raw = json.loads(path.read_text(encoding="utf-8"))
-    ear_raw = raw.get("ear")
-    ear = EarParams.from_preset_dict(ear_raw) if ear_raw else None
-    return SliderPacket(
-        emotion=str(raw.get("emotion") or resolved),
-        style=str(raw.get("style") or "default"),
-        macro=MacroSliders(**raw["macro"]),  # type: ignore[arg-type]
-        hold_seg=HoldSegment(**raw["hold_seg"]),  # type: ignore[arg-type]
-        ear=ear,
-    ).clamped()
+    pkt = SliderPacket.from_dict(raw)
+    if not pkt.emotion or pkt.emotion == "s01_pressure":
+        pkt.emotion = str(raw.get("emotion") or resolved)
+    from gaze_engine._shared.emotion_pad import ensure_pad_on_packet
+
+    return ensure_pad_on_packet(pkt, "dog")
 
 
 def dog_packet_from_preset(name: str) -> SliderPacket:

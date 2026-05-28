@@ -1,0 +1,16 @@
+{
+  "breed_id": "scottish_fold",
+  "species": "cat",
+  "label": "折耳猫/软萌型",
+  "_reference": "CFA Scottish Fold — large round eyes wide-set; folded ears (cfa.org breed standard)",
+  "membrane_notes": "大圆眼宽距、折耳",
+  "template_scales": {
+    "eye_size": 1.13,
+    "eye_aspect": 1.12,
+    "iris_size": 1.05,
+    "pupil_size": 1.0,
+    "ear_size": 0.88,
+    "ear_angle": 0.32
+  },
+  "schema": "ecursor_membrane_breed_v1"
+}

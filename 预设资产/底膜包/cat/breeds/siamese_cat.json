@@ -1,0 +1,16 @@
+{
+  "breed_id": "siamese_cat",
+  "species": "cat",
+  "label": "暹罗猫/高冷型",
+  "_reference": "CFA Siamese — almond blue eyes slanted; large ears (cfa.org breed standard)",
+  "membrane_notes": "杏仁蓝眼、大立耳",
+  "template_scales": {
+    "eye_size": 1.02,
+    "eye_aspect": 0.84,
+    "iris_size": 1.04,
+    "pupil_size": 1.05,
+    "ear_size": 1.08,
+    "ear_angle": 0.82
+  },
+  "schema": "ecursor_membrane_breed_v1"
+}

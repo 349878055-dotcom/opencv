@@ -2,10 +2,10 @@
 """
 rhythm_compiler.py · 节奏说明书编译器（公共层·算法骨架）
 
-从 02_烘焙_真人律.json（12 通道 × 150 帧）自动编译为
+从 02_烘焙 JSON（12 通道 × 150 帧，物种专名见 asset_lib.baked_output_filename）自动编译为
 05_扩散节拍表.txt（扩散引擎 Wan 可消费的自然语言节奏说明书）。
 
-合同规范：contracts/01_总纲/节奏说明书编译器.md
+合同规范：合同/04_通道与先验/节奏说明书编译器.md
 数据来源：各物种的 rhythm_data.py 提供提示词文案
 """
 from __future__ import annotations

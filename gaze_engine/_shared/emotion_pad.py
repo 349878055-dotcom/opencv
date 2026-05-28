@@ -103,6 +103,31 @@ def resolve_pad(packet: SliderPacket) -> tuple[float, float, float]:
     return EMOTION_PAD.get(packet.emotion, (0.0, 0.0, 0.0))
 
 
+def ensure_pad_on_packet(packet: SliderPacket, species: str = "human") -> SliderPacket:
+    """S1 收口：packet 无 pad 块时，从 EMOTION_PAD 补全（不改 macro/hold）。"""
+    if packet.pad is not None:
+        return packet
+    pad = default_pad_for_emotion(packet.emotion)
+    if pad is None:
+        return packet
+    hint = pad_channel_hint(species, pad.P, pad.A, pad.D)
+    if not pad.channel_hint and hint:
+        pad = PadParams(
+            P=pad.P, A=pad.A, D=pad.D,
+            position=pad.position,
+            channel_hint=hint,
+        )
+    return SliderPacket(
+        emotion=packet.emotion,
+        style=packet.style or "default",
+        macro=packet.macro,
+        hold_seg=packet.hold_seg,
+        ear=packet.ear,
+        pad=pad,
+        schema=packet.schema,
+    ).clamped()
+
+
 def pad_dict_for_json(emotion: str, species: str) -> dict[str, Any]:
     """写入预设 JSON 的 pad 块。"""
     t = EMOTION_PAD.get(emotion)

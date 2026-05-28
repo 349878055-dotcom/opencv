@@ -1,0 +1,19 @@
+{
+  "schema": "diffusion_bundle_v1",
+  "built_at": "2026-05-28T04:00:25.446992+00:00",
+  "customer_id": "C001",
+  "project_id": "P001",
+  "frame_count": 150,
+  "fps": 30,
+  "files": {
+    "03_工程底模.mp4": "/home/jintao/ai_video/ComfyUI/custom_nodes/jintao_node_eye/客户资产库/客户_C001/项目_P001/输出/扩散引擎包/03_工程底模.mp4",
+    "04_Prompt.txt": "/home/jintao/ai_video/ComfyUI/custom_nodes/jintao_node_eye/客户资产库/客户_C001/项目_P001/输出/扩散引擎包/04_Prompt.txt",
+    "wan_positive.txt": "/home/jintao/ai_video/ComfyUI/custom_nodes/jintao_node_eye/客户资产库/客户_C001/项目_P001/输出/扩散引擎包/wan_positive.txt",
+    "wan_negative.txt": "/home/jintao/ai_video/ComfyUI/custom_nodes/jintao_node_eye/客户资产库/客户_C001/项目_P001/输出/扩散引擎包/wan_negative.txt",
+    "start_image.jpg": "/home/jintao/ai_video/ComfyUI/custom_nodes/jintao_node_eye/客户资产库/客户_C001/项目_P001/输出/扩散引擎包/start_image.jpg",
+    "客户资料.json": "/home/jintao/ai_video/ComfyUI/custom_nodes/jintao_node_eye/客户资产库/客户_C001/项目_P001/输出/扩散引擎包/客户资料.json"
+  },
+  "ready_for_diffusion": true,
+  "usage": "整包 scp 到 AutoDL；start_image + 03 MP4 + wan_positive/negative 进 Wan Fun Control",
+  "profile_revision": "dog-pipeline:委屈·幼犬眼"
+}
