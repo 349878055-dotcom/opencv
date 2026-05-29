@@ -1,14 +1,22 @@
 ecursor 预设资产库
 ==================
 
-两大分类 + 底膜包
------------------
+两大分类 + 底膜包 + 情绪坐标
+--------------------------
 
-① 情绪包/           ← 基本情绪滑杆 + PAD 气质（macro + hold_seg + pad）
+① 情绪包/           ← E(t) 滑杆（macro + hold_seg）；共用大类如 委屈/ 含三变体
 │
-├── human/           ← 16种（施压·凝视、可怜·委屈、魅惑·勾人…）
-├── cat/             ← 12种（警觉瞪视、狩猎锁定、愤怒嘶哈…含 ear + pad）
-└── dog/             ← 10种（警觉·竖耳、委屈·幼犬眼…含 ear + pad）
+├── human/           ← 15 种单情绪（委屈 → 见 情绪包/委屈/）
+├── cat/             ← 12 种单情绪
+├── dog/             ← 10 种单情绪
+└── 委屈/            ← 跨物种共用：变体1/2/3.json（仅 macro/hold）
+
+
+①b 情绪坐标/        ← PAD (P,A,D) 真源 · 按 species 分子目录
+│
+├── human/           ← 16 文件：15 单情绪 + 委屈.json（大类一套 PAD）
+├── cat/             ← 13 文件：12 单情绪 + 委屈.json
+└── dog/             ← 11 文件：10 单情绪 + 委屈.json（委屈已定稿 v3.2）
 
 
 ② 风格包/           ← 风格偏移（base_offset + scale_factor）
@@ -46,7 +54,12 @@ ecursor 预设资产库
 
 编辑指南
 --------
-改预设数值：   情绪包/human/可怜·委屈.json → 改 macro/hold_seg/pad
+改 E(t) 滑杆：   情绪包/… 或 情绪包/委屈/变体N.json → macro/hold_seg
+改 PAD 气质：   情绪坐标/{species}/{情绪或大类}.json → pad 块
+
+审定状态 status（每个 preset json 必含，三选一）
+  修改中 | 脑补 | 定稿
+  当前：委屈 三变体 + 三物种 PAD = 修改中；其余预设 = 脑补
 改风格偏移：   风格包/human/天选者_大祭司/style.json → 改 base_offset/scale_factor
 改物种底膜：   底膜包/{species}/species_default.json → 对齐 species_template.py
 加新风格：     建 风格包/{species}/{风格名}/style.json

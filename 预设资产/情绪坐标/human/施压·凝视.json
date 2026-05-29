@@ -1,0 +1,18 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "human",
+  "category": "施压·凝视",
+  "label": "施压·凝视",
+  "emotion_ids": [
+    "施压·凝视"
+  ],
+  "pad": {
+    "P": -0.2,
+    "A": 0.7,
+    "D": 0.6,
+    "position": "愉悦中性 · 高激活 · 偏支配/压人",
+    "channel_hint": "pupil_x↑ · pupil_y↑ · lid_upper↑ · eyebrow压↓"
+  },
+  "note": "外放、急、猛、平顶钉死、慢收"
+}

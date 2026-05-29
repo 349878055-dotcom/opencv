@@ -20,9 +20,17 @@ from gaze_engine.dog.envelope_compile import DOG_CHANNELS, channels_from_envelop
 from gaze_engine.dog.pad_weights import DOG_BASE_SCALE, DOG_PAD_WEIGHTS
 
 
-def _load_packet(name: str = "委屈·幼犬眼") -> SliderPacket:
-    p = ROOT / "预设资产" / "情绪包" / "dog" / f"{name}.json"
-    return SliderPacket.from_dict(json.loads(p.read_text(encoding="utf-8")))
+def _load_packet(name: str = "委屈/变体3_迟疑试探") -> SliderPacket:
+    from asset_lib import load_emotion_slider_packet
+
+    pkt = load_emotion_slider_packet("dog", name)
+    if pkt is None:
+        # 兼容旧路径
+        legacy = ROOT / "预设资产" / "情绪包" / "dog" / f"{name}.json"
+        if legacy.is_file():
+            return SliderPacket.from_dict(json.loads(legacy.read_text(encoding="utf-8")))
+        raise FileNotFoundError(f"未找到狗预设: {name}")
+    return pkt
 
 
 def verify_s2(pkt: SliderPacket) -> None:

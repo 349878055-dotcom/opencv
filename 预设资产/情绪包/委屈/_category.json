@@ -1,0 +1,40 @@
+{
+  "schema": "emotion-category-v1",
+  "category": "委屈",
+  "label": "委屈",
+  "status": "修改中",
+  "note": "跨物种共用情绪包；PAD 见 预设资产/情绪坐标/{species}/委屈.json",
+  "pad_ref": "情绪坐标/{species}/委屈.json",
+  "ear_by_species": {
+    "dog": {
+      "left": [-0.7, -0.3],
+      "right": [-0.7, -0.3]
+    },
+    "cat": {
+      "left": [-0.6, -0.2],
+      "right": [-0.6, -0.2]
+    }
+  },
+  "variants": [
+    {
+      "id": "变体1_缓慢泄气",
+      "label": "变体1 · 缓慢泄气",
+      "subtitle": "Deflation",
+      "status": "修改中"
+    },
+    {
+      "id": "变体2_隐忍微颤",
+      "label": "变体2 · 隐忍微颤",
+      "subtitle": "Restraint",
+      "status": "修改中",
+      "aliases": ["可怜·委屈", "委屈呜咽", "cat_sad_whimper"]
+    },
+    {
+      "id": "变体3_迟疑试探",
+      "label": "变体3 · 迟疑试探",
+      "subtitle": "Hesitation",
+      "status": "修改中",
+      "aliases": ["委屈·幼犬眼"]
+    }
+  ]
+}

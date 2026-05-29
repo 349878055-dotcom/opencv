@@ -1,0 +1,18 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "cat",
+  "category": "好奇歪头",
+  "label": "好奇歪头",
+  "emotion_ids": [
+    "cat_curious_tilt"
+  ],
+  "pad": {
+    "P": 0.28,
+    "A": 0.42,
+    "D": -0.08,
+    "position": "愉悦中性 · 高激活 · 控制中性",
+    "channel_hint": "eye_gloss↑ · squint↑ · pupil_x↑ · pupil_y↑ · lid_upper↑"
+  },
+  "note": "歪头、竖耳、瞳孔放大"
+}

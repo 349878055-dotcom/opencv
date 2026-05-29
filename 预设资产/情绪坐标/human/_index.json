@@ -1,0 +1,139 @@
+{
+  "schema": "emotion-coord-index-v1",
+  "species": "human",
+  "note": "每文件 = 一个大类/一种情绪的 PAD 定稿；委屈 = 大类三变体共用",
+  "items": [
+    {
+      "file": "委屈.json",
+      "label": "委屈",
+      "category": true,
+      "emotion_ids": "三变体共用",
+      "status": "修改中"
+    },
+    {
+      "file": "冷压·决心.json",
+      "label": "冷压·决心",
+      "emotion_ids": [
+        "冷压·决心"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "哀求·仰望.json",
+      "label": "哀求·仰望",
+      "emotion_ids": [
+        "哀求·仰望"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "威慑·一瞬.json",
+      "label": "威慑·一瞬",
+      "emotion_ids": [
+        "威慑·一瞬"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "媚杀·一眼.json",
+      "label": "媚杀·一眼",
+      "emotion_ids": [
+        "媚杀·一眼"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "崩溃·泄劲.json",
+      "label": "崩溃·泄劲",
+      "emotion_ids": [
+        "崩溃·泄劲"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "怒视·压人.json",
+      "label": "怒视·压人",
+      "emotion_ids": [
+        "怒视·压人"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "惊惧·一怔.json",
+      "label": "惊惧·一怔",
+      "emotion_ids": [
+        "惊惧·一怔"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "打量·玩味.json",
+      "label": "打量·玩味",
+      "emotion_ids": [
+        "打量·玩味"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "施压·凝视.json",
+      "label": "施压·凝视",
+      "emotion_ids": [
+        "施压·凝视"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "空竭·死心.json",
+      "label": "空竭·死心",
+      "emotion_ids": [
+        "空竭·死心"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "纯甜·含情.json",
+      "label": "纯甜·含情",
+      "emotion_ids": [
+        "纯甜·含情"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "若即若离.json",
+      "label": "若即若离",
+      "emotion_ids": [
+        "若即若离"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "要哭未哭.json",
+      "label": "要哭未哭",
+      "emotion_ids": [
+        "要哭未哭"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "鄙夷·冷瞥.json",
+      "label": "鄙夷·冷瞥",
+      "emotion_ids": [
+        "鄙夷·冷瞥"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "魅惑·勾人.json",
+      "label": "魅惑·勾人",
+      "emotion_ids": [
+        "魅惑·勾人"
+      ],
+      "status": "脑补"
+    }
+  ],
+  "status_legend": [
+    "修改中",
+    "脑补",
+    "定稿"
+  ]
+}

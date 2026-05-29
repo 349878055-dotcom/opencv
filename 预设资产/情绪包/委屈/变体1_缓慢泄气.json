@@ -1,0 +1,24 @@
+{
+  "schema": "slider-packet-v1",
+  "status": "修改中",
+  "category": "委屈",
+  "variant": "变体1_缓慢泄气",
+  "emotion": "委屈·变体1·缓慢泄气",
+  "label": "变体1 · 缓慢泄气",
+  "note": "变体1·缓慢泄气：极缓上坡、极低峰、长塌陷（macro 初稿 · 修改中）",
+  "style": "default",
+  "macro": {
+    "push": 10,
+    "power": 12,
+    "speed": 5,
+    "steady": 55,
+    "grip": 50,
+    "outro": 70
+  },
+  "hold_seg": {
+    "shape": "decay",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  }
+}

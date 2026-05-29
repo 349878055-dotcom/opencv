@@ -1,0 +1,18 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "human",
+  "category": "若即若离",
+  "label": "若即若离",
+  "emotion_ids": [
+    "若即若离"
+  ],
+  "pad": {
+    "P": 0.3,
+    "A": 0.1,
+    "D": -0.1,
+    "position": "愉悦中性 · 激活中性 · 控制中性",
+    "channel_hint": "eye_gloss↑ · squint↑ · blink/幅低"
+  },
+  "note": "飘、慢拱、留韵"
+}

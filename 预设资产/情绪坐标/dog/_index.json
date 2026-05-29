@@ -1,0 +1,91 @@
+{
+  "schema": "emotion-coord-index-v1",
+  "species": "dog",
+  "note": "每文件 = 一个大类/一种情绪的 PAD 定稿；委屈 = 大类三变体共用",
+  "items": [
+    {
+      "file": "委屈.json",
+      "label": "委屈",
+      "category": true,
+      "emotion_ids": "三变体共用",
+      "status": "修改中"
+    },
+    {
+      "file": "兴奋·期待.json",
+      "label": "兴奋·期待",
+      "emotion_ids": [
+        "兴奋·期待"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "凶狠·威吓.json",
+      "label": "凶狠·威吓",
+      "emotion_ids": [
+        "凶狠·威吓"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "困倦·犯懒.json",
+      "label": "困倦·犯懒",
+      "emotion_ids": [
+        "困倦·犯懒"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "困惑·歪头.json",
+      "label": "困惑·歪头",
+      "emotion_ids": [
+        "困惑·歪头"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "守护·凝视.json",
+      "label": "守护·凝视",
+      "emotion_ids": [
+        "守护·凝视"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "害怕·退缩.json",
+      "label": "害怕·退缩",
+      "emotion_ids": [
+        "害怕·退缩"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "渴望·仰望.json",
+      "label": "渴望·仰望",
+      "emotion_ids": [
+        "渴望·仰望"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "满足·眯眼.json",
+      "label": "满足·眯眼",
+      "emotion_ids": [
+        "满足·眯眼"
+      ],
+      "status": "脑补"
+    },
+    {
+      "file": "警觉·竖耳.json",
+      "label": "警觉·竖耳",
+      "emotion_ids": [
+        "警觉·竖耳"
+      ],
+      "status": "脑补"
+    }
+  ],
+  "status_legend": [
+    "修改中",
+    "脑补",
+    "定稿"
+  ]
+}

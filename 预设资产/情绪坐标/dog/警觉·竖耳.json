@@ -1,0 +1,18 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "dog",
+  "category": "警觉·竖耳",
+  "label": "警觉·竖耳",
+  "emotion_ids": [
+    "警觉·竖耳"
+  ],
+  "pad": {
+    "P": -0.05,
+    "A": 0.75,
+    "D": 0.35,
+    "position": "愉悦中性 · 高激活 · 偏支配/压人",
+    "channel_hint": "pupil_x↑ · pupil_y↑ · lid_upper↑ · 眉压/耳竖↑"
+  },
+  "note": "警觉警惕：耳朵竖立前倾、瞳孔收缩、眼不眨"
+}

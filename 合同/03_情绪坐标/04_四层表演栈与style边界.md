@@ -368,7 +368,7 @@ print('OK: PAD(情绪) + style(品种) 串联')
 `breed_id` 空或 `default` 时 **跳过 S5**，styled ≈ pulse（仍含 ①②）。门户选贵宾后才叠 ③。
 
 **Q4：改「通用委屈」要不要改贵宾 md？**  
-**不要。** 改 `02_情绪与能量/狗/委屈·幼犬眼.md` + JSON；贵宾 base/scale 不变，styled **自动跟 pulse 变**。
+**不要。** 改 [`02_情绪与能量/委屈.md`](../02_情绪与能量/委屈.md) + JSON；贵宾 base/scale 不变，styled **自动跟 pulse 变**。
 
 **Q5：「5秒气质精品成片」里的气质指哪层？**  
 **整链读感** = ①+②+③+ prior；不是单指 PAD，也不是单指 style。

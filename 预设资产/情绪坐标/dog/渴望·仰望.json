@@ -1,0 +1,18 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "dog",
+  "category": "渴望·仰望",
+  "label": "渴望·仰望",
+  "emotion_ids": [
+    "渴望·仰望"
+  ],
+  "pad": {
+    "P": -0.2,
+    "A": 0.3,
+    "D": -0.5,
+    "position": "愉悦中性 · 激活中性 · 偏顺从/退缩",
+    "channel_hint": "squint↑ · lid_upper↓"
+  },
+  "note": "渴望祈求：耳朵后贴、眼睛上翻看主人、轻颤"
+}

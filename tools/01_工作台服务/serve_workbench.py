@@ -623,16 +623,17 @@ def _resolve_slider_packet(data: dict) -> dict | None:
 @Route.get("/api/portal/presets")
 def portal_presets(self: Handler):
     """返回预设索引（仅 id/label/路径）；数值从 预设资产/ 按需调取，不下发 macro/pad。"""
-    from asset_lib import ASSET_LIB, EMOTION_PACK_DIR
+    from asset_lib import ASSET_LIB, EMOTION_PACK_DIR, load_emotion_categories
 
     style_kind = {"human": "人格风格", "cat": "猫品种", "dog": "狗品种"}
-    result = {"human": {"emotions": [], "styles": [], "emotion_groups": []},
-              "cat": {"emotions": [], "styles": [], "emotion_groups": []},
-              "dog": {"emotions": [], "styles": [], "emotion_groups": []}}
+    result = {"human": {"emotions": [], "styles": [], "emotion_groups": [], "emotion_categories": []},
+              "cat": {"emotions": [], "styles": [], "emotion_groups": [], "emotion_categories": []},
+              "dog": {"emotions": [], "styles": [], "emotion_groups": [], "emotion_categories": []}}
 
     for species in ("human", "cat", "dog"):
         emotions_dir = EMOTION_PACK_DIR / species
         if emotions_dir.is_dir():
+            result[species]["emotion_categories"] = load_emotion_categories(species)
             groups_f = emotions_dir / "_groups.json"
             if groups_f.is_file():
                 try:
@@ -641,19 +642,40 @@ def portal_presets(self: Handler):
                     )
                 except Exception:
                     pass
-            for f in sorted(emotions_dir.iterdir()):
-                if f.suffix == ".json" and not f.name.startswith("_"):
-                    try:
-                        d = json.loads(f.read_text(encoding="utf-8"))
-                        result[species]["emotions"].append({
-                            "id": f.stem,
-                            "label": d.get("label") or f.stem,
-                            "emotion_id": d.get("emotion") or f.stem,
-                            "file": f"预设资产/情绪包/{species}/{f.name}",
-                            "note": d.get("note") or "",
-                        })
-                    except Exception:
-                        pass
+            from asset_lib import _iter_emotion_json_files, _iter_shared_variant_files
+
+            for preset_id, f in _iter_emotion_json_files(emotions_dir):
+                try:
+                    d = json.loads(f.read_text(encoding="utf-8"))
+                    result[species]["emotions"].append({
+                        "id": preset_id,
+                        "label": d.get("label") or d.get("emotion") or f.stem,
+                        "emotion_id": d.get("emotion") or preset_id,
+                        "category": d.get("category") or "",
+                        "variant": d.get("variant") or "",
+                        "aliases": d.get("aliases") or [],
+                        "file": f"预设资产/情绪包/{species}/{f.relative_to(emotions_dir).as_posix()}",
+                        "note": d.get("note") or "",
+                    })
+                except Exception:
+                    pass
+            for preset_id, f in _iter_shared_variant_files():
+                try:
+                    d = json.loads(f.read_text(encoding="utf-8"))
+                    rel = f.relative_to(EMOTION_PACK_DIR).as_posix()
+                    result[species]["emotions"].append({
+                        "id": preset_id,
+                        "label": d.get("label") or d.get("emotion") or f.stem,
+                        "emotion_id": d.get("emotion") or preset_id,
+                        "category": d.get("category") or "",
+                        "variant": d.get("variant") or "",
+                        "aliases": d.get("aliases") or [],
+                        "file": f"预设资产/情绪包/{rel}",
+                        "note": d.get("note") or "",
+                        "shared": True,
+                    })
+                except Exception:
+                    pass
 
     for species in ("human", "cat", "dog"):
         styles_dir = ASSET_LIB / "风格包" / species

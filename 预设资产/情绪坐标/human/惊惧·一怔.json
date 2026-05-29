@@ -1,0 +1,18 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "human",
+  "category": "惊惧·一怔",
+  "label": "惊惧·一怔",
+  "emotion_ids": [
+    "惊惧·一怔"
+  ],
+  "pad": {
+    "P": -0.4,
+    "A": 0.7,
+    "D": -0.3,
+    "position": "偏不悦/压抑 · 高激活 · 控制中性",
+    "channel_hint": "eye_gloss↓ · pupil_x↑ · pupil_y↑ · lid_upper↑"
+  },
+  "note": "急、中力、颤、快收"
+}

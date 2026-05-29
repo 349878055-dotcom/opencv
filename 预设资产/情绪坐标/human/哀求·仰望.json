@@ -1,0 +1,18 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "human",
+  "category": "哀求·仰望",
+  "label": "哀求·仰望",
+  "emotion_ids": [
+    "哀求·仰望"
+  ],
+  "pad": {
+    "P": 0.1,
+    "A": 0.2,
+    "D": -0.6,
+    "position": "愉悦中性 · 激活中性 · 偏顺从/退缩",
+    "channel_hint": "squint↑ · lid_upper↓"
+  },
+  "note": "内收、轻、慢收留韵"
+}

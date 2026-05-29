@@ -1,0 +1,21 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "修改中",
+  "species": "cat",
+  "category": "委屈",
+  "label": "委屈",
+  "emotion_ids": [
+    "委屈·变体2·隐忍微颤",
+    "cat_sad_whimper",
+    "委屈呜咽"
+  ],
+  "pad": {
+    "P": -0.32,
+    "A": 0.28,
+    "D": -0.58,
+    "position": "愉悦中性 · 激活中性 · 偏顺从/退缩",
+    "channel_hint": "eye_gloss↓ · squint↑ · lid_upper↓"
+  },
+  "note": "修改中",
+  "variants_note": "情绪包三变体共用本 PAD；变体 JSON 不含 pad 块"
+}

@@ -17,12 +17,20 @@
     "keys": [
       "cat_startle_fluff",
       "cat_scared_flatten",
-      "cat_sad_whimper"
+      {
+        "category": "委屈",
+        "label": "委屈",
+        "variants": [
+          "变体1_缓慢泄气",
+          "变体2_隐忍微颤",
+          "变体3_迟疑试探"
+        ]
+      }
     ],
     "keys_label": [
       "受惊炸毛",
       "恐惧贴耳",
-      "委屈呜咽"
+      "委屈"
     ]
   },
   {

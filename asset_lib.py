@@ -9,8 +9,11 @@ from typing import Any
 PKG = Path(__file__).resolve().parent
 ASSET_LIB = PKG / "预设资产"
 # ── 预设资产顶层目录（两大分类）──
-EMOTION_PACK_DIR = ASSET_LIB / "情绪包"          # macro + hold_seg + pad（S1 气质真源）
+EMOTION_PACK_DIR = ASSET_LIB / "情绪包"          # macro + hold_seg（S1 E(t) 真源）
+EMOTION_COORD_DIR = ASSET_LIB / "情绪坐标"        # PAD (P,A,D) 真源 · 按 species 分子目录
 EMOTION_PRESETS_DIR = EMOTION_PACK_DIR           # 兼容旧常量名
+# 跨物种共用情绪大类（目录在 情绪包/ 根下，非 {species}/ 内）
+SHARED_EMOTION_CATEGORIES: tuple[str, ...] = ("委屈",)
 HUMAN_PRESETS_DIR = EMOTION_PACK_DIR / "human"   # 人类16情绪
 CAT_PRESETS_DIR = EMOTION_PACK_DIR / "cat"       # 猫12情绪
 DOG_PRESETS_DIR = EMOTION_PACK_DIR / "dog"       # 狗10情绪
@@ -272,6 +275,186 @@ SPECIES_PRESET_DIRS: dict[str, Path] = {
 }
 
 
+def _preset_id_from_path(dir_path: Path, file_path: Path) -> str:
+    """物种目录内 preset id：子目录用 `委屈/变体3_迟疑试探`。"""
+    rel = file_path.relative_to(dir_path)
+    if rel.parent == Path("."):
+        return file_path.stem
+    return str(rel.with_suffix("")).replace("\\", "/")
+
+
+def _shared_category_dir(category: str) -> Path:
+    return EMOTION_PACK_DIR / category
+
+
+def _shared_variant_path(category: str, variant_id: str) -> Path:
+    return _shared_category_dir(category) / f"{variant_id}.json"
+
+
+def _parse_category_preset_id(preset_id: str) -> tuple[str, str] | None:
+    """`委屈/变体3_迟疑试探` → (category, variant_id)。"""
+    if "/" not in preset_id:
+        return None
+    category, variant_id = preset_id.split("/", 1)
+    if category not in SHARED_EMOTION_CATEGORIES or not variant_id:
+        return None
+    return category, variant_id
+
+
+def _iter_emotion_json_files(dir_path: Path):
+    """遍历物种情绪包（含子目录；跳过 _ 开头元数据；不含共用大类目录）。"""
+    if not dir_path.is_dir():
+        return
+    for child in sorted(dir_path.rglob("*.json")):
+        if child.name.startswith("_"):
+            continue
+        rel_parts = child.relative_to(dir_path).parts
+        if rel_parts and rel_parts[0] in SHARED_EMOTION_CATEGORIES:
+            continue
+        yield _preset_id_from_path(dir_path, child), child
+
+
+def _iter_shared_variant_files():
+    """遍历共用大类下的变体 JSON（扁平，不含 species 子目录）。"""
+    for category in SHARED_EMOTION_CATEGORIES:
+        cat_dir = _shared_category_dir(category)
+        if not cat_dir.is_dir():
+            continue
+        for child in sorted(cat_dir.glob("*.json")):
+            if child.name.startswith("_"):
+                continue
+            preset_id = f"{category}/{child.stem}"
+            yield preset_id, child
+
+
+def _load_category_meta(category: str, species: str = "") -> dict[str, Any] | None:
+    """读取共用大类 `_category.json`（位于 情绪包/{category}/）。"""
+    shared = _shared_category_dir(category) / "_category.json"
+    if not shared.is_file():
+        return None
+    try:
+        return json.loads(shared.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def _category_pad_for_species(meta: dict[str, Any], species: str) -> dict[str, Any] | None:
+    category = str(meta.get("category") or meta.get("label") or "").strip()
+    if category:
+        coord = load_emotion_coord_pad(species, category)
+        if coord:
+            return coord
+    by_sp = meta.get("pad_by_species")
+    if isinstance(by_sp, dict) and species in by_sp:
+        return by_sp[species]
+    pad = meta.get("pad")
+    if isinstance(pad, dict):
+        return pad
+    return None
+
+
+def load_emotion_coord_pad(species: str, key: str) -> dict[str, Any] | None:
+    """从 预设资产/情绪坐标/{species}/{key}.json 读取 pad 块。"""
+    sp = (species or "human").strip().lower()
+    name = (key or "").strip()
+    if not name:
+        return None
+    path = EMOTION_COORD_DIR / sp / f"{name}.json"
+    if not path.is_file():
+        return None
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    pad = raw.get("pad")
+    return pad if isinstance(pad, dict) else None
+
+
+def _resolve_coord_key(raw: dict[str, Any], preset_stem: str = "") -> str:
+    category = str(raw.get("category") or "").strip()
+    if category:
+        return category
+    for candidate in (raw.get("label"), raw.get("emotion"), preset_stem):
+        c = str(candidate or "").strip()
+        if c:
+            return c
+    return preset_stem
+
+
+def _merge_category_pad(raw: dict[str, Any], species: str, dir_path: Path | None = None) -> dict[str, Any]:
+    """变体/预设 JSON 无 pad 时，从 情绪坐标/ 或 _category.json 继承。"""
+    if raw.get("pad"):
+        return raw
+    key = _resolve_coord_key(raw)
+    coord_pad = load_emotion_coord_pad(species, key)
+    if coord_pad:
+        merged = dict(raw)
+        merged["pad"] = coord_pad
+        return merged
+    category = str(raw.get("category") or "").strip()
+    if not category:
+        return raw
+    meta = _load_category_meta(category, species)
+    if not meta:
+        return raw
+    pad = _category_pad_for_species(meta, species)
+    if not pad:
+        return raw
+    merged = dict(raw)
+    merged["pad"] = pad
+    return merged
+
+
+def load_emotion_categories(species: str) -> list[dict[str, Any]]:
+    """读取物种可用的共用情绪大类（三变体列表 + 该 species 的 PAD）。"""
+    out: list[dict[str, Any]] = []
+    for category in SHARED_EMOTION_CATEGORIES:
+        meta = _load_category_meta(category, species)
+        if not meta or meta.get("schema") != "emotion-category-v1":
+            continue
+        variants: list[dict[str, Any]] = []
+        for v in meta.get("variants") or []:
+            vid = str(v.get("id") or "")
+            if not vid:
+                continue
+            preset_id = f"{category}/{vid}"
+            variants.append({
+                "id": preset_id,
+                "variant": vid,
+                "label": v.get("label") or vid,
+                "subtitle": v.get("subtitle") or "",
+                "aliases": v.get("aliases") or [],
+            })
+        if not variants:
+            continue
+        out.append({
+            "id": category,
+            "label": meta.get("label") or category,
+            "note": meta.get("note") or "",
+            "pad": _category_pad_for_species(meta, species),
+            "variants": variants,
+        })
+    return out
+
+
+def _merge_category_extras(raw: dict[str, Any], species: str) -> dict[str, Any]:
+    """从 _category.json 注入 pad / ear（变体 JSON 不含这些块）。"""
+    merged = _merge_category_pad(raw, species)
+    if merged.get("ear"):
+        return merged
+    category = str(raw.get("category") or "").strip()
+    if not category:
+        return merged
+    meta = _load_category_meta(category, species)
+    if not meta:
+        return merged
+    ear_by = meta.get("ear_by_species")
+    if isinstance(ear_by, dict) and species in ear_by:
+        merged = dict(merged)
+        merged["ear"] = ear_by[species]
+    return merged
+
+
 def _load_groups_neutral(dir_path: Path) -> tuple[list | None, dict | None]:
     """读取目录下的 _groups.json 和 _neutral.json。"""
     groups_file = dir_path / "_groups.json"
@@ -301,17 +484,47 @@ def load_species_presets(species: str) -> dict[str, dict[str, Any]] | None:
     if not dir_path or not dir_path.is_dir():
         return None
     out: dict[str, dict[str, Any]] = {}
-    for child in sorted(dir_path.iterdir()):
-        if child.suffix != ".json" or child.name.startswith("_"):
-            continue
+    for preset_id, child in _iter_emotion_json_files(dir_path):
         try:
             data = json.loads(child.read_text(encoding="utf-8"))
-            name = data.get("emotion", child.stem)
+            data = _merge_category_extras(data, species)
+            name = data.get("emotion", preset_id)
             entry: dict[str, Any] = {
                 "note": data.get("note", ""),
                 "macro": data["macro"],
                 "hold_seg": data["hold_seg"],
+                "preset_id": preset_id,
             }
+            if data.get("category"):
+                entry["category"] = data["category"]
+            if data.get("variant"):
+                entry["variant"] = data["variant"]
+            if "ear" in data:
+                entry["ear"] = data["ear"]
+            if "pad" in data:
+                entry["pad"] = data["pad"]
+            out[name] = entry
+        except (json.JSONDecodeError, KeyError):
+            continue
+    for preset_id, child in _iter_shared_variant_files():
+        try:
+            data = json.loads(child.read_text(encoding="utf-8"))
+            data = _merge_category_extras(data, species)
+            if not data.get("species"):
+                data["species"] = species
+            name = data.get("emotion", preset_id)
+            if name in out:
+                continue
+            entry = {
+                "note": data.get("note", ""),
+                "macro": data["macro"],
+                "hold_seg": data["hold_seg"],
+                "preset_id": preset_id,
+            }
+            if data.get("category"):
+                entry["category"] = data["category"]
+            if data.get("variant"):
+                entry["variant"] = data["variant"]
             if "ear" in data:
                 entry["ear"] = data["ear"]
             if "pad" in data:
@@ -323,21 +536,52 @@ def load_species_presets(species: str) -> dict[str, dict[str, Any]] | None:
 
 
 def emotion_preset_path(species: str, preset_id: str) -> Path | None:
-    """定位情绪包 JSON：优先 `{preset_id}.json`，再按 emotion/label 匹配。"""
+    """定位情绪包 JSON：共用大类 `委屈/变体N` 或物种目录内扁平 preset。"""
+    parsed = _parse_category_preset_id(preset_id)
+    if parsed:
+        category, variant_id = parsed
+        shared = _shared_variant_path(category, variant_id)
+        if shared.is_file():
+            return shared
+    for category in SHARED_EMOTION_CATEGORIES:
+        meta = _load_category_meta(category, species)
+        if not meta:
+            continue
+        for v in meta.get("variants") or []:
+            aliases = v.get("aliases") or []
+            vid = str(v.get("id") or "")
+            if preset_id in aliases or preset_id == f"{category}/{vid}":
+                p = _shared_variant_path(category, vid)
+                if p.is_file():
+                    return p
     dir_path = SPECIES_PRESET_DIRS.get(species)
     if not dir_path or not dir_path.is_dir():
         return None
     direct = dir_path / f"{preset_id}.json"
     if direct.is_file():
         return direct
-    for child in sorted(dir_path.iterdir()):
-        if child.suffix != ".json" or child.name.startswith("_"):
-            continue
+    nested = dir_path / preset_id.replace("/", os.sep)
+    if nested.suffix != ".json":
+        nested = nested.with_suffix(".json")
+    if nested.is_file():
+        return nested
+    for preset_key, child in _iter_emotion_json_files(dir_path):
         try:
             raw = json.loads(child.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             continue
-        if raw.get("emotion") == preset_id or raw.get("label") == preset_id or child.stem == preset_id:
+        aliases = raw.get("aliases") or []
+        if (
+            raw.get("emotion") == preset_id
+            or raw.get("label") == preset_id
+            or preset_key == preset_id
+            or child.stem == preset_id
+            or preset_id in aliases
+        ):
+            return child
+        cat = str(raw.get("category") or "")
+        var = str(raw.get("variant") or "")
+        if cat and var and preset_id == f"{cat}/{var}":
             return child
     return None
 
@@ -348,9 +592,13 @@ def load_emotion_preset_raw(species: str, preset_id: str) -> dict[str, Any] | No
     if not path:
         return None
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        raw = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return None
+    raw = _merge_category_extras(raw, species)
+    if not raw.get("species"):
+        raw["species"] = species
+    return raw
 
 
 def load_emotion_slider_packet(species: str, preset_id: str):

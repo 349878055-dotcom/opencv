@@ -931,7 +931,7 @@ function defaultStyleForSpecies(species, styles){
   return '';
 }
 
-function emotionButtonsHtml(emotions, groups, activeId){
+def emotionButtonsHtml(emotions, groups, activeId){
   const emotionMap = Object.fromEntries((emotions || []).map(e => [e.id, e]));
   const used = new Set();
   let html = '';
@@ -941,16 +941,32 @@ function emotionButtonsHtml(emotions, groups, activeId){
 
   if(groups && groups.length){
     groups.forEach(g => {
-      const row = [];
-      (g.keys || []).forEach((_, idx) => {
+      let hasContent = false;
+      let groupHtml = `<div class="preset-group-label">${esc(g.label)}</div>`;
+      (g.keys || []).forEach((keyItem, idx) => {
+        if(keyItem && typeof keyItem === 'object' && keyItem.category){
+          const catId = keyItem.category;
+          const catLabel = keyItem.label || catId;
+          const variantIds = (keyItem.variants || []).map(v => `${catId}/${v}`);
+          const rows = variantIds.map(id => emotionMap[id]).filter(Boolean);
+          if(!rows.length) return;
+          hasContent = true;
+          rows.forEach(e => used.add(e.id));
+          const catActive = rows.some(e => e.id === activeId);
+          groupHtml += `<div class="preset-category${catActive ? ' active' : ''}">`;
+          groupHtml += `<div class="preset-category-label">${esc(catLabel)}</div>`;
+          groupHtml += `<div class="preset-category-variants">`;
+          groupHtml += rows.map(e => btn(e, 'preset-btn-variant')).join('');
+          groupHtml += `</div></div>`;
+          return;
+        }
         const id = resolveGroupEmotionId(g, idx, emotionMap);
         if(!id || used.has(id)) return;
         used.add(id);
-        row.push(emotionMap[id]);
+        hasContent = true;
+        groupHtml += btn(emotionMap[id], '');
       });
-      if(!row.length) return;
-      html += `<div class="preset-group-label">${esc(g.label)}</div>`;
-      html += row.map(e => btn(e, '')).join('');
+      if(hasContent) html += groupHtml;
     });
   }
 
@@ -1413,7 +1429,7 @@ async function renderMembraneMp4(){
     const d = await apiPost('/api/portal/render-membrane', {
       customer_id: S.customerId,
       project_id: S.currentProject.project_id,
-      preset: S.activeEmotion || '委屈·幼犬眼',
+      preset: S.activeEmotion || '委屈/变体3_迟疑试探',
     });
     if(!d.ok) throw new Error(d.error||'渲染失败');
     S.videoUrl = d.video_url + '?t=' + Date.now();

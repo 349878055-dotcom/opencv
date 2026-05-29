@@ -1,0 +1,18 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "human",
+  "category": "崩溃·泄劲",
+  "label": "崩溃·泄劲",
+  "emotion_ids": [
+    "崩溃·泄劲"
+  ],
+  "pad": {
+    "P": -0.6,
+    "A": 0.5,
+    "D": -0.7,
+    "position": "偏不悦/压抑 · 高激活 · 偏顺从/退缩",
+    "channel_hint": "eye_gloss↓ · pupil_x↑ · pupil_y↑ · lid_upper↑ · squint↑"
+  },
+  "note": "内收、平顶下泄、快断"
+}

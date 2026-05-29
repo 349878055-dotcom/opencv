@@ -1,0 +1,18 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "cat",
+  "category": "亲昵眯眼",
+  "label": "亲昵眯眼",
+  "emotion_ids": [
+    "cat_cuddle_squint"
+  ],
+  "pad": {
+    "P": 0.72,
+    "A": 0.18,
+    "D": -0.18,
+    "position": "偏愉悦 · 激活中性 · 控制中性",
+    "channel_hint": "eye_gloss↑ · squint↑ · pupil_scale↑"
+  },
+  "note": "慢眨眼、半眯眼、耳朵放松"
+}

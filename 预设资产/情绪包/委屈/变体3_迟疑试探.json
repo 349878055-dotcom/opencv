@@ -1,0 +1,27 @@
+{
+  "schema": "slider-packet-v1",
+  "status": "修改中",
+  "category": "委屈",
+  "variant": "变体3_迟疑试探",
+  "emotion": "委屈·变体3·迟疑试探",
+  "label": "变体3 · 迟疑试探",
+  "aliases": [
+    "委屈·幼犬眼"
+  ],
+  "note": "变体3·迟疑试探：物理滞后、不情愿回头（macro v3.1 flat · 修改中）",
+  "style": "default",
+  "macro": {
+    "push": 15,
+    "power": 15,
+    "speed": 8,
+    "steady": 62,
+    "grip": 68,
+    "outro": 55
+  },
+  "hold_seg": {
+    "shape": "flat",
+    "pulse_rate": 0,
+    "pulse_depth": 0,
+    "swell": 0
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "cat",
+  "category": "玩耍扑击",
+  "label": "玩耍扑击",
+  "emotion_ids": [
+    "cat_play_pounce"
+  ],
+  "pad": {
+    "P": 0.62,
+    "A": 0.72,
+    "D": 0.12,
+    "position": "偏愉悦 · 高激活 · 控制中性",
+    "channel_hint": "eye_gloss↑ · squint↑ · pupil_x↑ · pupil_y↑ · lid_upper↑"
+  },
+  "note": "瞳孔放大、耳朵前竖、快速扫视"
+}

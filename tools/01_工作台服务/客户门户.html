@@ -94,6 +94,12 @@ body { background:var(--portal-bg); font-family:-apple-system,BlinkMacSystemFont
 .preset-scroll.tall { max-height:none; }
 .preset-group-label { width:100%; font-size:0.72rem; color:var(--text-muted); margin:10px 0 4px; font-weight:600; }
 .preset-group-label:first-child { margin-top:0; }
+.preset-category { width:100%; margin:4px 0 8px; padding:8px 10px; border:1px dashed var(--border); border-radius:8px; background:#fafbfd; }
+.preset-category.active { border-color:var(--primary); background:var(--primary-light); }
+.preset-category-label { font-size:0.74rem; font-weight:700; color:var(--text); margin-bottom:6px; }
+.preset-category-variants { display:flex; flex-wrap:wrap; gap:6px; }
+.preset-btn.preset-btn-variant { font-size:0.72rem; background:#fff; }
+.preset-category.active .preset-btn.preset-btn-variant.active { background:var(--primary); color:white; }
 .preset-btn { padding:5px 10px; border:1px solid var(--border); border-radius:6px; background:white; cursor:pointer; font-size:0.78rem; }
 .preset-btn.active { background:var(--primary); color:white; border-color:var(--primary); }
 .preset-btn.style-btn.active { background:#c2410c; border-color:#c2410c; color:white; }

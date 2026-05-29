@@ -1,0 +1,29 @@
+{
+  "schema": "slider-packet-v1",
+  "status": "修改中",
+  "category": "委屈",
+  "variant": "变体2_隐忍微颤",
+  "emotion": "委屈·变体2·隐忍微颤",
+  "label": "变体2 · 隐忍微颤",
+  "aliases": [
+    "可怜·委屈",
+    "委屈呜咽",
+    "cat_sad_whimper"
+  ],
+  "note": "变体2·隐忍微颤：低峰 + 长平顶 + hold.tremble（修改中）",
+  "style": "default",
+  "macro": {
+    "push": 15,
+    "power": 26,
+    "speed": 22,
+    "steady": 62,
+    "grip": 68,
+    "outro": 22
+  },
+  "hold_seg": {
+    "shape": "tremble",
+    "pulse_rate": 18,
+    "pulse_depth": 22,
+    "swell": 8
+  }
+}

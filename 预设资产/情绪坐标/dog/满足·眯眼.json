@@ -1,0 +1,18 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "dog",
+  "category": "满足·眯眼",
+  "label": "满足·眯眼",
+  "emotion_ids": [
+    "满足·眯眼"
+  ],
+  "pad": {
+    "P": 0.65,
+    "A": 0.15,
+    "D": 0.05,
+    "position": "偏愉悦 · 激活中性 · 控制中性",
+    "channel_hint": "eye_gloss↑ · squint↑ · blink/幅低"
+  },
+  "note": "满足惬意：耳朵放松、眯眼慢眨"
+}

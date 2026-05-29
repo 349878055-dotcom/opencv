@@ -1,0 +1,18 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "human",
+  "category": "空竭·死心",
+  "label": "空竭·死心",
+  "emotion_ids": [
+    "空竭·死心"
+  ],
+  "pad": {
+    "P": -0.7,
+    "A": 0.1,
+    "D": -0.2,
+    "position": "偏不悦/压抑 · 激活中性 · 控制中性",
+    "channel_hint": "eye_gloss↓ · blink/幅低"
+  },
+  "note": "轻、内收、下泄、慢散"
+}
