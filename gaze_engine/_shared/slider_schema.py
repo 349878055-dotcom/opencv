@@ -130,6 +130,8 @@ class SliderPacket:
     ear: EarParams | None = None
     pad: PadParams | None = None
     schema: str = SCHEMA_ID
+    preset_id: str = ""
+    display_alias: str = ""
 
     def clamped(self) -> SliderPacket:
         return SliderPacket(
@@ -140,6 +142,8 @@ class SliderPacket:
             ear=self.ear,
             pad=self.pad.clamped() if self.pad is not None else None,
             schema=SCHEMA_ID,
+            preset_id=self.preset_id,
+            display_alias=self.display_alias,
         )
 
     def to_json(self) -> str:
@@ -157,6 +161,10 @@ class SliderPacket:
             d["ear"] = self.ear.to_dict()
         if self.pad is not None:
             d["pad"] = self.pad.to_dict()
+        if self.preset_id:
+            d["preset_id"] = self.preset_id
+        if self.display_alias:
+            d["display_alias"] = self.display_alias
         return d
 
     @classmethod
@@ -181,6 +189,8 @@ class SliderPacket:
             ),
             ear=ear,
             pad=pad,
+            preset_id=str(d.get("preset_id") or ""),
+            display_alias=str(d.get("display_alias") or ""),
         ).clamped()
 
 # 情绪默认点位（风格用 delta 叠在上面）

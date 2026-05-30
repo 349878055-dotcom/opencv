@@ -1428,8 +1428,9 @@ def portal_save_step(self: Handler, body: bytes):
             json.dumps(packet, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     baked = data.get("baked")
     if baked:
-        (out / "02_烘焙_真人律.json").write_text(
-            json.dumps(baked, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        from asset_lib import write_baked_json
+        sp = (data.get("species") or baked.get("species") or "human").strip().lower()
+        write_baked_json(out, baked, species=sp)
     metronome = data.get("metronome", "")
     if metronome:
         (out / "05_扩散节拍表.txt").write_text(metronome, encoding="utf-8")

@@ -200,10 +200,16 @@ def _make_dog_baked(
         tracks[key] = {"keyframes": kfs}
 
     baked = dict(stub)
+    pid = (getattr(packet, "preset_id", "") or "").strip() or packet.emotion
+    rev = f"dog:{pid}"
+    if breed_id:
+        rev += f"+breed={breed_id}"
     baked.update({
         "schema_version": "0.3-baked-dog",
         "_baked_dense": True,
-        "revision": f"dog-pipeline:{packet.emotion}",
+        "revision": rev,
+        "preset_id": pid,
+        "display_alias": getattr(packet, "display_alias", "") or "",
         "species": "dog",
         "channel_tracks": tracks,
         "energy_phases": phases,

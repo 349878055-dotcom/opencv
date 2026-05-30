@@ -818,10 +818,18 @@ async function loadProjectState(projectId){
     const ms = S.membraneStatus;
     const badBaked = ms && (ms.action === 'regenerate' || ms.baked_pipeline === 'human_legacy');
 
+    function applyActivePresetFromPacket(pkt, baked){
+      if(!pkt && !baked) return;
+      const pid = baked?.preset_id || pkt?.preset_id;
+      if(pid){ S.activeEmotion = pid; return; }
+      if(pkt?.emotion && String(pkt.emotion).includes('/')) S.activeEmotion = pkt.emotion;
+    }
+
     if(badBaked){
       setStatus(D.status3, ms.warning || '⚠ 请第③步重新「生成表情」以使用狗/猫底膜', true);
       S.lastBaked = null;
       S.lastPacket = d.pipeline?.packet || null;
+      applyActivePresetFromPacket(S.lastPacket, d.pipeline?.baked);
     } else if(d.species_mismatch){
       setStatus(D.status3, '⚠ 已保存的烘焙是「'+d.baked_species+'」，与项目「'+d.species+'」不一致，请重新生成', true);
       S.lastBaked = null;
@@ -829,16 +837,17 @@ async function loadProjectState(projectId){
     } else if(d.pipeline){
       if(d.pipeline.packet){
         S.lastPacket = d.pipeline.packet;
-        if(S.lastPacket.emotion) S.activeEmotion = S.lastPacket.emotion;
+        applyActivePresetFromPacket(S.lastPacket, d.pipeline.baked);
       }
       if(d.pipeline.baked){
         S.lastBaked = d.pipeline.baked;
-        if(S.lastBaked.mood || S.lastBaked.gaze_emotion_id) D.btnStep3Next.disabled = false;
+        applyActivePresetFromPacket(S.lastPacket, S.lastBaked);
+        if(S.lastBaked.mood || S.lastBaked.gaze_emotion_id || S.lastBaked.preset_id) D.btnStep3Next.disabled = false;
       }
     }
     if(d.slider_current?.packet){
       S.lastPacket = d.slider_current.packet;
-      if(S.lastPacket.emotion) S.activeEmotion = S.lastPacket.emotion;
+      applyActivePresetFromPacket(S.lastPacket, S.lastBaked);
     }
 
     if(d.deliverables){

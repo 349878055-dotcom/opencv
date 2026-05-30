@@ -1,9 +1,11 @@
 {
   "schema": "slider-packet-v1",
   "status": "修改中",
+  "preset_id": "委屈/变体3_迟疑试探",
   "category": "委屈",
   "variant": "变体3_迟疑试探",
   "emotion": "委屈·变体3·迟疑试探",
+  "display_alias": "委屈·幼犬眼",
   "label": "变体3 · 迟疑试探",
   "aliases": [
     "委屈·幼犬眼"

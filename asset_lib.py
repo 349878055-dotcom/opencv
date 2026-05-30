@@ -612,6 +612,12 @@ def load_emotion_slider_packet(species: str, preset_id: str):
     pkt = SliderPacket.from_dict(raw)
     if not pkt.emotion or pkt.emotion == "s01_pressure":
         pkt.emotion = str(raw.get("emotion") or preset_id)
+    pid = str(raw.get("preset_id") or preset_id).strip()
+    if not pid and raw.get("category") and raw.get("variant"):
+        pid = f"{raw['category']}/{raw['variant']}"
+    pkt.preset_id = pid
+    aliases = raw.get("aliases") or []
+    pkt.display_alias = str(raw.get("display_alias") or (aliases[0] if aliases else ""))
     return ensure_pad_on_packet(pkt, species)
 
 
