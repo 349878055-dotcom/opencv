@@ -44,8 +44,8 @@ const D = {
   energyPulseWrap: $('energy-pulse-wrap'), energyPulseCurve: $('energy-pulse-curve'),
   energyPulseInfo: $('energy-pulse-info'), energyPulseMacro: $('energy-pulse-macro'),
   energyPulseEmotion: $('energy-pulse-emotion'),
-  nlInput: $('nl-input'), btnStep2Prev: $('btn-step2-prev'), btnStep2Next: $('btn-step2-next'),
-  btnPomotRun: $('btn-pomot-run'), btnPomotRound2: $('btn-pomot-round2'), pomotSummary: $('pomot-summary'),
+  btnStep2Prev: $('btn-step2-prev'), btnStep2Next: $('btn-step2-next'),
+  btnPomotRun: $('btn-pomot-run'), pomotSummary: $('pomot-summary'),
   btnStep3Prev: $('btn-step3-prev'), btnStep3Next: $('btn-step3-next'), status3: $('status-3'), stepSaves3: $('step-saves-3'),
   btnStep4Prev: $('btn-step4-prev'), btnRenderVideo: $('btn-render-video'), btnStep4Next: $('btn-step4-next'),
   videoWrap: $('video-wrap'), previewVideo: $('preview-video'), status4: $('status-4'),
@@ -91,8 +91,7 @@ function archivePayload(extra={}){
     emotion: S.activeEmotion || S.lastRoute?.preset_name || '',
     active_emotion: S.activeEmotion,
     active_style: S.activeStyle,
-    nl: D.nlInput?.value?.trim() || '',
-    action: (S.lastSplit && S.lastSplit.action) || D.nlInput?.value?.trim() || '',
+    action: (S.lastSplit && S.lastSplit.action) || '',
     photo_name: S.photoName,
     // 不传 packet：01_滑杆包由服务端从 baked.slider_packet 或 预设资产/情绪包 解析
     baked: S.lastBaked,
@@ -463,7 +462,7 @@ function updateSpeciesBanner(ms){
     D.speciesBannerMsg.textContent = '✓ 底膜类型正确，可以预览和导出';
   } else if(ms.status === 'pending' || ms.baked_pipeline === 'none'){
     D.speciesBanner.classList.add('info');
-    D.speciesBannerMsg.textContent = '标定完成后：① 下方点「渲染 MP4」看狗底膜；或 ② 到第③步描述表情再生成';
+    D.speciesBannerMsg.textContent = '标定完成后：① 下方点「渲染 MP4」看狗底膜；或 ② 到第②步选情绪 → 第③步生成';
   } else if(ms.warning){
     D.speciesBanner.classList.add('warn');
     D.speciesBannerMsg.textContent = ms.warning + (ms.action==='regenerate' ? ' → 请到第③步点「生成表情」' : ms.action==='render' ? ' → 请到第④步点「渲染」' : '');
@@ -727,8 +726,11 @@ function formatFileSize(n){
 }
 
 function mp4MatchesBaked(del, baked){
-  if(!del?.video_exists || !baked) return false;
+  if(!del?.video_exists) return false;
   const meta = del.membrane_meta || {};
+  if(!baked){
+    return Boolean(meta.species && meta.baked_revision);
+  }
   const rev = baked.revision || baked.gaze_emotion_id || baked.mood || '';
   return !rev || !meta.baked_revision || meta.baked_revision === rev;
 }
@@ -829,21 +831,14 @@ async function loadProjectState(projectId){
       setStatus(D.status3, ms.warning || '⚠ 请第③步重新「生成表情」以使用狗/猫底膜', true);
       S.lastBaked = null;
       S.lastPacket = d.pipeline?.packet || null;
-      applyActivePresetFromPacket(S.lastPacket, d.pipeline?.baked);
-    } else if(d.species_mismatch){
-      setStatus(D.status3, '⚠ 已保存的烘焙是「'+d.baked_species+'」，与项目「'+d.species+'」不一致，请重新生成', true);
-      S.lastBaked = null;
-      S.lastPacket = null;
-    } else if(d.pipeline){
-      if(d.pipeline.packet){
-        S.lastPacket = d.pipeline.packet;
-        applyActivePresetFromPacket(S.lastPacket, d.pipeline.baked);
-      }
-      if(d.pipeline.baked){
-        S.lastBaked = d.pipeline.baked;
-        applyActivePresetFromPacket(S.lastPacket, S.lastBaked);
-        if(S.lastBaked.mood || S.lastBaked.gaze_emotion_id || S.lastBaked.preset_id) D.btnStep3Next.disabled = false;
-      }
+      applyActivePresetFromPacket(S.lastPacket, null);
+    } else if(d.pipeline?.packet){
+      S.lastPacket = d.pipeline.packet;
+      applyActivePresetFromPacket(S.lastPacket, null);
+    }
+    // 02 烘焙不落盘：不从磁盘恢复；须第③步重新生成（内存）或第④步即时编译
+    if(!S.lastBaked && d.deliverables?.video_exists){
+      setStatus(D.status4, 'ℹ 已有 MP4；若换情绪请第③步重新生成后再渲染', false);
     }
     if(d.slider_current?.packet){
       S.lastPacket = d.slider_current.packet;
@@ -851,7 +846,10 @@ async function loadProjectState(projectId){
     }
 
     if(d.deliverables){
-      if(d.deliverables.video_exists && !badBaked && mp4MatchesBaked(d.deliverables, S.lastBaked)){
+      const canShowVideo = d.deliverables.video_exists && (
+        !S.lastBaked ? mp4MatchesBaked(d.deliverables, null) : mp4MatchesBaked(d.deliverables, S.lastBaked)
+      );
+      if(canShowVideo && !badBaked){
         S.videoUrl = d.deliverables.video_url;
         D.previewVideo.src = S.videoUrl + '?t=' + Date.now();
         show(D.videoWrap);
@@ -940,7 +938,7 @@ function defaultStyleForSpecies(species, styles){
   return '';
 }
 
-def emotionButtonsHtml(emotions, groups, activeId){
+function emotionButtonsHtml(emotions, groups, activeId){
   const emotionMap = Object.fromEntries((emotions || []).map(e => [e.id, e]));
   const used = new Set();
   let html = '';
@@ -1126,9 +1124,8 @@ function renderPresets(species){
   D.presetContainer.innerHTML = emotionButtonsHtml(data.emotions, data.emotion_groups, S.activeEmotion);
   D.styleContainer.innerHTML = styleButtonsHtml(data.styles, S.activeStyle);
 
-  bindPresetButtons(D.presetContainer, (id, label) => {
+  bindPresetButtons(D.presetContainer, (id) => {
     S.activeEmotion = id;
-    if(!D.nlInput.value.trim()) D.nlInput.value = label;
     paintEnergyPulseFromPreset(id);
   });
   syncEnergyPulseFromState();
@@ -1442,7 +1439,7 @@ async function renderMembraneMp4(){
     });
     if(!d.ok) throw new Error(d.error||'渲染失败');
     S.videoUrl = d.video_url + '?t=' + Date.now();
-    S.lastBaked = null;
+    S.lastBaked = d.baked_json || S.lastBaked;
     S.membraneInfo = {
       species: d.species || 'dog',
       membrane_type: d.membrane_type || '狗工程底膜',
@@ -1453,7 +1450,7 @@ async function renderMembraneMp4(){
     show(D.videoWrap);
     D.btnStep4Next.disabled = false;
     addSavedStep('④ 狗底膜 MP4（'+ (d.membrane_type||'狗工程底膜') +'）');
-    setStatus(D.statusMembrane, '✅ '+ (d.membrane_type||'狗工程底膜') +' 已保存，可继续第②步描述表情或第⑤步导出');
+    setStatus(D.statusMembrane, '✅ '+ (d.membrane_type||'狗工程底膜') +' 已保存，可继续第②步选情绪或第⑤步导出');
     await loadProjectState(S.currentProject.project_id);
   } catch(e){
     setStatus(D.statusMembrane, '❌ '+e.message, true);
@@ -1473,37 +1470,22 @@ function fileToBase64(file){
   });
 }
 
-/* ── Step 3: Pomot ── */
-async function runPomot(isRound2){
-  const nl = D.nlInput.value.trim();
-  if(!nl){ alert('请输入描述'); return; }
-  const btn = isRound2 ? D.btnPomotRound2 : D.btnPomotRun;
+/* ── Step 3: Pomot（按钮驱动，暂不接 NL） ── */
+async function runPomot(){
+  if(!S.activeEmotion){ alert('请回第②步点选一个情绪'); return; }
+  const btn = D.btnPomotRun;
   btn.disabled = true;
-  setStatus(D.status3, isRound2 ? '⏳ 微调中…' : '⏳ 生成中…');
+  setStatus(D.status3, '⏳ 生成中…');
   try {
-    let d;
-    if(isRound2){
-      if(!S.lastBaked && !S.lastPacket){ alert('请先生成'); return; }
-      d = await apiPost('/api/portal/pomot/round2', {
-        nl,
-        customer_id: S.customerId,
-        project_id: S.currentProject?.project_id || '',
-        species: S.activeSpecies,
-        emotion: S.activeEmotion,
-        breed: S.activeStyle,
-        previous_baked: S.lastBaked,
-      });
-    } else {
-      d = await apiPost('/api/portal/pomot/round1', {
-        nl, species:S.activeSpecies, emotion:S.activeEmotion, breed:S.activeStyle,
-        customer_id:S.customerId, project_id:S.currentProject?.project_id||'',
-      });
-    }
+    const d = await apiPost('/api/portal/pomot/round1', {
+      species:S.activeSpecies, emotion:S.activeEmotion, breed:S.activeStyle,
+      customer_id:S.customerId, project_id:S.currentProject?.project_id||'',
+    });
     if(!d.ok) throw new Error(d.error||'失败');
     applyPomotResult(d);
     D.btnStep3Next.disabled = false;
     setStatus(D.status3, '✅ 管线完成（未写入客户资产库，第⑤步点「保存客户资料」）');
-    addSavedStep(isRound2 ? '③ Pomot 微调（内存）' : '③ Pomot 生成（内存）');
+    addSavedStep('③ Pomot 生成（内存）');
   } catch(e){
     setStatus(D.status3, '❌ '+e.message, true);
   } finally { btn.disabled = false; }
@@ -1538,14 +1520,14 @@ function applyPomotResult(d){
 
 /* ── Step 4: OpenCV 渲染 ── */
 async function renderVideo(){
-  if(!S.lastBaked){ alert('请先生成管线（第③步）'); return; }
+  if(!S.lastBaked && !S.activeEmotion){ alert('请先生成管线（第③步）或选择情绪'); return; }
   if(!assertBreedCalibrated()) return;
   const ms = S.membraneStatus;
   if(ms && ms.action === 'regenerate'){
     alert(ms.warning + '\n\n请回第③步点击「生成表情」，再回来渲染。');
     return;
   }
-  if(S.lastBaked.schema_version && String(S.lastBaked.schema_version).includes('human-prior') && S.activeSpecies === 'dog'){
+  if(S.lastBaked?.schema_version && String(S.lastBaked.schema_version).includes('human-prior') && S.activeSpecies === 'dog'){
     alert('当前生成数据是旧版人类管线，不是狗底膜。\n请回第③步重新「生成表情」。');
     return;
   }
@@ -1558,6 +1540,8 @@ async function renderVideo(){
       baked: S.lastBaked,
       species: S.activeSpecies,
       breed: S.activeStyle || getCalibBreed(),
+      emotion: S.activeEmotion,
+      active_emotion: S.activeEmotion,
     });
     if(!d.ok) throw new Error(d.error||'渲染失败');
     S.videoUrl = d.video_url + '?t=' + Date.now();
@@ -1595,7 +1579,7 @@ async function saveAll(){
 }
 
 async function doExport(){
-  if(!S.lastBaked){ alert('请先生成管线'); return; }
+  if(!S.lastBaked && !S.activeEmotion){ alert('请先生成管线或选择情绪'); return; }
   if(!S.videoUrl){ alert('请先渲染 OpenCV 底膜视频（第④步）'); return; }
   D.btnExport.disabled = true;
   setStatus(D.status5, '⏳ 更新 04_Prompt…');
@@ -1603,7 +1587,10 @@ async function doExport(){
     const d = await apiPost('/api/portal/export', {
       baked: S.lastBaked, species: S.activeSpecies,
       breed: S.activeStyle, emotion: S.activeEmotion,
-      action: (S.lastSplit && S.lastSplit.action) || D.nlInput.value.trim(),
+      active_emotion: S.activeEmotion,
+      customer_id: S.customerId,
+      project_id: S.currentProject?.project_id||'',
+      action: (S.lastSplit && S.lastSplit.action) || '',
       customer_id: S.customerId,
       project_id: S.currentProject?.project_id||'',
     });
@@ -1654,14 +1641,16 @@ D.btnCalibrateSubmit.onclick = submitCalibration;
 D.btnRenderMembrane.onclick = renderMembraneMp4;
 D.btnStep1Next.onclick = () => goStep(2);
 D.btnStep2Prev.onclick = () => goStep(1);
-D.btnStep2Next.onclick = () => goStep(3);
+D.btnStep2Next.onclick = () => {
+  if(!S.activeEmotion){ alert('请先点选一个情绪'); return; }
+  goStep(3);
+};
 D.btnStep3Prev.onclick = () => goStep(2);
 D.btnStep3Next.onclick = () => goStep(4);
 D.btnStep4Prev.onclick = () => goStep(3);
 D.btnStep4Next.onclick = () => goStep(5);
 D.btnStep5Prev.onclick = () => goStep(4);
-D.btnPomotRun.onclick = () => runPomot(false);
-D.btnPomotRound2.onclick = () => runPomot(true);
+D.btnPomotRun.onclick = () => runPomot();
 D.btnRenderVideo.onclick = renderVideo;
 D.btnSaveAll.onclick = saveAll;
 D.btnExport.onclick = doExport;

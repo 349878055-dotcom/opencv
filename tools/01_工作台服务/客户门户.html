@@ -104,8 +104,6 @@ body { background:var(--portal-bg); font-family:-apple-system,BlinkMacSystemFont
 .preset-btn.active { background:var(--primary); color:white; border-color:var(--primary); }
 .preset-btn.style-btn.active { background:#c2410c; border-color:#c2410c; color:white; }
 .preset-empty { font-size:0.78rem; color:var(--text-muted); }
-textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px solid var(--border); border-radius:8px; font-size:0.9rem; font-family:inherit; resize:vertical; min-height:72px; }
-
 /* ── 结果面板 ── */
 .result-tabs { display:flex; gap:4px; margin-bottom:8px; flex-wrap:wrap; }
 .result-tab { padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:white; cursor:pointer; font-size:0.75rem; }
@@ -263,7 +261,7 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
 
     <div class="step-bar" id="step-bar">
       <div class="step-item" data-step="1">① 上传+标定</div>
-      <div class="step-item" data-step="2">② 描述表情</div>
+      <div class="step-item" data-step="2">② 选情绪/品种</div>
       <div class="step-item" data-step="3">③ 生成管线</div>
       <div class="step-item" data-step="4">④ OpenCV预览</div>
       <div class="step-item" data-step="5">⑤ 导出扩散</div>
@@ -352,8 +350,8 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
     <!-- Step 2: 描述 -->
     <div class="wizard-panel hidden" id="panel-2">
       <div class="wizard-card">
-        <h3>📝 描述你想要的表情</h3>
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">物种：已在第①步选定（<span id="species-label">human</span>）· 下方选项与 <strong>预设资产库</strong> 同步加载</p>
+        <h3>🎯 点选情绪与品种</h3>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">物种：已在第①步选定（<span id="species-label">human</span>）· 下方按钮与 <strong>预设资产库</strong> 同步 · 暂不接自然语言，全靠点选</p>
 
         <div class="preset-section" id="preset-emotion-section">
           <div class="preset-section-title">
@@ -385,7 +383,6 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
           <p class="energy-pulse-macro" id="energy-pulse-macro"></p>
         </div>
 
-        <textarea class="nl-input" id="nl-input" placeholder="例如：狗狗委屈地回头看了一眼"></textarea>
         <div class="wizard-nav">
           <button class="btn" id="btn-step2-prev">← 上一步</button>
           <button class="btn primary" id="btn-step2-next">下一步 →</button>
@@ -397,12 +394,11 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
     <div class="wizard-panel hidden" id="panel-3">
       <div class="wizard-card">
         <h3>⚡ 执行 Pomot 管线</h3>
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">NL → 拆解 → 路由 → 滑杆包 → 烘焙(12×150) → 05节拍表 → 04 Prompt（含 L3 跟随控制序列）</p>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">按钮选定 → 路由 → 即时编译 12×150（<strong>仅内存</strong>，不写 02 烘焙 JSON）→ 04 Prompt</p>
         <div id="pomot-summary" class="pomot-summary hidden"></div>
         <div class="wizard-nav">
           <button class="btn" id="btn-step3-prev">← 上一步</button>
           <button class="btn primary" id="btn-pomot-run">🎨 生成表情</button>
-          <button class="btn" id="btn-pomot-round2">🔄 微调</button>
           <button class="btn" id="btn-step3-next" disabled>下一步 →</button>
         </div>
         <div class="status-msg" id="status-3"></div>
@@ -414,6 +410,7 @@ textarea.nl-input { width:100%; box-sizing:border-box; padding:10px; border:1px 
     <div class="wizard-panel hidden" id="panel-4">
       <div class="wizard-card">
         <h3>🎬 OpenCV 工程底膜预览</h3>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 12px">MP4 由 <strong>02 烘焙的 12 通道</strong> 逐帧驱动（R 眼睑 / G 眉耳 / B 虹膜+湿眼高光）；第①步标定只定脸几何，不含表情动画。</p>
         <div id="membrane-alert-step4" class="membrane-alert hidden"></div>
         <div class="wizard-nav" style="margin-top:0;margin-bottom:12px">
           <button class="btn" id="btn-step4-prev">← 上一步</button>

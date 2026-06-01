@@ -13,8 +13,6 @@ from pathlib import Path
 from typing import Any
 
 from asset_lib import (
-    BAKED_OUTPUT_BY_SPECIES,
-    LEGACY_BAKED_FILENAME,
     customer_dir,
     customer_info_path,
     customer_ref_photos_dir,
@@ -65,12 +63,8 @@ def save_project_profile(
     bundle = diffusion_bundle_dir(customer_id, project_id)
 
     files: dict[str, Any] = {}
-    baked_names = list(dict.fromkeys(
-        list(BAKED_OUTPUT_BY_SPECIES.values()) + [LEGACY_BAKED_FILENAME]
-    ))
     for name in (
         "01_滑杆包.json",
-        *baked_names,
         "03_工程底模.mp4",
         "03_工程底模.meta.json",
         "04_Prompt.txt",

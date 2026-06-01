@@ -105,6 +105,20 @@ def write_baked_json(out_dir: Path | str, baked: dict[str, Any], *, species: str
     return target
 
 
+def remove_baked_json_files(out_dir: Path | str) -> list[str]:
+    """删除输出目录下所有 02 烘焙 JSON（门户不落盘策略）。"""
+    root = Path(out_dir)
+    if not root.is_dir():
+        return []
+    removed: list[str] = []
+    for name in set(BAKED_OUTPUT_BY_SPECIES.values()) | {LEGACY_BAKED_FILENAME}:
+        p = root / name
+        if p.is_file():
+            p.unlink()
+            removed.append(name)
+    return removed
+
+
 def resolve_sparse_json(*, prefer_baked: bool = True, species: str = "") -> Path:
     """
     解析当前用于 05 节拍 / 示意图 的 02 路径。

@@ -8,7 +8,12 @@
 
 输出尺寸 690×361，匹配扩散引擎输入。
 
-支持通过 template_constants 传入客户定制底膜参数。
+12 通道 → 像素（每帧 render_frame 消费 channel_tracks 的一帧）：
+  R  blink + lid_upper + lid_lower + squint → 眼睑环
+  G  brow_raise → 眉脊；eyebrow → 耳廓（deform 不读 eyebrow）
+  B  pupil_x/y + pupil_scale + iris_scale + cornea_bulge → 虹膜/瞳孔；eye_gloss → 上缘湿眼高光斑
+
+支持通过 template_constants 传入客户定制底膜参数（标定几何，与 12 通道动画叠加）。
 """
 from __future__ import annotations
 
@@ -27,6 +32,7 @@ except ImportError:
 else:
     HAS_CV2 = True
 
+from gaze_engine._shared.affine_gloss import draw_eye_gloss
 from gaze_engine._shared.species_template import (
     SpeciesTemplate,
     species_default_template,
@@ -163,7 +169,6 @@ class DogEyeMesh:
         squint_lift: int = SQUINT_LIFT,
         lid_upper_drop: int = LID_UPPER_DROP,
         lid_lower_lift: int = LID_LOWER_LIFT,
-        brow_down: int = BROW_DOWN,
         brow_raise_amp: int = BROW_RAISE_AMP,
         pupil_x_range: int = PUPIL_X_RANGE,
         pupil_y_range: int = PUPIL_Y_RANGE,
@@ -177,7 +182,6 @@ class DogEyeMesh:
         squint = channels.get("squint", 0.0)
         lid_upper = channels.get("lid_upper", 0.0)
         lid_lower = channels.get("lid_lower", 0.0)
-        eyebrow = channels.get("eyebrow", 0.0)
         b_raise = channels.get("brow_raise", 0.0)
         px = channels.get("pupil_x", 0.0)
         py = channels.get("pupil_y", 0.0)
@@ -316,7 +320,6 @@ class DogAffineRenderer:
                 squint_lift=c["SQUINT_LIFT"],
                 lid_upper_drop=c["LID_UPPER_DROP"],
                 lid_lower_lift=c["LID_LOWER_LIFT"],
-                brow_down=c["BROW_DOWN"],
                 brow_raise_amp=c["BROW_RAISE_AMP"],
                 pupil_x_range=c["PUPIL_X_RANGE"],
                 pupil_y_range=c["PUPIL_Y_RANGE"],
@@ -343,11 +346,12 @@ class DogAffineRenderer:
             cv2.polylines(canvas, [ear_pts], False, (0, 255, 0),
                           c["EAR_THICK"], cv2.LINE_8)
 
-            # ── B 通道：虹膜 + 瞳孔 ──
+            # ── B 通道：虹膜 + 瞳孔 + 湿润高光 ──
             i_scale = channels.get("iris_scale", 0.0)
             cornea_bulge = channels.get("cornea_bulge", 0.0)
             p_scale = channels.get("pupil_scale", 0.0)
             blink = channels.get("blink", 0.0)
+            gloss = channels.get("eye_gloss", 0.0)
 
             iris_r = max(2, int(c["IRIS_R_BASE"]
                 * (1.0 + i_scale * (c["IRIS_SCALE_RANGE"] - 1.0))
@@ -359,6 +363,7 @@ class DogAffineRenderer:
                 pupil_r = max(2, int(c["PUPIL_R_BASE"] * (1.0 + p_scale * 0.5)))
                 cv2.circle(canvas, dst_pts["pupil"], pupil_r,
                            (255, 0, 0), c["PUPIL_THICK"], cv2.LINE_8)
+            draw_eye_gloss(canvas, dst_pts["pupil"], iris_r, gloss, blink)
 
         final_output = cv2.resize(canvas, (OUTPUT_W, OUTPUT_H),
                                   interpolation=cv2.INTER_AREA)
@@ -376,7 +381,6 @@ class DogAffineRenderer:
                 squint_lift=c["SQUINT_LIFT"],
                 lid_upper_drop=c["LID_UPPER_DROP"],
                 lid_lower_lift=c["LID_LOWER_LIFT"],
-                brow_down=c["BROW_DOWN"],
                 brow_raise_amp=c["BROW_RAISE_AMP"],
                 pupil_x_range=c["PUPIL_X_RANGE"],
                 pupil_y_range=c["PUPIL_Y_RANGE"],
@@ -393,6 +397,7 @@ class DogAffineRenderer:
             cornea_bulge = channels.get("cornea_bulge", 0.0)
             p_scale = channels.get("pupil_scale", 0.0)
             blink = channels.get("blink", 0.0)
+            gloss = channels.get("eye_gloss", 0.0)
             iris_r = max(2, int(c["IRIS_R_BASE"]
                 * (1.0 + i_scale * (c["IRIS_SCALE_RANGE"] - 1.0))
                 * (1.0 + cornea_bulge * 0.15)))
@@ -400,6 +405,7 @@ class DogAffineRenderer:
             if blink < 0.95:
                 pupil_r = max(2, int(c["PUPIL_R_BASE"] * (1.0 + p_scale * 0.5)))
                 cv2.circle(canvas, dst_pts["pupil"], pupil_r, (255, 0, 0), c["PUPIL_THICK"], cv2.LINE_8)
+            draw_eye_gloss(canvas, dst_pts["pupil"], iris_r, gloss, blink)
         return canvas
 
     def render_batch(self, json_path: str | Path, out_dir: str | Path, fps: int = 30) -> Path:

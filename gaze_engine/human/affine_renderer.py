@@ -32,6 +32,7 @@ except ImportError:
 else:
     HAS_CV2 = True
 
+from gaze_engine._shared.affine_gloss import draw_eye_gloss
 from gaze_engine._shared.species_template import (
     SpeciesTemplate,
     species_default_template,
@@ -398,6 +399,10 @@ else:
                     pupil_r = max(2, int(c["PUPIL_R_BASE"] * (1.0 + p_scale * 0.5)))
                     cv2.circle(canvas, dst_pts["pupil"], pupil_r,
                                (255, 0, 0), c["PUPIL_THICK"], cv2.LINE_8)
+                draw_eye_gloss(
+                    canvas, dst_pts["pupil"], iris_r,
+                    channels.get("eye_gloss", 0.0), blink,
+                )
             
             final_output = cv2.resize(canvas, (OUTPUT_W, OUTPUT_H),
                                       interpolation=cv2.INTER_AREA)

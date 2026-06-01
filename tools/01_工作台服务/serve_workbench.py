@@ -620,6 +620,39 @@ def _resolve_slider_packet(data: dict) -> dict | None:
     return None
 
 
+def _portal_compile_baked(data: dict) -> dict:
+    """门户即时编译 02（内存用，默认不写盘）。"""
+    from gaze_engine._shared.slider_schema import SliderPacket
+    from gaze_engine.delivery_pipeline import run_species_delivery
+
+    packet_dict = _resolve_slider_packet(data)
+    if not packet_dict:
+        raise ValueError("无法编译：请先点选情绪或提供 packet")
+    species = (data.get("species") or packet_dict.get("species") or "human").strip().lower()
+    breed = (data.get("breed") or data.get("active_style") or "").strip()
+    cid = (data.get("customer_id") or "").strip()
+    if not breed and cid:
+        breed = _resolve_breed_id(cid, species)
+    packet = SliderPacket.from_dict({**packet_dict, "species": species})
+    action = (data.get("action") or "").strip()
+    baked, _, _, _ = run_species_delivery(
+        packet,
+        species,
+        breed_id=breed or "",
+        style_id=breed or "",
+        narrative_action=action,
+    )
+    baked["species"] = species
+    if breed:
+        baked["breed"] = breed
+    return baked
+
+
+def _portal_purge_baked_files(out_dir) -> list[str]:
+    from asset_lib import remove_baked_json_files
+    return remove_baked_json_files(out_dir)
+
+
 @Route.get("/api/portal/presets")
 def portal_presets(self: Handler):
     """返回预设索引（仅 id/label/路径）；数值从 预设资产/ 按需调取，不下发 macro/pad。"""
@@ -738,15 +771,15 @@ def portal_preset_emotion_preview(self: Handler):
 
 @Route.post("/api/portal/pomot/round1")
 def portal_pomot_round1(self: Handler, body: bytes):
-    """Pomot 第一轮：NL → 拆解 → 路由 → 合成 → 管线 → 拼装。"""
+    """Pomot 第一轮：按钮 emotion → 路由 → 合成 → 管线 → 拼装（NL 可选，门户当前纯按钮）。"""
     from gaze_engine.pomot.pipeline import PomotPipeline
     data = self._read_body(body)
     nl = (data.get("nl") or "").strip()
-    if not nl:
-        return self._json({"ok": False, "error": "缺少 nl"}, status=400)
-    species = data.get("species", "")
-    emotion = data.get("emotion", "")
-    breed = data.get("breed", "")
+    species = (data.get("species") or "").strip()
+    emotion = (data.get("emotion") or "").strip()
+    breed = (data.get("breed") or "").strip()
+    if not nl and not emotion:
+        return self._json({"ok": False, "error": "缺少 emotion（请先在第②步点选情绪）"}, status=400)
     pipeline = PomotPipeline()
     result = pipeline.round1(
         nl,
@@ -866,12 +899,10 @@ def portal_save(self: Handler, body: bytes):
     if packet:
         ver = save_adjustment(cid, pid, packet, note=note or "手动保存")
 
-    # 保存烘焙和节拍表到输出目录
+    # 输出目录：不落盘 02 烘焙（即时编译）；清理历史遗留
     out = project_output_dir(cid, pid)
     out.mkdir(parents=True, exist_ok=True)
-    if baked:
-        (out / "02_烘焙_真人律.json").write_text(
-            json.dumps(baked, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _portal_purge_baked_files(out)
     if metronome:
         (out / "05_扩散节拍表.txt").write_text(metronome, encoding="utf-8")
     if packet:
@@ -1210,6 +1241,8 @@ def _analyze_membrane_status(
     if sp == "dog":
         if baked_pipe == "dog" and video_sp == "dog":
             status, is_valid = "ok", True
+        elif video_sp == "dog" and video_exists:
+            status, is_valid = "ok", True
         elif baked_pipe == "dog" and video_exists and not video_sp:
             status, warning = "video_unverified", "生成数据是狗管线，但视频未校验 — 请第④步重新渲染"
             action = "render"
@@ -1296,15 +1329,10 @@ def portal_project_state(self: Handler):
 
     pipeline: dict = {}
     packet_path = out_dir / "01_滑杆包.json"
-    baked_path = out_dir / "02_烘焙_真人律.json"
+    _portal_purge_baked_files(out_dir)
     if packet_path.is_file():
         try:
             pipeline["packet"] = json.loads(packet_path.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-    if baked_path.is_file():
-        try:
-            pipeline["baked"] = json.loads(baked_path.read_text(encoding="utf-8"))
         except Exception:
             pass
 
@@ -1346,11 +1374,11 @@ def portal_project_state(self: Handler):
     }
 
     species = proj.get("species") or (get_customer(cid) or {}).get("preferred_species") or "human"
-    baked_species = (pipeline.get("baked") or {}).get("species")
-    species_mismatch = bool(baked_species and baked_species != species)
+    baked_species = None
+    species_mismatch = False
     membrane_status = _analyze_membrane_status(
         species,
-        pipeline.get("baked"),
+        None,
         membrane_meta,
         video_exists=mp4.is_file(),
     )
@@ -1380,6 +1408,7 @@ def portal_project_state(self: Handler):
         "calibration": calibration,
         "template_params": template_params,
         "pipeline": pipeline,
+        "pipeline_note": "02_烘焙 不落盘；第③步生成或第④步渲染时即时编译",
         "deliverables": deliverables,
         "species_mismatch": species_mismatch,
         "baked_species": baked_species,
@@ -1426,11 +1455,7 @@ def portal_save_step(self: Handler, body: bytes):
     if packet:
         (out / "01_滑杆包.json").write_text(
             json.dumps(packet, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    baked = data.get("baked")
-    if baked:
-        from asset_lib import write_baked_json
-        sp = (data.get("species") or baked.get("species") or "human").strip().lower()
-        write_baked_json(out, baked, species=sp)
+    _portal_purge_baked_files(out)
     metronome = data.get("metronome", "")
     if metronome:
         (out / "05_扩散节拍表.txt").write_text(metronome, encoding="utf-8")
@@ -1454,7 +1479,7 @@ def portal_save_step(self: Handler, body: bytes):
 @Route.post("/api/portal/render-membrane")
 def portal_render_membrane(self: Handler, body: bytes):
     """标定后一键渲染狗工程底膜 MP4（默认委屈幼犬 preset + 客户巨型贵宾模板）。"""
-    from asset_lib import project_output_dir, write_baked_json
+    from asset_lib import project_output_dir
     from gaze_engine._shared.customer_db import get_project
     from gaze_engine.delivery_pipeline import run_species_delivery
     from gaze_engine.dog.presets import dog_packet_from_file
@@ -1494,9 +1519,7 @@ def portal_render_membrane(self: Handler, body: bytes):
 
     out = project_output_dir(cid, pid)
     out.mkdir(parents=True, exist_ok=True)
-    (out / "01_滑杆包.json").write_text(
-        json.dumps(pkt_dict, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    baked_path = write_baked_json(out, baked, species="dog")
+    _portal_purge_baked_files(out)
 
     try:
         video_path, frames, render_info = _render_opencv_video(
@@ -1519,7 +1542,7 @@ def portal_render_membrane(self: Handler, body: bytes):
         "frames": frames,
         "path": str(dest),
         "preset": preset_name,
-        "baked_file": baked_path.name,
+        "baked_json": baked,
         "baked_schema": baked.get("schema_version"),
         "baked_species": baked.get("species"),
         **render_info,
@@ -1535,6 +1558,12 @@ def portal_render_preview(self: Handler, body: bytes):
     species = data.get("species", "human")
     baked = data.get("baked")
     req_breed = (data.get("breed") or "").strip()
+
+    if not baked or not baked.get("channel_tracks"):
+        try:
+            baked = _portal_compile_baked(data)
+        except ValueError as e:
+            return self._json({"ok": False, "error": str(e)}, status=400)
 
     project_species = species
     if cid and pid:
@@ -1568,6 +1597,7 @@ def portal_render_preview(self: Handler, body: bytes):
         if get_project(cid, pid):
             out = project_output_dir(cid, pid)
             out.mkdir(parents=True, exist_ok=True)
+            _portal_purge_baked_files(out)
             dest = out / video_name
             dest.write_bytes(video_path.read_bytes())
             video_path = dest
@@ -1602,8 +1632,11 @@ def portal_export(self: Handler, body: bytes):
 
     data = self._read_body(body)
     baked = data.get("baked")
-    if not baked:
-        return self._json({"ok": False, "error": "缺少 baked (02_烘焙.json)"}, status=400)
+    if not baked or not baked.get("channel_tracks"):
+        try:
+            baked = _portal_compile_baked(data)
+        except ValueError as e:
+            return self._json({"ok": False, "error": str(e)}, status=400)
 
     species = data.get("species") or baked.get("species") or "human"
     breed = data.get("breed") or baked.get("breed") or ""
@@ -1641,6 +1674,7 @@ def portal_export(self: Handler, body: bytes):
     if cid and pid and get_project(cid, pid):
         out = project_output_dir(cid, pid)
         out.mkdir(parents=True, exist_ok=True)
+        _portal_purge_baked_files(out)
         prompt_file = out / "04_Prompt.txt"
         prompt_file.write_text(prompt_04, encoding="utf-8")
         (out / "wan_positive.txt").write_text(wan_clip["positive"], encoding="utf-8")
@@ -1783,9 +1817,7 @@ def portal_archive(self: Handler, body: bytes):
     if packet:
         (out / "01_滑杆包.json").write_text(
             json.dumps(packet, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    if baked:
-        (out / "02_烘焙_真人律.json").write_text(
-            json.dumps(baked, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _portal_purge_baked_files(out)
     metronome = data.get("metronome") or data.get("beat_text") or ""
     if metronome:
         (out / "05_扩散节拍表.txt").write_text(metronome, encoding="utf-8")
