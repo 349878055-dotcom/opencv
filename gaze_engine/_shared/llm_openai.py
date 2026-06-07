@@ -7,9 +7,10 @@ import re
 from dataclasses import asdict
 from typing import Any
 
-from gaze_engine.human.control_surface import PRESETS as ACTING_PULSE_PRESETS, packet_from_acting_preset
-from gaze_engine.nl_to_packet import match_preset_from_text
-from gaze_engine._shared.slider_schema import HOLD_IDS, MACRO_IDS, HoldSegment, SliderPacket, apply_llm_delta
+from asset_lib import is_valid_preset, load_species_presets
+from gaze_engine.input.control_surface import packet_from_acting_preset
+from gaze_engine.nl.nl_to_packet import match_preset_from_text
+from gaze_engine.input.slider_schema import HOLD_IDS, MACRO_IDS, HoldSegment, SliderPacket, apply_llm_delta
 
 DEFAULT_MODEL = os.environ.get("ECURSOR_OPENAI_MODEL", "gpt-4o-mini")
 CHEAP_MODEL = os.environ.get("ECURSOR_CHEAP_MODEL", "gpt-4o-mini")  # 非关键任务用轻量模型省Token
@@ -18,7 +19,8 @@ def openai_configured() -> bool:
     return bool((os.environ.get("OPENAI_API_KEY") or "").strip())
 
 def _preset_list() -> str:
-    return "、".join(ACTING_PULSE_PRESETS.keys())
+    presets = load_species_presets("human") or {}
+    return "、".join(presets.keys())
 
 def _router_system_prompt() -> str:
     """紧凑版系统Prompt（比 prompts/node1_system_prompt.txt 更短, 回退用）。"""
@@ -55,11 +57,11 @@ def _packet_from_llm_apply_json(
     preset = str(data.get("preset") or preset_hint or "").strip()
     if base_packet is not None:
         pkt = SliderPacket.from_dict(base_packet.to_dict())
-        if preset and preset in ACTING_PULSE_PRESETS and preset != pkt.emotion:
+        if preset and is_valid_preset("human", preset) and preset != pkt.emotion:
             pkt = packet_from_acting_preset(preset)
     else:
         preset = preset or match_preset_from_text(text)
-        if preset not in ACTING_PULSE_PRESETS:
+        if not is_valid_preset("human", preset):
             preset = match_preset_from_text(preset + " " + text)
         pkt = packet_from_acting_preset(preset)
 
@@ -67,7 +69,7 @@ def _packet_from_llm_apply_json(
     if isinstance(macro, dict) and macro:
         d = {k: int(macro[k]) for k in MACRO_IDS if k in macro}
         if d:
-            from gaze_engine._shared.slider_schema import MacroSliders
+            from gaze_engine.input.slider_schema import MacroSliders
 
             pkt.macro = MacroSliders(**{**{k: getattr(pkt.macro, k) for k in MACRO_IDS}, **d})  # type: ignore[arg-type]
 
@@ -84,7 +86,7 @@ def _packet_from_llm_apply_json(
         pkt.hold_seg = HoldSegment(**hs)  # type: ignore[arg-type]
 
     pkt = pkt.clamped()
-    if not preset or preset not in ACTING_PULSE_PRESETS:
+    if not preset or not is_valid_preset("human", preset):
         preset = pkt.emotion
     note = str(
         data.get("energy_map_note") or data.get("diffusion_prompt") or ""
@@ -97,7 +99,7 @@ def _packet_from_llm_apply_json(
 
 def resolve_node1_system_prompt(custom: str) -> str:
     """留空 → prompts/node1_system_prompt.txt → 短内置回退。"""
-    from gaze_engine._shared.node1_defaults import default_system_prompt_text, resolve_system_prompt_input
+    from gaze_engine.input.node1_defaults import default_system_prompt_text, resolve_system_prompt_input
 
     t = resolve_system_prompt_input(custom)
     if t:
@@ -134,14 +136,14 @@ def chatgpt_customer_nl(
     previous_packet: SliderPacket | None = None,
 ) -> "CustomerNLResult":
     """意图分离 + 咨询或生成。返回 CustomerNLResult。"""
-    from gaze_engine.nl_intent import INTENT_APPLY, INTENT_CONSULT, CustomerNLResult, normalize_intent
+    from gaze_engine.nl.nl_intent import INTENT_APPLY, INTENT_CONSULT, CustomerNLResult, normalize_intent
 
     if not openai_configured():
         raise RuntimeError("未设置 OPENAI_API_KEY（见 scripts/s01_设置OpenAI密钥.sh）")
 
     from openai import OpenAI
 
-    from gaze_engine._shared.node1_defaults import format_previous_packet_for_llm, resolve_knowledge_base
+    from gaze_engine.input.node1_defaults import format_previous_packet_for_llm, resolve_knowledge_base
 
     nl = (text or "").strip()
     kb = resolve_knowledge_base(knowledge_base)
@@ -242,7 +244,7 @@ def chatgpt_nl_to_packet(
     prompt_fn = _cheap_apply_system_prompt if use_cheap else _apply_system_prompt
 
     user_parts = [f"客户自然语言：\n{nl}"]
-    if preset_hint.strip() and preset_hint in ACTING_PULSE_PRESETS:
+    if preset_hint.strip() and is_valid_preset("human", preset_hint):
         user_parts.append(f"预设提示：{preset_hint}")
     kb_limit = 2000 if use_cheap else 4000
     if knowledge_base.strip():

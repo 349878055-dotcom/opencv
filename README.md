@@ -22,8 +22,8 @@
 | 用途 | 文件 |
 |------|------|
 | **宏观架构（唯一）** | [`合同/00_管线导读/00_从门户到扩散_管线总览.md`](合同/00_管线导读/00_从门户到扩散_管线总览.md) |
-| HTTP 服务 | [`tools/01_工作台服务/serve_workbench.py`](tools/01_工作台服务/serve_workbench.py) |
-| 客户创作门户 | [`tools/01_工作台服务/客户门户.html`](tools/01_工作台服务/客户门户.html) |
+| HTTP 服务 | [`portal/serve_workbench.py`](portal/serve_workbench.py) |
+| 客户创作门户 | [`portal/客户门户.html`](portal/客户门户.html) |
 | 核心引擎 | [`gaze_engine/`](gaze_engine/) |
 | 代码依赖图谱 | [`AI_INDEX.md`](AI_INDEX.md) |
 | 合同索引 | [`合同/README.md`](合同/README.md) |

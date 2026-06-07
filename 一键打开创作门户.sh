@@ -14,11 +14,18 @@ fi
 
 mkdir -p "$(dirname "$LOG")"
 
+# 清理 Python 缓存，强制重新加载最新代码
+_clear_pycache() {
+  find "$ROOT" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+  find "$ROOT" -name "*.pyc" -delete 2>/dev/null || true
+}
+
 _stop_port() {
   fuser -k "${PORT}/tcp" 2>/dev/null || true
   lsof -ti ":${PORT}" 2>/dev/null | xargs -r kill -9 2>/dev/null || true
   pkill -f "serve_workbench.py" 2>/dev/null || true
   sleep 0.8
+  _clear_pycache
 }
 
 _health_ok() {
@@ -36,7 +43,7 @@ if 'calibrate_preview' not in feats:
 _start_server() {
   cd "$ROOT"
   export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
-  nohup "$VENV_PY" "$ROOT/tools/01_工作台服务/serve_workbench.py" >>"$LOG" 2>&1 &
+  nohup "$VENV_PY" "$ROOT/portal/serve_workbench.py" >>"$LOG" 2>&1 &
   local pid=$!
   for _ in $(seq 1 50); do
     if _health_ok; then

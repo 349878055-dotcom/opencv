@@ -39,7 +39,7 @@ from asset_lib import (
     project_output_dir,
 )
 
-from gaze_engine._shared.species_template import (
+from gaze_engine.render.species_template import (
     SpeciesTemplate,
     species_default_template,
     adjust_template_for_breed,

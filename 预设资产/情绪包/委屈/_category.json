@@ -3,8 +3,13 @@
   "category": "委屈",
   "label": "委屈",
   "status": "修改中",
-  "note": "跨物种共用情绪包；PAD 见 预设资产/情绪坐标/{species}/委屈.json",
-  "pad_ref": "情绪坐标/{species}/委屈.json",
+  "note": "跨物种共用情绪包；同物种下三类变体共用此 PAD 块真源",
+  "pad": {
+    "P": -0.2,
+    "A": 0.2,
+    "D": -0.5,
+    "position": "愉悦中性 · 激活中性 · 偏顺从/退缩"
+  },
   "ear_by_species": {
     "dog": {
       "left": [-0.7, -0.3],

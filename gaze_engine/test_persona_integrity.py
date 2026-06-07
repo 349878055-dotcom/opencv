@@ -17,13 +17,13 @@ import math
 import random
 from typing import Dict, List, Tuple
 
-from gaze_engine.human.persona_compiler import (
+from gaze_engine.style.persona_compiler import (
     FRAME_COUNT,
     compile_to_channels,
     get_persona,
     list_persona_ids,
 )
-from gaze_engine.human.envelope_compile import HUMAN_CHANNELS
+from gaze_engine.envelope.envelope_compile import HUMAN_CHANNELS
 
 # ──────────────────────────────────────────────
 # 1. 标准「魅惑」情绪波形生成器

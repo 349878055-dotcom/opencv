@@ -1,0 +1,13 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "修改中",
+  "species": "human",
+  "category": "委屈",
+  "label": "委屈",
+  "emotion_ids": [
+    "委屈·变体2·隐忍微颤",
+    "可怜·委屈"
+  ],
+  "note": "修改中",
+  "variants_note": "情绪包三变体共用本 PAD；变体 JSON 不含 pad 块"
+}

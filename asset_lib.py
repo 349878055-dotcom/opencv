@@ -8,25 +8,19 @@ from typing import Any
 
 PKG = Path(__file__).resolve().parent
 ASSET_LIB = PKG / "预设资产"
-# ── 预设资产顶层目录（两大分类）──
+# ── 预设资产顶层目录（仅人类）──
 EMOTION_PACK_DIR = ASSET_LIB / "情绪包"          # macro + hold_seg（S1 E(t) 真源）
-EMOTION_COORD_DIR = ASSET_LIB / "情绪坐标"        # PAD (P,A,D) 真源 · 按 species 分子目录
+EMOTION_COORD_DIR = ASSET_LIB / "情绪坐标"        # PAD (P,A,D) 真源（已删除各文件的 pad 块，pad 真源在 情绪包/）
 EMOTION_PRESETS_DIR = EMOTION_PACK_DIR           # 兼容旧常量名
-# 跨物种共用情绪大类（目录在 情绪包/ 根下，非 {species}/ 内）
+# 跨物种共用情绪大类（目录在 情绪包/ 根下）
 SHARED_EMOTION_CATEGORIES: tuple[str, ...] = ("委屈",)
-HUMAN_PRESETS_DIR = EMOTION_PACK_DIR / "human"   # 人类16情绪
-CAT_PRESETS_DIR = EMOTION_PACK_DIR / "cat"       # 猫12情绪
-DOG_PRESETS_DIR = EMOTION_PACK_DIR / "dog"       # 狗10情绪
+HUMAN_PRESETS_DIR = EMOTION_PACK_DIR             # 16 情绪 JSON 直接位于 情绪包/ 根下
 
 STYLE_PACK_DIR = ASSET_LIB / "风格包"              # 风格偏移根目录
-STYLE_HUMAN = STYLE_PACK_DIR / "human"             # 人类人格风格（9 archetype）
-STYLE_CAT = STYLE_PACK_DIR / "cat"                 # 猫品种风格
-STYLE_DOG = STYLE_PACK_DIR / "dog"                 # 狗品种风格
+STYLE_HUMAN = STYLE_PACK_DIR                      # 8 人格风格目录直接位于 风格包/ 根下
 
 MEMBRANE_PACK_DIR = ASSET_LIB / "底膜包"           # 几何骨架预设（物种默认）
-MEMBRANE_HUMAN = MEMBRANE_PACK_DIR / "human"
-MEMBRANE_CAT = MEMBRANE_PACK_DIR / "cat"
-MEMBRANE_DOG = MEMBRANE_PACK_DIR / "dog"
+MEMBRANE_HUMAN = MEMBRANE_PACK_DIR                # species_default.json 直接位于 底膜包/ 根下
 
 # ── 运行时输出目录（管线中间产物）──
 RUNTIME_DIR = PKG / "_runtime"
@@ -37,20 +31,14 @@ def cmd_dir() -> Path:
     return RUNTIME_DIR
 
 
-# 02 烘焙落盘：每物种独立文件名（人类=真人律，来自 human_prior；狗/猫=各自管线）
-BAKED_OUTPUT_BY_SPECIES: dict[str, str] = {
-    "human": "02_烘焙_真人律.json",
-    "dog": "02_烘焙_狗律.json",
-    "cat": "02_烘焙_猫律.json",
-}
-# 旧版狗/猫误用「真人律」文件名，读取时回退，新写入不再使用
-LEGACY_BAKED_FILENAME = "02_烘焙_真人律.json"
+# 02 烘焙文件名（仅人类）
+BAKED_FILENAME = "02_烘焙_真人律.json"
+LEGACY_BAKED_FILENAME = BAKED_FILENAME
 
 
 def baked_output_filename(species: str = "human") -> str:
-    """物种 → 02 烘焙 JSON 文件名。"""
-    sp = (species or "human").strip().lower()
-    return BAKED_OUTPUT_BY_SPECIES.get(sp, BAKED_OUTPUT_BY_SPECIES["human"])
+    """02 烘焙 JSON 文件名（兼容旧参数，仅返回人类文件名）。"""
+    return BAKED_FILENAME
 
 
 def baked_output_path(out_dir: Path | str, species: str = "human") -> Path:
@@ -58,50 +46,28 @@ def baked_output_path(out_dir: Path | str, species: str = "human") -> Path:
 
 
 def species_from_baked(baked: dict[str, Any] | None) -> str:
-    """从 02 内容推断物种（写盘/读盘路由）。"""
-    if not baked:
-        return "human"
-    sp = (baked.get("species") or "").strip().lower()
-    if sp in BAKED_OUTPUT_BY_SPECIES:
-        return sp
-    schema = (baked.get("schema_version") or "").lower()
-    if "dog" in schema:
-        return "dog"
-    if "cat" in schema:
-        return "cat"
+    """始终返回 human（仅人类物种）。"""
     return "human"
 
 
 def resolve_baked_json_path(out_dir: Path | str, species: str = "") -> Path | None:
-    """查找已存在的 02 烘焙文件：优先物种专名，再回退旧版统一名。"""
+    """查找已存在的 02 烘焙文件。"""
     root = Path(out_dir)
-    candidates: list[Path] = []
-    if species:
-        candidates.append(baked_output_path(root, species))
-    for sp in BAKED_OUTPUT_BY_SPECIES:
-        p = baked_output_path(root, sp)
-        if p not in candidates:
-            candidates.append(p)
+    target = baked_output_path(root, species or "human")
+    if target.is_file():
+        return target
     legacy = root / LEGACY_BAKED_FILENAME
-    if legacy not in candidates:
-        candidates.append(legacy)
-    for p in candidates:
-        if p.is_file():
-            return p
+    if legacy.is_file():
+        return legacy
     return None
 
 
 def write_baked_json(out_dir: Path | str, baked: dict[str, Any], *, species: str = "") -> Path:
-    """按物种写入 02；狗/猫写入后删除误放在「真人律」名下的旧文件。"""
+    """写入 02 烘焙 JSON（仅人类）。"""
     root = Path(out_dir)
     root.mkdir(parents=True, exist_ok=True)
-    sp = (species or species_from_baked(baked)).strip().lower()
-    target = baked_output_path(root, sp)
+    target = baked_output_path(root, species or "human")
     target.write_text(json.dumps(baked, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    if sp != "human":
-        legacy = root / LEGACY_BAKED_FILENAME
-        if legacy.is_file() and legacy.resolve() != target.resolve():
-            legacy.unlink()
     return target
 
 
@@ -111,7 +77,7 @@ def remove_baked_json_files(out_dir: Path | str) -> list[str]:
     if not root.is_dir():
         return []
     removed: list[str] = []
-    for name in set(BAKED_OUTPUT_BY_SPECIES.values()) | {LEGACY_BAKED_FILENAME}:
+    for name in (BAKED_FILENAME, LEGACY_BAKED_FILENAME):
         p = root / name
         if p.is_file():
             p.unlink()
@@ -211,12 +177,8 @@ def customer_template_params_path(customer_id: str) -> Path:
 def species_membrane_default_path(species: str) -> Path:
     """预设资产：物种默认底膜 JSON（只读真源）。"""
     sp = (species or "human").strip().lower()
-    root = {
-        "human": MEMBRANE_HUMAN,
-        "cat": MEMBRANE_CAT,
-        "dog": MEMBRANE_DOG,
-    }.get(sp, MEMBRANE_HUMAN)
-    return root / "species_default.json"
+    # 所有物种共用 MEMBRANE_PACK_DIR（已扁平化，无 /human /cat /dog 子目录）
+    return MEMBRANE_PACK_DIR / "species_default.json"
 
 
 # ── 客户枚举 ──
@@ -279,13 +241,11 @@ def generate_project_id(customer_id: str) -> str:
 
 
 # ═══════════════════════════════════════════════════════════
-# 物种预设包读取（human / cat / dog）
+# 物种预设包读取（仅人类）
 # ═══════════════════════════════════════════════════════════
 
 SPECIES_PRESET_DIRS: dict[str, Path] = {
     "human": HUMAN_PRESETS_DIR,
-    "cat": CAT_PRESETS_DIR,
-    "dog": DOG_PRESETS_DIR,
 }
 
 
@@ -368,20 +328,11 @@ def _category_pad_for_species(meta: dict[str, Any], species: str) -> dict[str, A
 
 
 def load_emotion_coord_pad(species: str, key: str) -> dict[str, Any] | None:
-    """从 预设资产/情绪坐标/{species}/{key}.json 读取 pad 块。"""
-    sp = (species or "human").strip().lower()
-    name = (key or "").strip()
-    if not name:
-        return None
-    path = EMOTION_COORD_DIR / sp / f"{name}.json"
-    if not path.is_file():
-        return None
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return None
-    pad = raw.get("pad")
-    return pad if isinstance(pad, dict) else None
+    """从 预设资产/情绪包/{species}/{key}.json 读取 pad 块（唯一真源）。"""
+    raw = load_emotion_preset_raw(species, key)
+    if raw and "pad" in raw:
+        return raw["pad"]
+    return None
 
 
 def _resolve_coord_key(raw: dict[str, Any], preset_stem: str = "") -> str:
@@ -620,8 +571,8 @@ def load_emotion_slider_packet(species: str, preset_id: str):
     raw = load_emotion_preset_raw(species, preset_id)
     if not raw:
         return None
-    from gaze_engine._shared.emotion_pad import ensure_pad_on_packet
-    from gaze_engine._shared.slider_schema import SliderPacket
+    from gaze_engine.envelope.emotion_pad import ensure_pad_on_packet
+    from gaze_engine.input.slider_schema import SliderPacket
 
     pkt = SliderPacket.from_dict(raw)
     if not pkt.emotion or pkt.emotion == "s01_pressure":
@@ -633,6 +584,21 @@ def load_emotion_slider_packet(species: str, preset_id: str):
     aliases = raw.get("aliases") or []
     pkt.display_alias = str(raw.get("display_alias") or (aliases[0] if aliases else ""))
     return ensure_pad_on_packet(pkt, species)
+
+
+def is_valid_preset(species: str, preset_id: str) -> bool:
+    """检查情绪包 JSON 是否存在（唯一真源检查）。"""
+    path = emotion_preset_path(species, preset_id)
+    return path is not None and path.is_file()
+
+
+def load_emotion_pad(species: str, emotion: str) -> tuple[float, float, float] | None:
+    """从情绪包 JSON 读取 PAD (P,A,D)，若不存在返回 None。"""
+    raw = load_emotion_preset_raw(species, emotion)
+    if raw and "pad" in raw:
+        p = raw["pad"]
+        return (float(p["P"]), float(p["A"]), float(p["D"]))
+    return None
 
 
 def load_species_preset_groups(species: str) -> list[dict[str, Any]] | None:

@@ -1,0 +1,11 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "human",
+  "category": "怒视·压人",
+  "label": "怒视·压人",
+  "emotion_ids": [
+    "怒视·压人"
+  ],
+  "note": "外放、高力度、平顶"
+}

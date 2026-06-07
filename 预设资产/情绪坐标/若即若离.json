@@ -1,0 +1,11 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "human",
+  "category": "若即若离",
+  "label": "若即若离",
+  "emotion_ids": [
+    "若即若离"
+  ],
+  "note": "飘、慢拱、留韵"
+}

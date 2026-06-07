@@ -1,0 +1,11 @@
+{
+  "schema": "emotion-pad-v1",
+  "status": "脑补",
+  "species": "human",
+  "category": "要哭未哭",
+  "label": "要哭未哭",
+  "emotion_ids": [
+    "要哭未哭"
+  ],
+  "note": "更轻更慢、颤"
+}
