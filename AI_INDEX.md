@@ -18,6 +18,7 @@
 ├── README.md               ← 项目简介
 ├── .clinerules             ← Roo Code AI 行为规则
 ├── .cursorrules            ← Cursor AI 行为规则
+├── .rooignore              ← Roo Code 忽略规则（减少 Token 消耗）
 ├── .env / .env.example     ← 环境变量
 ├── .gitignore              ← Git 忽略规则
 ├── 一键打开创作门户.sh       ← 启动入口
@@ -123,27 +124,29 @@
 │
 └── 预设资产/             ← 🔵 预设资产（四大分类 + 情绪坐标 JSON）
     ├── 情绪包/           ← ① 情绪包（macro+hold_seg+pad）
-    │   ├── human/            ← 16种（含怒视·压人）
-    │   └── 委屈/            ← 委屈类别 3 变体（缓慢泄气、隐忍微颤、迟疑试探）
+    │   ├── 16 种情绪 JSON     ← 每种情绪一份（含怒视·压人等）
+    │   ├── _groups.json       ← 情绪分组
+    │   ├── _neutral.json      ← 中性默认值
+    │   └── 委屈/              ← 委屈类别 3 变体（缓慢泄气、隐忍微颤、迟疑试探）
     │
     ├── 风格包/               ← ② 风格偏移（base_offset+scale_factor）
-    │   └── human/            ← 9 个人格风格（含魅惑者_温碧霞）
-    │       ├── 天选者_大祭司/style.json
-    │       ├── 魅惑者_部落巫医/style.json
-    │       ├── 魅惑者_温碧霞/style.json
-    │       ├── 狠厉者_铁血将军/style.json
-    │       ├── 怯弱者_逃兵/style.json
-    │       ├── 悲悯者_圣徒/style.json
-    │       ├── 呆滞者_傀儡/style.json
-    │       ├── 癫狂者_疯僧/style.json
-    │       └── 天真者_幼童/style.json
+    │   ├── 天选者_大祭司/style.json
+    │   ├── 魅惑者_部落巫医/style.json
+    │   ├── 魅惑者_温碧霞/style.json
+    │   ├── 狠厉者_铁血将军/style.json
+    │   ├── 怯弱者_逃兵/style.json
+    │   ├── 悲悯者_圣徒/style.json
+    │   ├── 呆滞者_傀儡/style.json
+    │   ├── 癫狂者_疯僧/style.json
+    │   └── 天真者_幼童/style.json
     │
     ├── 底膜包/               ← ④ 物种底膜几何参数
-    │   ├── human/species_default.json
+    │   ├── species_default.json
     │   └── README.txt
     │
-    ├── 情绪坐标/             ← PAD 真源 JSON（按物种组织，同步自合同）
-    │   ├── human/             ← 16种 + _index.json
+    ├── 情绪坐标/             ← PAD 真源 JSON（同步自合同）
+    │   ├── 16 种情绪 JSON     ← 每种情绪一份
+    │   ├── _index.json
     │   └── README.txt
     │
     └── README.txt
@@ -153,10 +156,10 @@
 >
 > | 层级 | 目录 | 内容 | 作用于 | 数据来源 |
 > |------|------|------|--------|---------|
-> | ① 情绪包 | `情绪包/human/` | macro+hold_seg+pad，滑杆与气质基准 | 单情绪 | `input/control_surface.PRESETS` |
-> | ② 人格包 | `风格包/human/` | base_offset+scale_factor，12通道偏移 | 指定演员+情绪 | `style/persona_style_catalog.json`（真源）→ `persona_matrix.json` + `风格包/` |
-> | ③ 底膜包 | `底膜包/human/` | 物种底膜几何参数（species_default） | 人类物种 | → `底膜包/` |
-> | 情绪坐标 JSON | `情绪坐标/human/` | PAD 真实值 JSON（同步自 `合同/03_情绪坐标/`） | 存档/校验 | → `情绪坐标/` |
+> | ① 情绪包 | `情绪包/` | macro+hold_seg+pad，滑杆与气质基准 | 单情绪 | `input/control_surface.PRESETS` |
+> | ② 人格包 | `风格包/` | base_offset+scale_factor，12通道偏移 | 指定演员+情绪 | `style/persona_style_catalog.json`（真源）→ `persona_matrix.json` + `风格包/` |
+> | ③ 底膜包 | `底膜包/` | 物种底膜几何参数（species_default） | 人类物种 | → `底膜包/` |
+> | 情绪坐标 JSON | `情绪坐标/` | PAD 真实值 JSON（同步自 `合同/03_情绪坐标/`） | 存档/校验 | → `情绪坐标/` |
 > | — | 合同正文 | 16 情绪 + 9 人格独立 md | 审定真源 | `合同/02_情绪与能量/` + `合同/05_风格化/` |
 
 ---
